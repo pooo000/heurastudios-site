@@ -1,0 +1,59 @@
+---
+layout: default
+title: "Join the waitlist"
+description: "Join the Heura Studios waitlist and get an email when the beta opens."
+og_title: "Join the Heura Studios waitlist"
+og_description: "Build your company's own AI. No code. Get an email when the Heura Studios beta opens."
+hide_request_button: true
+reveal: true
+css: [/waitlist/waitlist.css]
+js: [/form.js, /waitlist/waitlist.js]
+---
+<main class="wl-main">
+  <div class="ov-wrap wl-grid">
+    <div class="wl-panel">
+      {%- comment -%} Posts to the Apps Script in _backend/ (form.js sends it with fetch; without JS it posts normally). {%- endcomment %}
+      <form id="wl-form" class="wl-form" action="{{ site.form_endpoint }}" method="post" novalidate>
+        <h1 class="wl-title" data-reveal>Join the waitlist</h1>
+        <p class="wl-lead" data-reveal style="--d:.1s">Heura Studios opens to beta testers soon. Leave your work email and company, and you’ll get an email when it’s your turn.</p>
+        <div class="wl-fields">
+          <div class="wl-field">
+            <label for="wl-email">Work email</label>
+            <input id="wl-email" name="email" type="email" autocomplete="email" inputmode="email" maxlength="254" placeholder="you@company.com" required>
+          </div>
+          <div class="wl-field">
+            <label for="wl-company">Company name</label>
+            <input id="wl-company" name="company" autocomplete="organization" maxlength="100" required>
+          </div>
+          {%- comment -%} Honeypot: hidden from people; bots that fill it get "ok" and nothing is saved. {%- endcomment %}
+          <div class="wl-trap" aria-hidden="true">
+            <label for="wl-website">Website</label>
+            <input id="wl-website" name="website" tabindex="-1" autocomplete="off">
+          </div>
+          <input type="hidden" name="from" value="">
+        </div>
+        <p class="wl-error" id="wl-error" role="alert"></p>
+        <button class="ov-btn ov-btn-primary wl-submit" type="submit">Join waitlist</button>
+        <p class="wl-fine">Your email is only used to invite you to the beta. See the <a href="/privacy/">Privacy Policy</a>.</p>
+      </form>
+
+      <section class="wl-done" id="wl-done" tabindex="-1" aria-labelledby="wl-done-title" hidden>
+        <h1 id="wl-done-title" class="wl-title">You’re on the waitlist</h1>
+        <p class="wl-lead" id="wl-done-text"></p>
+        <a class="ov-btn ov-btn-quiet wl-home" href="/">Back to home</a>
+      </section>
+    </div>
+
+    {%- comment -%} Sample chat widget on a made-up shop: pops open after load; the bubble toggles it (waitlist.js). {%- endcomment %}
+    <div class="ov-panel ov-chat wl-art" data-chat-open="load">
+      <div class="ov-chat-box">
+        <img class="ov-chat-card" src="/img/studio-chat-card.webp" width="840" height="1048" loading="lazy" decoding="async"
+          alt="A Heura Studios chat window on a website, greeting a visitor with “Hi! How can I help?”">
+        <button class="ov-chat-bubble" type="button" aria-expanded="true" aria-label="Close the sample chat" hidden>
+          <svg class="ov-chat-icon-chat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 12.5a7.5 7.5 0 0 1-11 6.6L4.5 20l1-4A7.5 7.5 0 1 1 20 12.5z"/></svg>
+          <svg class="ov-chat-icon-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6.5 9.5 5.5 5.5 5.5-5.5"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</main>
