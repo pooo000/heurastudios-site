@@ -1,0 +1,77 @@
+/* The blog (/blog/ and each post, built by Jekyll from _layouts/): one reading column, like the legal pages.
+   Builds on site.css: the tokens (light and dark), the header and the footer. */
+
+.bl-main { padding: clamp(32px, 6vw, 88px) 0 clamp(64px, 8vw, 112px); }
+.bl-wrap { max-width: 880px; }
+.bl-main h1 {
+  font-family: var(--serif); font-weight: 400; font-size: clamp(40px, 3vw + 22px, 64px);
+  line-height: 1.03; letter-spacing: -.02em; text-wrap: balance;
+}
+.bl-main a:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; border-radius: 2px; }
+.ov-nav a[aria-current="page"] { color: var(--ink); }   /* the header says which page this is */
+
+/* ---- the list: date, title, summary, the report */
+.bl-lead { margin-top: 14px; max-width: 60ch; color: var(--ink-2); font-size: 18px; }
+.bl-list { margin-top: clamp(32px, 5vw, 56px); border-top: 1px solid var(--line); }
+.bl-list > li { display: grid; gap: 6px; padding: 28px 0; border-bottom: 1px solid var(--line); }
+.bl-list time { color: var(--ink-2); font-size: 15px; }
+.bl-list h2 {
+  font-family: var(--serif); font-weight: 400; font-size: clamp(24px, .8vw + 20px, 30px);
+  line-height: 1.15; letter-spacing: -.01em; text-wrap: balance;
+}
+.bl-list h2 a { text-decoration: underline; text-decoration-color: transparent; text-underline-offset: 4px;
+  text-decoration-thickness: 1px; transition: text-decoration-color .15s ease; }
+@media (hover: hover) { .bl-list h2 a:hover { text-decoration-color: currentColor; } }
+.bl-summary { max-width: 64ch; color: var(--ink-2); }
+.bl-report { justify-self: start; margin-top: 4px; font-size: 15px; text-decoration: underline; text-underline-offset: 3px; }
+.bl-empty { margin-top: 40px; color: var(--ink-2); }
+/* wide: the date sits in its own column beside the rest */
+@media (min-width: 760px) {
+  .bl-list > li { grid-template-columns: 170px minmax(0, 1fr); column-gap: 32px; }
+  .bl-list time { grid-row: 1 / span 3; padding-top: 7px; }
+  .bl-list > li > :not(time) { grid-column: 2; }
+}
+
+/* ---- a post */
+.bl-byline { margin-top: 14px; color: var(--ink-2); }
+.bl-get { margin-top: 18px; }
+.bl-download { font-weight: 400; text-decoration: underline; text-underline-offset: 3px; }
+.bl-post { margin-top: clamp(28px, 4vw, 48px); }
+.bl-post > * + * { margin-top: 14px; }
+.bl-post p, .bl-post ul, .bl-post ol { max-width: 68ch; }
+.bl-post h2 {
+  margin-top: 48px; font-family: var(--serif); font-weight: 400; font-size: clamp(26px, .8vw + 21px, 32px);
+  line-height: 1.15; letter-spacing: -.01em;
+}
+.bl-post h3 { margin-top: 28px; font-size: 18px; font-weight: 700; }
+.bl-post h2 + *, .bl-post h3 + * { margin-top: 10px; }
+.bl-post ul, .bl-post ol { display: grid; gap: 8px; padding-left: 22px; }
+.bl-post ul { list-style: disc; }
+.bl-post ol { list-style: decimal; }
+.bl-post li::marker { color: var(--ink-2); }
+.bl-post a { text-decoration: underline; text-underline-offset: 3px; }
+.bl-post strong { font-weight: 700; }
+.bl-post em { font-style: italic; }
+.bl-post blockquote { padding-left: 16px; border-left: 2px solid var(--rule); color: var(--ink-2); }
+.bl-post code { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: .9em; }
+/* tables: numbers line up, and a wide one scrolls inside itself on a phone, never the page */
+.bl-post table {
+  display: block; max-width: 100%; overflow-x: auto; border-collapse: collapse;
+  font-size: 15px; font-variant-numeric: tabular-nums;
+}
+.bl-post th { padding: 10px 18px 10px 0; border-bottom: 1px solid var(--ink); text-align: left; font-weight: 400; vertical-align: bottom; }
+.bl-post td { padding: 11px 18px 11px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+.bl-post th:first-child, .bl-post td:first-child { min-width: 14em; }
+.bl-post th:not(:first-child), .bl-post td:not(:first-child) { white-space: nowrap; }   /* numbers and short words: one line */
+/* pictures (the report's charts are drawn on white): the column's width at most, a hairline edge */
+.bl-post img {
+  display: block; max-width: 100%; height: auto; margin: 6px 0 4px; border-radius: 12px;
+  background: #ffffff; box-shadow: 0 0 0 1px var(--ring);
+}
+.bl-end { display: flex; flex-wrap: wrap; gap: 12px 28px; margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--line); }
+.bl-back { color: var(--ink-2); text-decoration: underline; text-underline-offset: 3px; }
+
+@media print {
+  .ov-top, .ov-foot, .bl-end { display: none; }
+  .bl-post img { box-shadow: none; }
+}

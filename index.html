@@ -1,0 +1,113 @@
+---
+layout: default
+title: "Post-training for AI-native companies"
+description: "Post-training for AI-native companies. Your team’s demonstrations and corrections train LoRA checkpoints. Each is scored on your eval set, and any that scores below the live one is held back."
+og_title: "Heura Studios"
+og_description: "Specialize the base before you ship the agent."
+css: [/home.css]
+js: [/form.js, /recording.js, /home.js]
+---
+<main id="main">
+  <section class="hm-hero" aria-labelledby="hm-title">
+    <div class="ov-wrap hm-hero-row">
+      <h1 id="hm-title" class="ov-display hm-title">Specialize the base before you ship the agent.</h1>
+      <div class="hm-hero-side">
+        <p class="ov-lead">Your team’s demonstrations and corrections train LoRA checkpoints. Each is scored on your eval set, and any that scores below the live one is held back.</p>
+      </div>
+    </div>
+  </section>
+
+  {%- comment -%}
+    Screen recording of one run (made with _tools/record-pipeline.py). home.js handles play/pause, light/dark and
+    reduced motion. Without JS the browser's own controls show. Phone-sized files first; .mp4 before .webm for iPhones.
+  {%- endcomment %}
+  <section class="hm-run" aria-labelledby="hm-run-title">
+    <div class="ov-wrap">
+      <h2 id="hm-run-title" class="ov-sr">A run in Heura Studios</h2>
+      <figure class="hm-film">
+        <div class="hm-frame">
+          <video class="hm-video" width="1440" height="900" muted loop playsinline controls preload="none"
+            data-light="/img/pipeline-run" data-dark="/img/pipeline-run-dark"
+            data-phone-light="/img/pipeline-run-phone" data-phone-dark="/img/pipeline-run-phone-dark"
+            aria-describedby="hm-run-caption">
+            <source src="/img/pipeline-run-phone.mp4" type="video/mp4" media="(max-width: 599px)">
+            <source src="/img/pipeline-run-phone.webm" type="video/webm" media="(max-width: 599px)">
+            <source src="/img/pipeline-run.mp4" type="video/mp4">
+            <source src="/img/pipeline-run.webm" type="video/webm">
+          </video>
+        </div>
+        <button class="hm-toggle" type="button" aria-label="Pause the recording" hidden>Pause</button>
+        <figcaption id="hm-run-caption" class="hm-caption">One run on a sample model in Heura Studios: 82 training rows (10 demonstrations and the replay mix), scored on the eval set before and after, promoted on a tie.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="ov-section" id="specs" aria-labelledby="hm-specs-title">
+    <div class="ov-wrap ov-split">
+      <div class="ov-head">
+        <h2 id="hm-specs-title" class="ov-h2">Specifications</h2>
+      </div>
+      <dl class="hm-specs">
+        <div><dt>Base model</dt><dd>Heura Arche, 2B, built on Qwen3-VL-2B-Instruct. Or a model you bring: Claude, GPT, Gemini, or any model behind an OpenAI-compatible server.</dd></div>
+        <div><dt>Training</dt><dd>Supervised fine-tuning: LoRA adapters on Heura Arche, or OpenAI’s fine-tuning API for its fine-tunable models.</dd></div>
+        <div><dt>Training data</dt><dd>Your demonstrations and corrections, plus a replay mix of Heura’s own data so the base keeps its general skills. Answers written by Claude, GPT or Gemini never enter a training set.</dd></div>
+        <div><dt>Evaluation</dt><dd>Every run is scored on the eval set before and after it trains.</dd></div>
+        <div><dt>Promotion</dt><dd>A checkpoint that scores lower than the live one is held back. Only the owner can promote it by hand.</dd></div>
+        <div><dt>Serving</dt><dd>An OpenAI-compatible endpoint, <code>/v1/chat/completions</code> and <code>/v1/models</code>, and an embed for websites.</dd></div>
+        <div><dt>Export</dt><dd>The active adapter, with a runtime that has an OpenAI-compatible server, the Apache-2.0 licence and a NOTICE for Qwen.</dd></div>
+        <div><dt>Access</dt><dd>The owner keeps the base model, the eval set, promotion, keys and exports.</dd></div>
+      </dl>
+    </div>
+  </section>
+
+  <section class="ov-section hm-request" id="request" aria-labelledby="hm-request-title">
+    <div class="ov-wrap ov-split">
+      <div class="ov-head">
+        <h2 id="hm-request-title" class="ov-h2">Request access</h2>
+        <p class="hm-login">Already have access? <a href="https://app.heurastudios.com/login">Log in</a></p>
+      </div>
+      <div class="hm-request-body">
+        {%- comment -%} Posts to the Apps Script in _backend/ (form.js sends it with fetch; without JS it posts normally). {%- endcomment %}
+        <form id="hm-form" class="hm-form" action="{{ site.form_endpoint }}" method="post" novalidate>
+          <div class="hm-field">
+            <label for="hm-name">Name</label>
+            <input id="hm-name" name="name" autocomplete="name" maxlength="100" required>
+          </div>
+          <div class="hm-field">
+            <label for="hm-email">Work email</label>
+            <input id="hm-email" name="email" type="email" autocomplete="email" inputmode="email" maxlength="254" required>
+          </div>
+          <div class="hm-field">
+            <label for="hm-company">Company</label>
+            <input id="hm-company" name="company" autocomplete="organization" maxlength="100" required>
+          </div>
+          <div class="hm-field">
+            <label for="hm-role">Role</label>
+            <input id="hm-role" name="role" autocomplete="organization-title" maxlength="100">
+          </div>
+          <div class="hm-field hm-field-wide">
+            <label for="hm-use">What will you specialize?</label>
+            <textarea id="hm-use" name="use" rows="4" maxlength="1000" aria-describedby="hm-use-hint"></textarea>
+            <p class="hm-hint" id="hm-use-hint">The model, and the work it should do.</p>
+          </div>
+          {%- comment -%} Honeypot: hidden from people; bots that fill it get "ok" and nothing is saved. {%- endcomment %}
+          <div class="hm-trap" aria-hidden="true">
+            <label for="hm-website">Website</label>
+            <input id="hm-website" name="website" tabindex="-1" autocomplete="off">
+          </div>
+          <input type="hidden" name="kind" value="request">
+          <input type="hidden" name="from" value="/">
+          <p class="hm-error" id="hm-error" role="alert"></p>
+          <div class="hm-submit-row">
+            <button class="ov-btn ov-btn-primary hm-submit" type="submit">Request access</button>
+            <p class="hm-fine">These details are used only to reply to you. See the <a href="/privacy/">Privacy Policy</a>.</p>
+          </div>
+        </form>
+        <div class="hm-done" id="hm-done" tabindex="-1" hidden>
+          <h3 class="hm-done-title">Request sent</h3>
+          <p id="hm-done-text"></p>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>

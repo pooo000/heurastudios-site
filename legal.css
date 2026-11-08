@@ -1,0 +1,49 @@
+/* The Privacy Policy (/privacy/) and the Terms of Service (/terms/): one column of reading text, and the pipeline's
+   wires beside each title.
+   Builds on site.css: the tokens (light and dark), the header and the footer. The words are the same as the Heura
+   Studio app's /privacy and /terms pages. */
+
+.lg-main { padding: clamp(32px, 6vw, 88px) 0 clamp(64px, 8vw, 112px); }
+.lg-wrap { max-width: 880px; }
+.lg-main h1 {
+  margin-bottom: 8px; font-family: var(--serif); font-weight: 400; font-size: clamp(40px, 3vw + 22px, 64px);
+  line-height: 1.03; letter-spacing: -.02em; text-wrap: balance;
+}
+.lg-main h2 {
+  margin: 48px 0 12px; font-family: var(--serif); font-weight: 400; font-size: clamp(26px, .8vw + 21px, 32px);
+  line-height: 1.15; letter-spacing: -.01em;
+}
+.lg-main p { max-width: 68ch; margin-bottom: 14px; }
+.lg-main ul, .lg-main ol { display: grid; gap: 8px; max-width: 68ch; margin: 0 0 16px; padding-left: 22px; }
+.lg-main ul { list-style: disc; }
+.lg-main ol { list-style: decimal; }
+.lg-main li::marker { color: var(--ink-2); }
+.lg-main strong { font-weight: 700; }
+.lg-main a { text-decoration: underline; text-underline-offset: 3px; }
+
+/* Each page's title as a node on a pipeline (decoration, _includes/wires.html): wires run in from the canvas to
+   ports left of the column and out from one right of it, on past the screen's edges, level with the title's middle.
+   Never over the words; only on screens 1100px and wider, where the narrow column leaves room beside it. */
+.lg-title { position: relative; }
+@media (min-width: 1100px) {
+  .lg-main { overflow-x: hidden; overflow-x: clip; }   /* (the wires run on past the screen's edges) */
+  .lg-title .ov-wires { display: block; }
+}
+
+.legal-table { width: 100%; margin: 8px 0 20px; border-collapse: collapse; font-size: 15px; }
+.legal-table th {
+  padding: 10px 12px 10px 0; border-bottom: 1px solid var(--line); text-align: left;
+  color: var(--ink-2); font-size: 14px; font-weight: 400;
+}
+.legal-table td { padding: 12px 12px 12px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+.legal-table td:first-child { width: 28%; font-weight: 700; }
+.legal-table td:last-child { width: 20%; color: var(--ink-2); }
+
+/* phones: each row of the table becomes a small block, its cells labelled */
+@media (max-width: 719px) {
+  .legal-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .legal-table, .legal-table tbody, .legal-table tr, .legal-table td { display: block; }
+  .legal-table tr { padding: 12px 0; border-bottom: 1px solid var(--line); }
+  .legal-table td, .legal-table td:first-child, .legal-table td:last-child { width: auto; padding: 2px 0; border: 0; }
+  .legal-table td:not(:first-child)::before { content: attr(data-label) ": "; color: var(--ink-2); }
+}

@@ -1,0 +1,97 @@
+/* The home page (/): hero, screen recording, specifications and the Request access form (Tools: tools.css). */
+
+/* the hero: the headline on the left, the lead and the buttons beside it */
+.hm-hero { padding-top: clamp(48px, 8vw, 120px); }
+.hm-hero-row {
+  display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  column-gap: clamp(32px, 5vw, 80px); align-items: end;
+}
+.hm-title { max-width: 11.5em; }
+@media (max-width: 999px) {
+  .hm-hero-row { grid-template-columns: minmax(0, 1fr); }
+  .hm-hero-side { margin-top: 24px; }
+}
+
+/* the recording: a run in Heura Studios, in a thin frame */
+.hm-run { margin-top: clamp(48px, 7vw, 96px); }
+.hm-frame {
+  position: relative; overflow: hidden; aspect-ratio: 1440 / 900;
+  border-radius: clamp(8px, 1.1vw, 14px); box-shadow: 0 0 0 1px var(--ring);
+  /* the recording's first frame, for the appearance in use, until the video has one of its own */
+  background: var(--panel) url("/img/pipeline-run.webp") center / cover no-repeat;
+}
+:root[data-theme="dark"] .hm-frame { background-image: url("/img/pipeline-run-dark.webp"); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme]) .hm-frame { background-image: url("/img/pipeline-run-dark.webp"); } }
+.hm-video { display: block; width: 100%; height: 100%; object-fit: cover; }
+/* on a phone, the Studio recorded at a phone's size (390 x 600), and its own first frame */
+@media (max-width: 599px) {
+  .hm-frame { aspect-ratio: 390 / 600; background-image: url("/img/pipeline-run-phone.webp"); }
+  :root[data-theme="dark"] .hm-frame { background-image: url("/img/pipeline-run-phone-dark.webp"); }
+}
+@media (max-width: 599px) and (prefers-color-scheme: dark) {
+  :root:not([data-theme]) .hm-frame { background-image: url("/img/pipeline-run-phone-dark.webp"); }
+}
+/* under it, the caption, and Pause beside it (below it on a phone): a sibling, so it's no part of the caption */
+.hm-film { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 32px; }
+.hm-frame { grid-column: 1 / -1; }
+.hm-caption { grid-row: 2; grid-column: 1; max-width: 46em; margin-top: 14px; font-size: 15px; line-height: 1.5; color: var(--ink-2); }
+.hm-toggle {
+  grid-row: 2; grid-column: 2; align-self: start; margin-top: 6px;
+  display: inline-flex; align-items: center; min-height: 40px; padding: 0 16px;
+  border: 0; border-radius: 999px; background: var(--panel); color: var(--ink); box-shadow: inset 0 0 0 1px var(--edge);
+  font: inherit; font-size: 15px; line-height: 1; cursor: pointer;
+}
+.hm-toggle:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.hm-toggle[hidden] { display: none; }
+@media (max-width: 599px) {
+  .hm-film { grid-template-columns: minmax(0, 1fr); }
+  .hm-toggle { grid-row: 3; grid-column: 1; justify-self: start; margin-top: 12px; }
+}
+
+/* the specifications: one row per part, its name and exactly what it is */
+.hm-specs > div {
+  display: grid; grid-template-columns: minmax(0, 9em) minmax(0, 1fr); column-gap: 24px;
+  padding: 14px 0 15px; border-top: 1px solid var(--line);
+}
+.hm-specs > div:last-child { border-bottom: 1px solid var(--line); }
+.hm-specs dt { font-size: 15px; font-weight: 700; line-height: 1.5; }
+.hm-specs dd { font-size: 16px; line-height: 1.5; color: var(--ink-2); text-wrap: pretty; }
+.hm-specs code { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: .9em; }
+@media (max-width: 559px) { .hm-specs > div { grid-template-columns: minmax(0, 1fr); row-gap: 4px; } }
+
+.hm-request { padding-bottom: clamp(88px, 10vw, 144px); }
+/* the way in for teams that have access: where Request access leads, not in the header (Ryan, Oct 19) */
+.hm-login { margin-top: 20px; font-size: 16px; line-height: 1.5; color: var(--ink-2); }
+.hm-login a { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+.hm-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.hm-field { display: grid; gap: 8px; align-content: start; }
+.hm-field-wide, .hm-error, .hm-submit-row { grid-column: 1 / -1; }
+.hm-field label { font-size: 15px; font-weight: 700; line-height: 1.3; }
+.hm-field input, .hm-field textarea {
+  display: block; width: 100%; margin: 0; padding: 13px 16px; border: 1px solid var(--field); border-radius: 12px;
+  background: var(--page); color: var(--ink); font: inherit; font-size: 17px; line-height: 1.4;
+  transition: border-color .15s ease; -webkit-appearance: none; appearance: none;
+}
+.hm-field input { height: 52px; padding-top: 0; padding-bottom: 0; }
+.hm-field textarea { min-height: 120px; resize: vertical; }
+@media (hover: hover) { .hm-field input:hover, .hm-field textarea:hover { border-color: var(--ink-2); } }
+.hm-field input:focus, .hm-field textarea:focus { outline: 2px solid var(--ink); outline-offset: 2px; border-color: var(--ink-2); }
+/* (after :focus, with the same weight, so a field that needs fixing keeps its red edge while it's being fixed) */
+.hm-field input[aria-invalid="true"], .hm-field textarea[aria-invalid="true"] { border-color: var(--bad); }
+.hm-field input:-webkit-autofill {
+  -webkit-text-fill-color: var(--ink); -webkit-box-shadow: 0 0 0 1000px var(--page) inset; caret-color: var(--ink);
+}
+.hm-hint { font-size: 14px; line-height: 1.45; color: var(--ink-2); }
+.hm-trap { position: absolute; left: -10000px; top: auto; width: 1px; height: 1px; overflow: hidden; }
+.hm-error { font-size: 15px; font-weight: 700; line-height: 1.45; color: var(--bad); }
+/* empty, it stays in the accessibility tree (so its first message is announced like the rest), out of the grid's flow */
+.hm-error:empty { position: absolute; }
+.hm-submit-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; margin-top: 8px; }
+.hm-submit[disabled] { opacity: .6; cursor: progress; }
+.hm-fine { font-size: 14px; line-height: 1.5; color: var(--ink-2); }
+.hm-fine a { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+.hm-done { padding: clamp(24px, 3vw, 36px); border-radius: clamp(16px, 1.8vw, 24px); background: var(--panel); }
+.hm-done:focus { outline: none; }
+.hm-done-title { font-size: 22px; font-weight: 700; line-height: 1.3; }
+.hm-done p { margin-top: 8px; font-size: 17px; line-height: 1.5; color: var(--ink-2); }
+@media (max-width: 559px) { .hm-form { grid-template-columns: minmax(0, 1fr); } }

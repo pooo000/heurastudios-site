@@ -1,0 +1,21 @@
+# heurastudios.com — built by GitHub Pages with Jekyll 3.10.
+# Every page uses _layouts/default.html (head, header, footer from _includes/). See README.md.
+title: Heura Studios
+url: https://heurastudios.com
+timezone: America/Vancouver
+
+# Blog: posts are Markdown in _posts/ (YYYY-MM-DD-slug.md), served at /blog/slug/
+permalink: /blog/:title/
+markdown: kramdown
+kramdown:
+  input: GFM
+  hard_wrap: false
+defaults:
+  - scope: { path: "", type: posts }
+    values: { layout: post, css: [/blog.css] }
+
+# Not published (folders starting with _ never are)
+exclude: [docs, README.md, package.json, package-lock.json, Gemfile, Gemfile.lock, node_modules, vendor]
+
+# Google Apps Script web app behind both forms (see _backend/). Redeploying as a "New version" keeps this URL.
+form_endpoint: https://script.google.com/macros/s/AKfycbymRmy_8immz1FDS9UUhf3K3dv8k77KYyOzTlwy4SzNQUM16fwwYgfr7wcwSkxPGGZW3g/exec
