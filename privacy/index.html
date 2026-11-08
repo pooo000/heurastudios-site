@@ -1,0 +1,131 @@
+---
+layout: default
+title: "Privacy Policy"
+description: "What personal information Heura Studios collects, how Ostravanne uses it, and the choices you have."
+og_title: "Heura Studios Privacy Policy"
+current: privacy
+css: [/legal.css]
+---
+<main class="lg-main">
+  <div class="ov-wrap lg-wrap">
+    <article>
+    <div class="lg-title">
+      <h1>Heura Studios Privacy Policy</h1>
+      {% include wires.html %}
+    </div>
+
+    <section aria-labelledby="who">
+      <h2 id="who">1. Who we are</h2>
+      <p>This policy explains what personal information Heura Studios collects, how we use it (including to train our AI models), and the choices you have. Effective date: October 15, 2026.</p>
+      <p>Heura Studios (“Heura”, “we”, “us”) is a product of Ostravanne, based in Vancouver, British Columbia, Canada. It covers our website at heurastudios.com, the Heura Studios app at app.heurastudios.com, the waitlist and early-access forms, our models (including Heura Arche), the API, and any chat assistants our customers deploy with Heura (together, the “Services”).</p>
+      <p>When a business uses Heura to build and launch its own assistant, that business decides what documents and end-user data go into it. For that content, the business is responsible for its own privacy notice and we act as its service provider.</p>
+    </section>
+
+    <section aria-labelledby="collect">
+      <h2 id="collect">2. Information we collect</h2>
+      <p>We collect account and login information, the content you put into Heura, and basic technical data.</p>
+      <table class="legal-table">
+        <thead><tr><th scope="col">Category</th><th scope="col">Examples</th><th scope="col">Source</th></tr></thead>
+        <tbody>
+          <tr><td data-label="Category">Account and login information</td><td data-label="Examples">Name, email address, company name, password (stored only as a salted hash, never in plain text), login times, IP address, which version of our Terms you accepted</td><td data-label="Source">You</td></tr>
+          <tr><td data-label="Category">Waitlist and early-access information</td><td data-label="Examples">Name, email address, company, the page that sent you</td><td data-label="Source">You</td></tr>
+          <tr><td data-label="Category">Trial and workspace content</td><td data-label="Examples">Documents you upload, rules, example answers, test questions, test chats, model outputs, readiness scores, feedback, and API keys for outside AI providers you connect (stored encrypted)</td><td data-label="Source">You</td></tr>
+          <tr><td data-label="Category">End-user conversations</td><td data-label="Examples">Messages sent to an assistant you deploy through our hosted chat widget or API. We use them to answer and don’t keep them afterwards.</td><td data-label="Source">Your end users</td></tr>
+          <tr><td data-label="Category">Server logs</td><td data-label="Examples">For each request: the time, IP address, page or API path and result. Error logs.</td><td data-label="Source">Automatically</td></tr>
+          <tr><td data-label="Category">Cookies</td><td data-label="Examples">One cookie that keeps you logged in. No analytics or advertising cookies.</td><td data-label="Source">Automatically</td></tr>
+        </tbody>
+      </table>
+      <p>Heura Studios is free during early access, so we collect no payment information. If you download an assistant and run it on your own computer, its documents and conversations stay on your device and aren’t sent to us; the first time it starts, it downloads the open base model from Hugging Face.</p>
+    </section>
+
+    <section aria-labelledby="use">
+      <h2 id="use">3. How we use information</h2>
+      <p>We use your information to run the Services, keep them secure, and improve them. We do not sell personal information.</p>
+      <ul>
+        <li><strong>Provide the Services:</strong> create and secure your account, sign you in, store your workspace, train and host your custom assistant.</li>
+        <li><strong>Security:</strong> detect suspicious logins, prevent fraud and abuse, enforce our <a href="/terms/">Terms</a>.</li>
+        <li><strong>Communicate:</strong> send service notices and, if you asked for them on the waitlist, product updates. Every marketing email has an unsubscribe link.</li>
+        <li><strong>Improve Heura and train our models:</strong> see section 4.</li>
+        <li><strong>Legal:</strong> comply with law and respond to lawful requests.</li>
+      </ul>
+      <p>Where a law such as the GDPR applies, our legal bases are: performing our contract with you, our legitimate interests in running and improving the Services, your consent (for example, marketing email or the training switch), and legal obligations.</p>
+    </section>
+
+    <section aria-labelledby="training">
+      <h2 id="training">4. How we use trial data to train our AI</h2>
+      <p>We use protected copies of trial data to improve Heura’s base models (such as Arche, Asteria and Aniketos) only if you turn on “Use my data to improve Heura”, and you can turn it off at any time.</p>
+      <p><strong>What we use.</strong> Content from free trials and beta workspaces that turned it on: uploaded documents, rules, example answers, test questions, prompts, model outputs and feedback. We never use passwords, login credentials or payment information for training.</p>
+      <p><strong>How we protect it.</strong></p>
+      <ol>
+        <li>Trial data is encrypted in transit (TLS) and stored on encrypted disks.</li>
+        <li>Before data enters a training set, we remove or replace direct identifiers such as names, email addresses, phone numbers and account IDs (pseudonymization).</li>
+        <li>Training data is stored separately from account data, and only Ostravanne’s founders can access it.</li>
+        <li>Before we release a model trained with this data, we test it to reduce the chance that it repeats training content.</li>
+      </ol>
+      <p>Pseudonymized data can still count as personal information under some laws, so we continue to treat it as personal information and protect it accordingly.</p>
+      <p><strong>Your choices.</strong></p>
+      <ul>
+        <li>“Use my data to improve Heura” is in your workspace settings. It is off unless you turn it on. You can turn it off again at any time, or email us; turning it off applies to data from that point on.</li>
+        <li>The same applies to paid workspaces when we offer them: they’re only used to train our base models if the customer turns this on.</li>
+        <li>Your own custom assistant is trained on your content for your use only and is not shared with other customers.</li>
+        <li>Once data has been used in a released model version, we cannot remove its influence from that version, but we will exclude it from future training.</li>
+      </ul>
+    </section>
+
+    <section aria-labelledby="sharing">
+      <h2 id="sharing">5. Sharing</h2>
+      <p>We share personal information only with:</p>
+      <ul>
+        <li><strong>Service providers</strong>, under contracts that limit their use of the data:<ul><li>Cloudflare, Inc. (United States) carries all traffic to app.heurastudios.com and, to do that, decrypts it in transit.</li><li>GitHub, Inc. (United States) hosts the heurastudios.com website. It holds no account data.</li><li>Google LLC (United States) runs our waitlist and early-access forms (Google Sheets and Apps Script) and our email.</li></ul></li>
+        <li><strong>AI providers you choose.</strong> If you connect Anthropic (Claude), OpenAI (GPT) or Google (Gemini), or your own model server, each question your assistant answers, the chat so far and the parts of your content needed to answer it go to that provider under your own account with them. The app shows exactly what goes before you switch. Training a GPT model sends your examples to OpenAI. With Heura Arche, nothing goes to an outside AI company.</li>
+        <li><strong>Websites your assistant opens.</strong> When an assistant opens a web page to answer a question, that website sees a request from our server.</li>
+        <li><strong>Your organization</strong>, if your account belongs to a company workspace.</li>
+        <li><strong>Authorities</strong>, when required by law or to protect rights and safety.</li>
+        <li><strong>A buyer or successor</strong>, if Ostravanne is involved in a merger or acquisition, with notice to you.</li>
+      </ul>
+    </section>
+
+    <section aria-labelledby="security">
+      <h2 id="security">6. Security</h2>
+      <p>Everything sent to and from the Services is encrypted with HTTPS. Your workspace is stored on encrypted disks, on hardware Ostravanne operates in Canada, reached through Cloudflare’s network. Passwords are stored only as salted hashes, login tokens and the API keys we issue only in hashed or encrypted form (a downloadable package carries its own key until we delete it, 24 hours after it’s made), and API keys for outside AI providers are encrypted with AES-256. Every account is kept separate from every other. No system is perfectly secure. If a breach creates a real risk of significant harm, we will notify you and the Office of the Privacy Commissioner of Canada (and other regulators where the law requires), and we keep a record of every breach.</p>
+    </section>
+
+    <section aria-labelledby="retention">
+      <h2 id="retention">7. Retention</h2>
+      <ul>
+        <li>Account data: kept while your account is open. When you delete your account in the app, we delete it and everything in it right away.</li>
+        <li>Workspace content: an assistant you delete goes to the trash and is permanently deleted after 30 days. Downloadable packages are deleted from our server 24 hours after they’re made.</li>
+        <li>End-user conversations through the chat widget or API: not kept after the answer is sent.</li>
+        <li>Pseudonymized training data (only if you turned the training switch on): kept up to 3 years, then deleted.</li>
+        <li>Server logs: deleted after 12 months.</li>
+      </ul>
+      <p>We may keep some records longer where the law requires.</p>
+    </section>
+
+    <section aria-labelledby="rights">
+      <h2 id="rights">8. Your rights</h2>
+      <p>Depending on where you live (including under Canada’s PIPEDA, BC’s PIPA, the GDPR and California law), you may ask to access, correct, delete or export your information, withdraw consent, object to training use, or complain to a regulator (in Canada, the Office of the Privacy Commissioner of Canada). You can download each assistant and delete your whole account yourself in the app; for anything else, email our privacy officer (section 12) and we will reply within 30 days. We will not treat you differently for using these rights.</p>
+    </section>
+
+    <section aria-labelledby="transfers">
+      <h2 id="transfers">9. International transfers</h2>
+      <p>We are based in Canada and keep your workspace in Canada. Our service providers and any AI provider you connect may process data in the United States or other countries where they operate. We use contractual safeguards for these transfers.</p>
+    </section>
+
+    <section aria-labelledby="children">
+      <h2 id="children">10. Children</h2>
+      <p>The Services are for businesses and for people 18 or older. They are not directed to children, and customers may not use them to build assistants directed to children under 13. We do not knowingly collect children’s information and will delete it if we learn we have.</p>
+    </section>
+
+    <section aria-labelledby="changes">
+      <h2 id="changes">11. Changes</h2>
+      <p>We will post updates here and change the effective date. For material changes, especially to how we use data for training, we will notify you by email or in the app before they take effect.</p>
+    </section>
+
+    <section aria-labelledby="contact">
+      <h2 id="contact">12. Contact</h2>
+      <p>Ostravanne (Heura Studios), Vancouver, British Columbia, Canada. Privacy officer: Leo, co-founder, <a href="mailto:leoli@ostravanne.com">leoli@ostravanne.com</a>. Anything else: <a href="mailto:ryantian@ostravanne.com">ryantian@ostravanne.com</a>.</p>
+    </section>
+  </article>
+  </div>
+</main>
