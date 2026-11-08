@@ -1,0 +1,12 @@
+---
+layout: blog
+---
+<article>
+  <h1>{{ page.title | escape }}</h1>
+  <p class="bl-byline"><time datetime="{{ page.date | date: '%Y-%m-%d' }}">{{ page.date | date: '%B %-d, %Y' }}</time>{% if page.author %}, by {{ page.author | escape }}{% endif %}</p>
+  {% if page.report %}<p class="bl-get"><a class="bl-download" href="{{ page.report }}">Download the full report (PDF)</a></p>{% endif %}
+  <div class="bl-post">
+{{ content }}
+  </div>
+  <p class="bl-end">{% if page.report %}<a class="bl-download" href="{{ page.report }}">Download the full report (PDF)</a>{% endif %}<a class="bl-back" href="/blog/">All posts</a></p>
+</article>
