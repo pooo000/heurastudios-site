@@ -129,3 +129,91 @@ test('the duplicate check and the write happen under the lock', () => {
   handleJoin({ email: 'a@b.co', company: 'Acme' }, deps);
   assert.deepEqual(seen, [['rows', true], ['append', true]]);
 });
+
+// Every new request for access emails the four founders (Ryan, Nov 8, 2026: the new @heurastudios.com addresses),
+// with the person who asked as the reply-to, so a founder can answer straight from the email.
+const { FOUNDERS } = require('../core.js');
+function withMail(rows = [], opts = {}) {
+  const f = fakeDeps(rows, opts);
+  f.sent = [];
+  f.order = [];
+  f.deps.notify = m => { f.order.push('notify'); if (opts.mailFails) throw new Error('quota'); f.sent.push(m); };
+  const append = f.deps.append;
+  f.deps.append = row => { f.order.push('append'); append(row); };
+  return f;
+}
+
+test('the founders are the four new heurastudios.com addresses', () => {
+  assert.deepEqual(FOUNDERS, ['ryan@heurastudios.com', 'william@heurastudios.com', 'tsun@heurastudios.com',
+    'ethan@heurastudios.com']);
+});
+
+test('a new request for access emails the four founders, with a reply-to of the person who asked', () => {
+  const { deps, sent } = withMail();
+  const r = handleJoin({ email: 'Ann@Acme.co', company: 'Acme', from: '/', name: 'Ann Lee', role: 'Head of ML',
+    use: 'A support agent\nfor billing questions' }, deps);
+  assert.deepEqual(r, { ok: true });
+  assert.equal(sent.length, 1);
+  const m = sent[0];
+  assert.equal(m.to, 'ryan@heurastudios.com,william@heurastudios.com,tsun@heurastudios.com,ethan@heurastudios.com');
+  assert.equal(m.replyTo, 'ann@acme.co');
+  assert.equal(m.subject, 'Request for access: Ann Lee, Acme');
+  for (const line of ['Name: Ann Lee', 'Work email: ann@acme.co', 'Company: Acme', 'Role: Head of ML',
+    'What they will specialize: A support agent for billing questions', 'Came from: /']) {
+    assert.ok(m.body.includes(line), line);
+  }
+  assert.match(m.body, /Reply to this email to answer them\./);
+});
+
+test('someone on the waitlist who then asks for access: the founders get the email too', () => {
+  const joined = [new Date('2026-10-01T00:00:00Z'), 'ann@acme.co', 'Acme', '/waitlist/', '', '', ''];
+  const { deps, sent } = withMail([joined]);
+  handleJoin({ email: 'ann@acme.co', company: 'Acme', from: '/', name: 'Ann Lee' }, deps);
+  assert.equal(sent.length, 1);
+  assert.equal(sent[0].subject, 'Request for access: Ann Lee, Acme');
+  assert.ok(sent[0].body.includes('Role: (not given)'));
+});
+
+test('a waitlist join, asking again, a bot, a refused or a busy request email no one', () => {
+  const asked = [new Date('2026-10-01T00:00:00Z'), 'ann@acme.co', 'Acme', '/', 'Ann Lee', '', ''];
+  for (const [rows, p, opts] of [
+    [[], { email: 'a@b.co', company: 'Acme', from: '/waitlist/' }, {}],
+    [[asked], { email: 'ann@acme.co', company: 'Acme', name: 'Ann' }, {}],
+    [[], { email: 'bot@spam.co', company: 'Spam', name: 'Bot', website: 'http://spam' }, {}],
+    [[], { email: 'nope', company: 'Acme', name: 'Ann' }, {}],
+    [[], { email: 'a@b.co', company: 'Acme', name: 'Ann' }, { busy: true }],
+  ]) {
+    const { deps, sent } = withMail(rows, opts);
+    handleJoin(p, deps);
+    assert.equal(sent.length, 0, JSON.stringify(p));
+  }
+});
+
+test('the email goes out after the row is saved, outside the lock', () => {
+  const f = withMail();
+  let inside = false;
+  f.deps.withLock = fn => { inside = true; try { return fn(); } finally { inside = false; } };
+  const notify = f.deps.notify;
+  f.deps.notify = m => { assert.equal(inside, false, 'not under the lock'); notify(m); };
+  handleJoin({ email: 'a@b.co', company: 'Acme', name: 'Ann' }, f.deps);
+  assert.deepEqual(f.order, ['append', 'notify']);
+});
+
+test('if the email fails, the request is still saved and the answer is still ok', () => {
+  const { deps, appended, sent } = withMail([], { mailFails: true });
+  const warned = [];
+  deps.warn = e => warned.push(String(e));
+  assert.deepEqual(handleJoin({ email: 'a@b.co', company: 'Acme', name: 'Ann' }, deps), { ok: true });
+  assert.equal(appended.length, 1);
+  assert.equal(sent.length, 0);
+  assert.deepEqual(warned, ['Error: quota']);
+});
+
+test('the email shows what they typed as plain text: flattened, never escaped for the sheet', () => {
+  const { deps, sent, appended } = withMail();
+  handleJoin({ email: 'a@b.co', company: '=Acme', name: '@Ann\nLee', role: '-1', use: '=2+2' }, deps);
+  assert.equal(appended[0][4], "'@Ann Lee", 'the sheet keeps its formula guard');
+  assert.equal(sent[0].subject, 'Request for access: @Ann Lee, =Acme');
+  assert.ok(sent[0].body.includes('Role: -1'));
+  assert.ok(sent[0].body.includes('What they will specialize: =2+2'));
+});

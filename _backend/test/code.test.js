@@ -21,7 +21,8 @@ function load() {
   const cache = new Map();
   const ctx = {
     console,
-    SpreadsheetApp: { getActiveSpreadsheet: () => ({ getSheets: () => [sheet] }), flush() {} },
+    SpreadsheetApp: { getActiveSpreadsheet: () => ({ getSheets: () => [sheet], getUrl: () => 'https://docs.google.com/spreadsheets/d/x/edit' }), flush() {} },
+    MailApp: { sendEmail() {} },
     LockService: { getScriptLock: () => ({ waitLock() {}, releaseLock() {} }) },
     CacheService: { getScriptCache: () => ({ get: k => cache.get(k) ?? null, put: (k, v) => cache.set(k, v) }) },
     ContentService: {
@@ -110,4 +111,53 @@ test('a failure inside answers a plain error, never a stack trace', () => {
 test('a visit to the web app address says what it is', () => {
   const { ctx } = load();
   assert.deepEqual(JSON.parse(ctx.doGet().text), { ok: true, service: 'Heura waitlist' });
+});
+
+// The emails to the founders go through MailApp, from "Heura Studios", with a link to the sheet.
+function loadWithMail(opts = {}) {
+  const l = load();
+  l.mails = [];
+  l.ctx.MailApp = { sendEmail: m => { if (opts.fails) throw new Error('Service invoked too many times'); l.mails.push(m); } };
+  return l;
+}
+
+test('a request for access emails the founders from Heura Studios, with a link to the sheet', () => {
+  const { ctx, mails } = loadWithMail();
+  ctx.setup();
+  const out = ctx.doPost({ parameter: { js: '1', kind: 'request', email: 'Ann@Acme.co', company: 'Acme', from: '/',
+    name: 'Ann Lee', role: 'Head of ML', use: 'A support agent' } });
+  assert.deepEqual(JSON.parse(out.text), { ok: true });
+  assert.equal(mails.length, 1);
+  const m = mails[0];
+  assert.equal(m.to, 'ryan@heurastudios.com,william@heurastudios.com,tsun@heurastudios.com,ethan@heurastudios.com');
+  assert.equal(m.replyTo, 'ann@acme.co');
+  assert.equal(m.name, 'Heura Studios');
+  assert.equal(m.subject, 'Request for access: Ann Lee, Acme');
+  assert.match(m.body, /Every request is in the sheet: https:\/\/docs\.google\.com\/spreadsheets\/d\/x\/edit/);
+});
+
+test('a waitlist join sends no email', () => {
+  const { ctx, mails } = loadWithMail();
+  ctx.setup();
+  ctx.doPost({ parameter: { js: '1', email: 'a@b.co', company: 'Acme', from: '/waitlist/' } });
+  assert.equal(mails.length, 0);
+});
+
+test('when MailApp fails, the request is still saved and the page still says sent', () => {
+  const { ctx, cells, mails } = loadWithMail({ fails: true });
+  ctx.setup();
+  const quiet = console.error;
+  const logged = [];
+  console.error = (...a) => logged.push(a.join(' '));
+  try {
+    const out = ctx.doPost({ parameter: { js: '1', kind: 'request', email: 'a@b.co', company: 'Acme', name: 'Ann' } });
+    assert.deepEqual(JSON.parse(out.text), { ok: true });
+    const page = ctx.doPost({ parameter: { kind: 'request', email: 'c@d.co', company: 'Acme', name: 'Bo' } });
+    assert.match(page.html, /Request sent/);
+  } finally {
+    console.error = quiet;
+  }
+  assert.equal(cells.length, 3, 'both requests saved');
+  assert.equal(mails.length, 0);
+  assert.ok(logged.some(l => /email to the founders failed/.test(l)), logged.join('\n'));
 });
