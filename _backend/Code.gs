@@ -1,7 +1,8 @@
 /** @OnlyCurrentDoc */
 // Google Apps Script entry points for the site's two forms (waitlist + Request access). Bound to the
-// "Heura waitlist" sheet; @OnlyCurrentDoc limits its permissions to that one sheet. The logic is in core.js
-// (paste it in as a second script file named "core"); this file wires it to the sheet.
+// "Heura waitlist" sheet; @OnlyCurrentDoc limits its sheet permissions to that one sheet. Each new request for access
+// is also emailed to the founders (MailApp, sent as the account the web app runs as). The logic is in core.js
+// (paste it in as a second script file named "core"); this file wires it to the sheet and to MailApp.
 //
 // First deploy: run setup(), then Deploy > New deployment > Web app (Execute as: Me, Who has access: Anyone),
 //   and put the /exec URL in form_endpoint in _config.yml.
@@ -50,6 +51,15 @@ function deps_() {
         SpreadsheetApp.flush();   // the next request sees this one's row
         lock.releaseLock();
       }
+    },
+    notify: function (mail) {   // the founders' email about one request (core.js requestEmail)
+      MailApp.sendEmail({ to: mail.to, replyTo: mail.replyTo, subject: mail.subject, body: mail.body, name: 'Heura Studios' });
+    },
+    sheetUrl: function () {
+      return SpreadsheetApp.getActiveSpreadsheet().getUrl();
+    },
+    warn: function (err) {
+      console.error('The email to the founders failed: ' + err);
     },
     busy: function () {
       var cache = CacheService.getScriptCache();
