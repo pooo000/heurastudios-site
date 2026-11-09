@@ -67,4 +67,4 @@ A small model on a laptop is best at focused, repeatable work where the answer l
 
 ## Launch an agent
 
-Heura Studios is open. [Launch an agent](https://app.heurastudios.com/signup) with one job. And tell us what you'd want your assistant to do: [email the founders](mailto:ryantian@ostravanne.com,leoli@ostravanne.com,ethanwang@ostravanne.com). We read every email.
+Heura Studios is open. [Launch an agent](https://app.heurastudios.com/signup) with one job. And tell us what you'd want your assistant to do: [email the founders](mailto:ryan@heurastudios.com,william@heurastudios.com,tsun@heurastudios.com,ethan@heurastudios.com). We read every email.
