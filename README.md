@@ -59,6 +59,11 @@ Both forms post to one Apps Script web app (`form_endpoint`). The home page send
 fields. With JS, `form.js` posts with `js=1` and shows the JSON result in place. Without JS, the browser posts the
 form and the script answers with a plain page.
 
+The sheet ("Heura waitlist") and its bound Apps Script project of the same name are in ryan@heurastudios.com's
+Google Drive, since Nov 8, 2026; they run as that account. Each new request for access is also emailed to
+ryan@, william@, tsun@ and ethan@heurastudios.com (`FOUNDERS` in `_backend/core.js`), with the person who asked as
+the reply-to. A waitlist join, a repeat request, a bot and a refused request send no email.
+
 The sheet keeps one row per email: Joined at, Email, Company, Came from, Name, Role, What they will specialize.
 Signing up again doesn't add a row. If someone on the waitlist later requests access, the request fills in Name,
 Role and What they will specialize on their existing row. "Came from" is the page's utm query, the page on this

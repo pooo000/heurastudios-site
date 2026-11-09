@@ -17,5 +17,6 @@ defaults:
 # Not published (folders starting with _ never are)
 exclude: [docs, README.md, package.json, package-lock.json, Gemfile, Gemfile.lock, node_modules, vendor]
 
-# Google Apps Script web app behind both forms (see _backend/). Redeploying as a "New version" keeps this URL.
-form_endpoint: https://script.google.com/macros/s/AKfycbymRmy_8immz1FDS9UUhf3K3dv8k77KYyOzTlwy4SzNQUM16fwwYgfr7wcwSkxPGGZW3g/exec
+# Google Apps Script web app behind both forms (see _backend/), in ryan@heurastudios.com's Google since Nov 8, 2026.
+# Redeploying as a "New version" keeps this URL.
+form_endpoint: https://script.google.com/macros/s/AKfycbzZfe89ETbdFbdA9Yvv-BJn_RDsXYpnbazX_mfaa4_vJPWOwQsnIa13JanuQATVI6C8/exec
