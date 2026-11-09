@@ -7,7 +7,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const { startServer, launch } = require('./helpers');
 
-const SCRIPT = 'https://script.google.com/macros/s/AKfycbymRmy_8immz1FDS9UUhf3K3dv8k77KYyOzTlwy4SzNQUM16fwwYgfr7wcwSkxPGGZW3g/exec';
+const SCRIPT = 'https://script.google.com/macros/s/AKfycbzZfe89ETbdFbdA9Yvv-BJn_RDsXYpnbazX_mfaa4_vJPWOwQsnIa13JanuQATVI6C8/exec';
 
 let server, browser;
 test.before(async () => { server = await startServer(); browser = await launch(); });

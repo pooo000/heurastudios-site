@@ -84,16 +84,48 @@ test('no Log in on the waitlist page either', async () => {
   await close();
 });
 
-test('"Email the founders" writes to Ryan, Leo and Ethan, on both pages', async () => {
+test('"Email the founders" writes to Ryan, William, Tsun and Ethan at heurastudios.com, on both pages', async () => {
   for (const path of ['/', '/waitlist/']) {
     const { page, errors, close } = await open(path);
     const link = page.getByRole('link', { name: 'Email the founders' });
     assert.equal(await link.count(), 1, path);
     assert.equal(await link.getAttribute('href'),
-      'mailto:ryantian@ostravanne.com,leoli@ostravanne.com,ethanwang@ostravanne.com', path);
+      'mailto:ryan@heurastudios.com,william@heurastudios.com,tsun@heurastudios.com,ethan@heurastudios.com', path);
     assert.deepEqual(errors, []);
     await close();
   }
+});
+
+// Nov 8, 2026 (Ryan: "were throwing away parent company emails"): every address on the site is at heurastudios.com.
+// Leo stays the privacy officer, and the Terms' contact is Ryan or Leo.
+test('every email on the site is at heurastudios.com, and the legal pages name Ryan and Leo', async () => {
+  const pages = ['/', '/tools/', '/privacy/', '/terms/', '/waitlist/', '/blog/',
+    '/blog/why-heura-studios-fits-small-business/', '/blog/heura-eval-004/', '/blog/sleep-training/'];
+  for (const path of pages) {
+    const { page, errors, close } = await open(path);
+    assert.doesNotMatch(await page.content(), /ostravanne\.com/i, path);
+    for (const href of await page.locator('a[href^="mailto:"]').evaluateAll(as => as.map(a => a.getAttribute('href')))) {
+      for (const to of href.slice('mailto:'.length).split('?')[0].split(',')) {
+        assert.match(to, /^[a-z]+@heurastudios\.com$/, `${path}: ${to}`);
+      }
+    }
+    assert.deepEqual(errors, [], path);
+    await close();
+  }
+  const contact = async (path) => {
+    const { page, close } = await open(path);
+    const section = page.locator('section[aria-labelledby="contact"]');
+    const out = { text: (await section.innerText()).replace(/\s+/g, ' '),
+      to: await section.locator('a[href^="mailto:"]').evaluateAll(as => as.map(a => a.getAttribute('href'))) };
+    await close();
+    return out;
+  };
+  const privacy = await contact('/privacy/');
+  assert.match(privacy.text, /Privacy officer: Leo, leo@heurastudios\.com\. Anything else: ryan@heurastudios\.com\./);
+  assert.deepEqual(privacy.to, ['mailto:leo@heurastudios.com', 'mailto:ryan@heurastudios.com']);
+  const terms = await contact('/terms/');
+  assert.match(terms.text, /Email: ryan@heurastudios\.com or leo@heurastudios\.com\./);
+  assert.deepEqual(terms.to, ['mailto:ryan@heurastudios.com', 'mailto:leo@heurastudios.com']);
 });
 
 test('the waitlist page asks for a work email and a company name, nothing else', async () => {

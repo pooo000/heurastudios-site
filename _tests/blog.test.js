@@ -127,7 +127,7 @@ test('the small-business post: its title, byline, sections, the jobs, the footno
   const post = page.locator('.bl-post');
   assert.equal(await post.getByRole('link', { name: 'Launch an agent' }).getAttribute('href'), 'https://app.heurastudios.com/signup');
   assert.equal(await post.getByRole('link', { name: 'email the founders' }).getAttribute('href'),
-    'mailto:ryantian@ostravanne.com,leoli@ostravanne.com,ethanwang@ostravanne.com');
+    'mailto:ryan@heurastudios.com,william@heurastudios.com,tsun@heurastudios.com,ethan@heurastudios.com');
   assert.match(text, /Heura Studios is open\. Launch an agent with one job\. And tell us what you.d want your assistant to do: email the founders\. We read every email\./);
   assert.doesNotMatch(text, /not open yet|waitlist/i, 'no waitlist now that it’s open');
   assert.equal(await page.getByRole('link', { name: 'All posts' }).getAttribute('href'), '/blog/');
