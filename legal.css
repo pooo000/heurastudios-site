@@ -3,7 +3,7 @@
    Builds on site.css: the tokens (light and dark), the header and the footer. The words are the same as the Heura
    Studio app's /privacy and /terms pages. */
 
-.lg-main { padding: clamp(32px, 6vw, 88px) 0 clamp(64px, 8vw, 112px); }
+.lg-main { padding: clamp(32px, 4vw, 64px) 0 clamp(64px, 8vw, 112px); }   /* the title as close under the header as the home page's (Nov 14) */
 .lg-wrap { max-width: 880px; }
 .lg-main h1 {
   margin-bottom: 8px; font-family: var(--serif); font-weight: 400; font-size: clamp(40px, 3vw + 22px, 64px);

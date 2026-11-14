@@ -1,19 +1,13 @@
 /* The home page (/): hero, screen recording, specifications and the Request access form (Tools: tools.css). */
 
-/* the hero: the headline on the left, the lead and the buttons beside it */
-.hm-hero { padding-top: clamp(48px, 8vw, 120px); }
-.hm-hero-row {
-  display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
-  column-gap: clamp(32px, 5vw, 80px); align-items: end;
-}
-.hm-title { max-width: 11.5em; }
-@media (max-width: 999px) {
-  .hm-hero-row { grid-template-columns: minmax(0, 1fr); }
-  .hm-hero-side { margin-top: 24px; }
-}
+/* the hero (Ryan, Nov 14: "the one thats on the side", then "make the spacing a bit tighter"): the headline and,
+   under it, the lead, on the left */
+.hm-hero { padding-top: clamp(32px, 4vw, 64px); }
+.hm-title { max-width: 15em; }
+.hm-hero-side { max-width: 40em; margin-top: clamp(14px, 1.2vw, 18px); }
 
 /* the recording: a run in Heura Studios, in a thin frame */
-.hm-run { margin-top: clamp(48px, 7vw, 96px); }
+.hm-run { margin-top: clamp(32px, 3.6vw, 56px); }
 .hm-frame {
   position: relative; overflow: hidden; aspect-ratio: 1440 / 900;
   border-radius: clamp(8px, 1.1vw, 14px); box-shadow: 0 0 0 1px var(--ring);

@@ -16,7 +16,7 @@
   }
 }
 
-.tl-main { padding: clamp(48px, 8vw, 112px) 0 clamp(88px, 10vw, 144px); }
+.tl-main { padding: clamp(32px, 4vw, 64px) 0 clamp(88px, 10vw, 144px); }   /* the title as close under the header as the home page's (Nov 14) */
 .tl-intro .ov-lead { margin-top: 20px; }
 /* the owner's tools: the dark tile says it, and the key names it once ("Owner only" is read out on each, for screen
    readers) */

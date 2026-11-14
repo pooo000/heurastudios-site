@@ -1,7 +1,7 @@
 /* The blog (/blog/ and each post, built by Jekyll from _layouts/): one reading column, like the legal pages.
    Builds on site.css: the tokens (light and dark), the header and the footer. */
 
-.bl-main { padding: clamp(32px, 6vw, 88px) 0 clamp(64px, 8vw, 112px); }
+.bl-main { padding: clamp(32px, 4vw, 64px) 0 clamp(64px, 8vw, 112px); }   /* the title as close under the header as the home page's (Nov 14) */
 .bl-wrap { max-width: 880px; }
 .bl-main h1 {
   font-family: var(--serif); font-weight: 400; font-size: clamp(40px, 3vw + 22px, 64px);

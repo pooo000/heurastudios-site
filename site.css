@@ -1,6 +1,6 @@
 /* heurastudios.com — shared by every page: color tokens (light/dark/high contrast), base, type, buttons,
    header, sections and footer. Page-specific styles: home.css, legal.css, blog.css, waitlist/waitlist.css.
-   Font: Cantarell everywhere (400, and 700 for bold). Colors are black and white only; every color is a token.
+   Font: Roboto Mono everywhere (400, and 700 for bold; Ryan, Nov 14: "change the font for EVERYTHING into roboto mono"). Colors are black and white only; every color is a token.
    Dark mode: html[data-theme="dark"] (set by the inline script in _includes/head.html), or the system setting
    when JS is off. Tokens are registered with @property so a theme switch can cross-fade them. */
 
@@ -30,10 +30,10 @@
   --foot-edge: #000000; /* the footer's top edge: in light it's the footer itself */
   --canvas: #f3f3f3;  /* the margins' grey while their backdrop picture loads (the Studio canvas's #f2f2f4, no blue) */
   --canvas-dot: #cfcfcf; /* the Studio canvas's dots (#cfcfd4); the margins no longer draw them */
-  --sans: "Cantarell", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --serif: "Cantarell", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --sans: "Roboto Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --serif: "Roboto Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   --gutter: clamp(20px, 4vw, 48px);
-  --header: 64px;
+  --header: 68px;   /* the header: 12px over its capsule, which is 56px tall */
   color-scheme: light;
 }
 /* dark: panels #161616 stand apart from the black page (1.16:1); secondary text 8.3:1 */
@@ -76,7 +76,7 @@ html { background: var(--page); -webkit-text-size-adjust: 100%; text-size-adjust
 body {
   display: flex; flex-direction: column; min-height: 100vh; margin: 0; isolation: isolate;
   background: var(--page); color: var(--ink);
-  font-family: var(--sans); font-size: 16px; line-height: 1.55; font-weight: 400; letter-spacing: -.003em;
+  font-family: var(--sans); font-size: 15px; line-height: 1.6; font-weight: 400; letter-spacing: -.01em; word-spacing: -.08em;
   -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
 }
 main { flex: 1 0 auto; }
@@ -132,27 +132,28 @@ button, input { font: inherit; color: inherit; }
 .ov-wires circle { fill: currentColor; stroke: var(--page); stroke-width: 2; }
 
 /* ---- type */
-/* --serif and --sans are both Cantarell; the names are kept so headings and body can diverge later */
+/* --serif and --sans are both Roboto Mono; the names are kept so headings and body can diverge later. A monospace
+   face is wide: headings are set a little smaller and tighter than they were in Cantarell */
 .ov-display {
-  font-family: var(--serif); font-weight: 400; font-size: clamp(40px, 4.4vw + 16px, 76px);
-  line-height: 1.02; letter-spacing: -.022em; text-wrap: balance;
+  font-family: var(--serif); font-weight: 400; font-size: clamp(30px, 3.4vw + 12px, 64px);
+  line-height: 1.08; letter-spacing: -.045em; word-spacing: -.2em; text-wrap: balance;
 }
 .ov-h2 {
-  font-family: var(--serif); font-weight: 400; font-size: clamp(32px, 2.4vw + 20px, 56px);
-  line-height: 1.05; letter-spacing: -.018em; text-wrap: balance;
+  font-family: var(--serif); font-weight: 400; font-size: clamp(26px, 2vw + 16px, 44px);
+  line-height: 1.1; letter-spacing: -.04em; word-spacing: -.18em; text-wrap: balance;
 }
 .ov-lead,
 .ov-section-lead {
-  max-width: 28em; font-family: var(--serif); font-size: clamp(19px, .45vw + 15.5px, 22px);
+  max-width: 40em; font-family: var(--serif); font-size: clamp(15px, .25vw + 13.5px, 17px);
   line-height: 1.42; color: var(--ink-2); text-wrap: pretty;
 }
-.ov-section-lead { margin-top: 16px; max-width: 30em; }
+.ov-section-lead { margin-top: 16px; max-width: 44em; }
 
 /* ---- buttons: pills; the primary is filled with the ink */
 .ov-btn {
   position: relative; display: inline-flex; align-items: center; justify-content: center;
   min-height: 48px; padding: 0 24px; border: 0; border-radius: 999px; cursor: pointer;
-  font-family: var(--sans); font-size: 16px; font-weight: 400; line-height: 1; letter-spacing: -.005em; white-space: nowrap;
+  font-family: var(--sans); font-size: 14px; font-weight: 400; line-height: 1; letter-spacing: 0; white-space: nowrap;
   transition: background-color .15s ease, color .15s ease;
   -webkit-tap-highlight-color: transparent;
 }
@@ -162,28 +163,29 @@ button, input { font: inherit; color: inherit; }
   .ov-btn-primary:hover { background: color-mix(in srgb, var(--ink) 80%, var(--page)); }
   .ov-btn-quiet:hover { background: color-mix(in srgb, var(--panel) 90%, var(--ink)); }
 }
-.ov-btn-small { min-height: 40px; padding: 0 18px; font-size: 15px; }
-.ov-btn-small::before { content: ""; position: absolute; inset: -2px 0; } /* 44px to tap */
+.ov-btn-small { min-height: 36px; padding: 0 16px; font-size: 13px; }
+.ov-btn-small::before { content: ""; position: absolute; inset: -4px 0; } /* 44px to tap */
 
-/* ---- header: solid; a rule appears once the page scrolls */
-.ov-top {
-  position: sticky; top: 0; z-index: 10; background: var(--page);
-  border-bottom: 1px solid transparent; transition: border-color .2s ease;
-}
-.ov-top.is-scrolled { border-bottom-color: var(--line); }
-@media (min-width: 1360px) {   /* beside the column, the canvas (see the margins, above): the header is the sheet's top */
-  .ov-top, .ov-top.is-scrolled { background: none; border-bottom-color: transparent; }
-  .ov-top::before {   /* its rule where the header's own would be */
-    content: ""; position: absolute; top: 0; bottom: -1px; left: calc(50% - 640px); width: 1280px; z-index: -1;
+/* ---- header (Ryan, Nov 14: a redesign of the top; he chose "the one thats on the side"): a capsule floating at the
+   top of the page, outlined in the page's line, holding the logo, the two sections and Request access. The strip
+   it floats in is the page's color, so the page scrolls away under it. */
+.ov-top { position: sticky; top: 0; z-index: 10; padding-top: 12px; background: var(--page); }
+@media (min-width: 1360px) {   /* beside the column, the picture (see the margins, above): the header is the sheet's top */
+  .ov-top { background: none; }
+  .ov-top::before {   /* and the sheet runs on a screen's height above the page (Ryan, Nov 14: "when i scroll up theres
+                         still the black part"): pulling the page down past its top shows more sheet, not the picture */
+    content: ""; position: absolute; top: -100vh; bottom: 0; left: calc(50% - 640px); width: 1280px; z-index: -1;
     background: var(--page); box-shadow: -1px 0 var(--line), 1px 0 var(--line); pointer-events: none;
-    border-bottom: 1px solid transparent; transition: border-color .2s ease;
   }
-  .ov-top.is-scrolled::before { border-bottom-color: var(--line); }
 }
-.ov-top-row { display: flex; align-items: center; gap: 24px; min-height: var(--header); }
+.ov-top-row {
+  display: flex; align-items: center; gap: 24px; min-height: 56px;
+  max-width: min(1100px, calc(100% - 2 * var(--gutter))); padding: 0 8px 0 20px;
+  border: 1px solid var(--line); border-radius: 999px; background: var(--page);
+}
 .ov-logo {
   display: inline-flex; align-items: center; gap: 10px; min-height: 44px; white-space: nowrap;
-  font-size: 17px; font-weight: 700; letter-spacing: -.015em; line-height: 1;
+  font-size: 15px; font-weight: 700; letter-spacing: -.02em; line-height: 1;
 }
 /* the mark: five pipeline wires plugged in on the left, three running as one bundle through the middle;
    drawn in currentColor, so it is the ink, light or dark (the drawing: _tools/make-logo.py) */
@@ -191,21 +193,25 @@ button, input { font: inherit; color: inherit; }
 .ov-nav { display: flex; align-items: center; gap: 4px; margin-left: auto; }
 .ov-nav a {
   display: inline-flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 8px;
-  font-size: 15px; color: var(--ink-2); transition: color .15s ease;
+  font-size: 13.5px; color: var(--ink-2); transition: color .15s ease;
 }
+.ov-nav a[aria-current="page"] { color: var(--ink); }   /* the section you're on */
 @media (hover: hover) { .ov-nav a:hover { color: var(--ink); } }
 .ov-top-row > .ov-btn { flex: none; }
 @media (max-width: 759px) {   /* the two sections need this much room beside Request access */
   .ov-nav { display: none; }
   .ov-top-row > .ov-btn { margin-left: auto; }
 }
-@media (max-width: 419px) {   /* a phone: the logo and Request access share the row */
-  .ov-top-row { gap: 10px; }
-  .ov-top-row > .ov-logo { font-size: 15px; }
-  .ov-top-row > .ov-btn { padding: 0 14px; }
+@media (max-width: 419px) {   /* a phone: the logo and Request access share the capsule */
+  .ov-top-row { gap: 8px; padding-left: 14px; padding-right: 6px; }
+  .ov-top-row > .ov-logo { gap: 8px; font-size: 13px; }
+  .ov-top-row > .ov-btn { padding: 0 12px; font-size: 12px; }
 }
-@media (max-width: 359px) {   /* the narrowest phones (320 px): the button a size smaller, its words whole */
-  .ov-top-row > .ov-btn { padding: 0 12px; font-size: 14px; }
+@media (max-width: 359px) {   /* the narrowest phones (320 px): smaller still, the words whole */
+  .ov-top-row { padding-left: 12px; }
+  .ov-top-row > .ov-logo { gap: 6px; font-size: 12px; }
+  .ov-top-row > .ov-logo .ov-mark { width: 20px; height: 19.03px; }
+  .ov-top-row > .ov-btn { padding: 0 10px; font-size: 11.5px; }
 }
 
 /* ---- panels: the grey behind a picture (the waitlist's sample chat) */
@@ -216,7 +222,8 @@ button, input { font: inherit; color: inherit; }
 /* the first thing Tab reaches: shown only then */
 .ov-skip {
   position: absolute; left: var(--gutter); top: 8px; z-index: 30; padding: 10px 16px; border-radius: 999px;
-  background: var(--ink); color: var(--page); font-size: 15px; transform: translateY(-160%);
+  background: var(--ink); color: var(--page); font-size: 13px;
+  transform: translateY(calc(-100% - 100vh));   /* far above, so pulling the page down past its top never shows it */
 }
 .ov-skip:focus { transform: none; outline: 2px solid var(--ink); outline-offset: 2px; }
 
