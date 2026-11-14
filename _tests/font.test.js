@@ -1,14 +1,14 @@
-// Every word in Cantarell (Ryan, Oct 19, 2026: "can you also change the font of the website using cantarell", and he
-// chose everywhere, headlines too): Cantarell from Google Fonts in the two weights it has, 400 and 700, upright and
-// italic (the posts use italics), in place of Archivo for the text and Newsreader for the headlines and leads. --sans
-// and --serif both name it, so every rule gets it whichever one it picks. Code in a post stays monospace.
+// Every word in Roboto Mono (Ryan, Nov 14, 2026: "change the font for EVERYTHING into roboto mono"; before it, from
+// Oct 19, Cantarell, and before that Archivo for the text and Newsreader for the headlines and leads): Roboto Mono from
+// Google Fonts at 400 and 700, upright and italic (the posts use italics). --sans and --serif both name it, so every
+// rule gets it whichever one it picks. Code in a post is monospace too.
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const { startServer, launch, buildSite, ROOT } = require('./helpers');
 
-const FAMILY = 'Cantarell:ital,wght@0,400;0,700;1,400;1,700';
+const FAMILY = 'Roboto Mono:ital,wght@0,400;0,700;1,400;1,700';
 const read = file => fs.readFileSync(path.join(ROOT, file), 'utf8');
 
 // the repo's files that make the site: pages, layouts, posts, styles, scripts and the config (not these tests)
@@ -27,7 +27,7 @@ let server, browser;
 test.before(async () => { server = await startServer(); browser = await launch(); });
 test.after(async () => { await browser.close(); await server.close(); });
 
-test('every page and layout asks Google Fonts for Cantarell, 400 and 700, upright and italic, and for nothing else', () => {
+test('every page and layout asks Google Fonts for Roboto Mono, 400 and 700, upright and italic, and for nothing else', () => {
   // every page as Jekyll builds it (the <head> is _includes/head.html)
   const site = buildSite();
   const built = (rel = '') => fs.readdirSync(path.join(site, rel)).flatMap(name => {
@@ -61,16 +61,16 @@ test('no page, layout, post, style or script names Archivo or Newsreader, or the
   }
 });
 
-test('--sans and --serif in site.css are both Cantarell, with the same fallbacks', () => {
+test('--sans and --serif in site.css are both Roboto Mono, with the same fallbacks', () => {
   const css = read('site.css');
   const token = name => (css.match(new RegExp(`--${name}:\\s*([^;]+);`)) || [])[1] || '';
-  assert.match(token('sans'), /^"Cantarell", /, '--sans');
-  assert.match(token('serif'), /^"Cantarell", /, '--serif');
-  assert.equal(token('serif'), token('sans'), 'a headline that can’t get Cantarell falls back to what the text does');
-  assert.match(token('sans'), /, sans-serif$/);
+  assert.match(token('sans'), /^"Roboto Mono", /, '--sans');
+  assert.match(token('serif'), /^"Roboto Mono", /, '--serif');
+  assert.equal(token('serif'), token('sans'), 'a headline that can’t get Roboto Mono falls back to what the text does');
+  assert.match(token('sans'), /, monospace$/);
 });
 
-test('every weight the styles ask for is one Cantarell has, 400 or 700, so what the CSS says is what shows', () => {
+test('every weight the styles ask for is one the page loads, 400 or 700, so what the CSS says is what shows', () => {
   const sheets = files().filter(f => f.endsWith('.css'));
   assert.ok(sheets.length >= 4, sheets.join(', '));
   for (const f of sheets) {
@@ -96,7 +96,7 @@ async function checkWords(url, p) {
     assert.ok(words.length > 20, `${p}: words found`);
     for (const w of words) {
       if (w.code) { assert.match(w.family, /monospace$/, `${p}: ${w.what}`); continue; }
-      assert.match(w.family, /^Cantarell, /, `${p}: ${w.what}`);
+      assert.match(w.family, /^Roboto Mono, /, `${p}: ${w.what}`);
       assert.ok(['400', '700'].includes(w.weight), `${p}: ${w.what} at ${w.weight}`);
     }
     return words;
@@ -105,7 +105,7 @@ async function checkWords(url, p) {
   }
 }
 
-test('every word on every page is set in Cantarell, at 400 or 700', async () => {
+test('every word on every page is set in Roboto Mono, at 400 or 700', async () => {
   for (const p of ['/', '/tools/', '/waitlist/', '/privacy/', '/terms/']) await checkWords(server.url, p);
 });
 

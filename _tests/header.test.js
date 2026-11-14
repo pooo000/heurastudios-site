@@ -61,3 +61,37 @@ for (const path of ['/', '/tools/', '/privacy/', '/terms/']) {
     }
   });
 }
+
+// Ryan, Nov 14: a redesign of the top; he chose "the one thats on the side" (option B): the header is a capsule floating
+// 12px under the top of the screen, outlined in the page's line color and fully round, the section you're on in the
+// ink and the others quieter.
+test('the header is a capsule: outlined, fully round, floating under the top; the section you are on in the ink', async () => {
+  for (const [width, path] of [[390, '/'], [1024, '/tools/'], [1600, '/blog/']]) {
+    const { page, close } = await open(path, { viewport: { width, height: 800 } });
+    const look = await page.evaluate(() => {
+      const top = document.querySelector('.ov-top'), row = document.querySelector('.ov-top-row');
+      const s = getComputedStyle(row), r = row.getBoundingClientRect();
+      const probe = document.createElement('i');
+      probe.style.color = getComputedStyle(document.documentElement).getPropertyValue('--line').trim();
+      document.body.append(probe); const line = getComputedStyle(probe).color; probe.remove();
+      const ink = getComputedStyle(document.body).color;
+      return {
+        border: [s.borderTopWidth, s.borderTopStyle, s.borderTopColor, s.borderBottomColor], line,
+        round: parseFloat(s.borderTopLeftRadius) >= r.height / 2, gap: r.top - top.getBoundingClientRect().top,
+        inside: r.left > 0 && r.right < innerWidth,
+        links: [...document.querySelectorAll('.ov-nav a')].filter(a => a.getBoundingClientRect().width > 0)
+          .map(a => [a.textContent.trim(), a.getAttribute('aria-current'), getComputedStyle(a).color]), ink,
+      };
+    });
+    const where = `${path} at ${width}px`;
+    assert.deepEqual(look.border, ['1px', 'solid', look.line, look.line], `${where}: outlined in the line color`);
+    assert.ok(look.round, `${where}: fully round`);
+    assert.equal(look.gap, 12, `${where}: 12px under the top`);
+    assert.ok(look.inside, `${where}: clear of the screen's edges`);
+    for (const [name, current, color] of look.links) {
+      if (current === 'page') assert.equal(color, look.ink, `${where}: ${name}, the section you're on`);
+      else assert.notEqual(color, look.ink, `${where}: ${name}, quieter`);
+    }
+    await close();
+  }
+});

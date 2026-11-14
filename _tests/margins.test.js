@@ -225,16 +225,18 @@ test('a phone, or a laptop with no room beside the column, gets no picture and n
 
 // Ryan, 22:29 (the header's white over both margins circled): "can you also remove these two sides". Beside the
 // header the canvas runs on up to the top of the screen; the header covers only the column, as the sheet's top.
-test('beside the header the picture runs to the top of the screen: the header is the sheet’s top, with its rule once the page scrolls; the footer has a canvas of its own', async () => {
+// Nov 14: the header is a capsule floating in the sheet's top (option B), outlined, with no rule under it.
+test('beside the header the picture runs to the top of the screen: the header is the sheet’s top, its capsule outlined; the footer has a canvas of its own', async () => {
   const width = 1600, left = (width - SHEET) / 2, right = left + SHEET;
   for (const scheme of ['light', 'dark']) {
     const { page, close } = await bare('/', width, scheme);
     const header = await page.locator('header.ov-top').boundingBox();
-    const rule = Math.round(header.y + header.height) - 1;   // the header's bottom row: its rule, once it scrolls
+    const rule = Math.round(header.y + header.height) - 1;   // the header's bottom row (no rule there now)
+    const capsule = await page.locator('.ov-top-row').boundingBox();
     const clip = { x: 0, y: 0, width, height: rule + 1 };
     const still = await band(page, clip);
     await page.evaluate(() => scrollTo(0, 700));
-    await page.waitForTimeout(400);   // (the rule fades in)
+    await page.waitForTimeout(150);
     const top = await band(page, clip);
     const at = `${scheme}`;
     for (const shot of [still, top]) {
@@ -253,15 +255,19 @@ test('beside the header the picture runs to the top of the screen: the header is
       }
     }
     assert.equal(moved, 0, `${at}: the picture beside the header doesn't move`);
-    // the header's part of the sheet: the page's color (beside the logo and Request access), and its rule only once
-    // the page has scrolled, only across the sheet
-    const inside = [left + 20, right - 21];
-    for (const x of inside) {
-      for (let y = 0; y < rule; y++) assert.equal(top.rgb(x, y).join(), `${PAGE[scheme]},${PAGE[scheme]},${PAGE[scheme]}`, `${at}: the sheet, (${x}, ${y})`);
-      assert.equal(still.rgb(x, rule).join(), `${PAGE[scheme]},${PAGE[scheme]},${PAGE[scheme]}`, `${at}: no rule before it scrolls`);
-      assert.equal(top.rgb(x, rule).join(), `${EDGE[scheme]},${EDGE[scheme]},${EDGE[scheme]}`, `${at}: the rule once it scrolls`);
+    // the header's part of the sheet: the page's color beside the capsule, before and after the page scrolls (no rule
+    // under it); the capsule's outline in the page's line color, its inside the page's color
+    const sheet = `${PAGE[scheme]},${PAGE[scheme]},${PAGE[scheme]}`, edge = `${EDGE[scheme]},${EDGE[scheme]},${EDGE[scheme]}`;
+    for (const x of [left + 20, right - 21]) {
+      for (const shot of [still, top]) for (let y = 0; y <= rule; y++) assert.equal(shot.rgb(x, y).join(), sheet, `${at}: the sheet, (${x}, ${y})`);
     }
-    assert.equal(top.rgb(30, rule).join(), still.rgb(30, rule).join(), `${at}: the rule stops at the sheet's edge`);
+    const mid = Math.round(width / 2);
+    for (const shot of [still, top]) {
+      assert.equal(shot.rgb(mid, Math.round(capsule.y)).join(), edge, `${at}: the capsule's top edge`);
+      assert.equal(shot.rgb(mid, Math.round(capsule.y + capsule.height) - 1).join(), edge, `${at}: its bottom edge`);
+      assert.equal(shot.rgb(mid, Math.round(capsule.y) + 3).join(), sheet, `${at}: inside it`);
+      assert.equal(shot.rgb(mid, Math.round(capsule.y) - 3).join(), sheet, `${at}: the sheet above it`);
+    }
     await page.evaluate(() => scrollTo(0, document.documentElement.scrollHeight));
     await page.waitForTimeout(100);
     const row = await page.locator('.ov-foot-bottom').boundingBox();   // (the wires run higher up, by the nodes)
@@ -269,6 +275,29 @@ test('beside the header the picture runs to the top of the screen: the header is
     // the footer's own canvas, always the Studio's dark one: #0c0c0c, its dots #2c2c2c
     const dark = farthest(shot, 0, 140, 12);
     assert.ok(dark > 20 && dark <= 33, `${scheme}: the footer's dark canvas and its dots (${dark})`);
+    await close();
+  }
+});
+
+// Ryan, Nov 14 (dark, the page pulled down past its top, the picture showing above the sheet): "elongate the strip so
+// like when i scroll up theres still the black part". The header's part of the sheet runs a screen's height up above
+// the page, so a pull past the top shows sheet between the margins. (Pulled here by moving the page's own boxes down,
+// as the browser's bounce does; the picture is fixed and stays.)
+test('pulled down past its top, the page shows more sheet between the margins, not the picture', async () => {
+  const width = 1600, left = (width - SHEET) / 2, right = left + SHEET;
+  for (const scheme of ['light', 'dark']) {
+    const { page, close } = await bare('/', width, scheme);
+    const reach = await page.evaluate(() => -parseFloat(getComputedStyle(document.querySelector('.ov-top'), '::before').top));
+    assert.ok(reach >= 1000, `${scheme}: the sheet runs ${reach}px above the page`);
+    await page.evaluate(() => { for (const el of document.body.children) if (el.tagName !== 'SCRIPT') el.style.translate = '0 150px'; });
+    await page.waitForTimeout(100);
+    const shot = await band(page, { x: 0, y: 0, width, height: 140 });
+    for (const x of [left + 2, Math.round(width / 2), right - 3]) {
+      assert.equal(share(shot, x, PAGE[scheme]), 1, `${scheme}: sheet above the page at x ${x}`);
+    }
+    assert.equal(share(shot, left - 1, EDGE[scheme]), 1, `${scheme}: with its left edge`);
+    assert.equal(share(shot, right, EDGE[scheme]), 1, `${scheme}: and its right edge`);
+    assert.ok(share(shot, 30, PAGE[scheme]) < 0.05, `${scheme}: the picture beside it`);
     await close();
   }
 });

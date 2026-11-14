@@ -52,12 +52,16 @@ test('the hero: the headline and the lead, and the header has the one Request ac
   const { page, errors, close } = await open('/');
   assert.equal(await page.title(), 'Post-training for AI-native companies – Heura Studios');
   assert.equal(await page.locator('h1').innerText(), 'Specialize the base before you ship the agent.');
-  assert.equal(await page.locator('.hm-hero .ov-lead').innerText(),
-    'Your team’s demonstrations and corrections train LoRA checkpoints. Each is scored on your eval set, and any that scores below the live one is held back.');
+  // (Ryan, Nov 14: "make it straight to the point"): three short lines
+  assert.equal((await page.locator('.hm-hero .ov-lead').innerText()).replace(/\s+/g, ' '),
+    'Fine-tune the base on your team’s examples. Test every version on your eval set. Ship only the ones that don’t get worse.');
+  assert.equal(await page.locator('.hm-hero .ov-lead br').count(), 2);
   assert.equal(await page.locator('.hm-hero .ov-btn').count(), 0);
+  const [h1, lead] = await Promise.all(['h1', '.hm-hero .ov-lead'].map(s => page.locator(s).boundingBox()));
+  assert.ok(lead.y >= h1.y + h1.height && Math.abs(lead.x - h1.x) <= 4, 'the lead under the headline, on its left edge');
   assert.equal(await page.locator('header').getByRole('link', { name: 'Request access' }).count(), 1);
   const description = await page.locator('meta[name="description"]').getAttribute('content');
-  assert.match(description, /^Post-training for AI-native companies\. Your team’s demonstrations and corrections train LoRA checkpoints/);
+  assert.match(description, /^Post-training for AI-native companies\. Fine-tune the base on your team’s examples\. Test every version on your eval set\./);
   assert.doesNotMatch(description, /Grounding/);
   assert.deepEqual(errors, []);
   await close();
