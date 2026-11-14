@@ -5,6 +5,9 @@
 //   beside the column) down to the footer, and only where a screen leaves room beside the column: not on a phone, not
 //   on a 1280px laptop. Nothing of it is ever behind the column's words.
 // - "make the canvas thing still and only have the center part scroll": it stays still while the page scrolls.
+// - Nov 14: the margins are a photograph now, not the canvas: "a shuffle between the mountains, the ocean and the
+//   clouds". One picture per visit (mountains, the ocean or clouds, a third of the time each; clouds are one of five),
+//   the same on every page while the visit lasts, never the last visit's twice running; dimmed in dark.
 // - "make the middle section stand out more": the column is a sheet on the canvas, the page's color with an edge.
 // - "for the privacy policy ... add like the pipeline lines as deco", then "make the terms like that too": each legal
 //   page's title is a node on a pipeline, wires running in from the screen's left edge and out past its right edge,
@@ -19,20 +22,37 @@ const LEGAL = ['/privacy/', '/terms/'];
 const COLUMN = 1184;   // what .ov-wrap leaves for the words and panels on a wide screen: 1280px less 48px each side
 const SHEET = 1280;    // the sheet under the column: .ov-wrap's own width
 const PAGE = { light: 255, dark: 0 };     // the page's own color, a channel
-const CANVAS = { light: 243, dark: 12 };  // the canvas's grey (#f3f3f3, #0c0c0c)
+const BACKDROPS = ['mountains', 'ocean', 'clouds-summer', 'clouds-towers', 'clouds-drift', 'clouds-bank', 'clouds-above'];
 const EDGE = { light: 228, dark: 38 };    // the sheet's edge, the page's rule (#e4e4e4, #262626)
 
 let server, browser;
 test.before(async () => { server = await startServer(); browser = await launch(); });
 test.after(async () => { await browser.close(); await server.close(); });
 
-// A page at a size, with what's in main hidden, so a screenshot shows only what's drawn behind it
-async function bare(path, width, scheme = 'light', height = 1000) {
+// A page at a size, with what's in main hidden, so a screenshot shows only what's drawn behind it; its backdrop the one
+// named (this visit's pick, as the page's own script keeps it), loaded before anything is measured
+async function bare(path, width, scheme = 'light', height = 1000, backdrop = 'mountains') {
   const ctx = await browser.newContext({ viewport: { width, height }, colorScheme: scheme, reducedMotion: 'reduce' });
+  await ctx.addInitScript((name) => sessionStorage.setItem('ov-backdrop', name), backdrop);
   const page = await ctx.newPage();
   await page.goto(server.url + path);
   await page.addStyleTag({ content: 'main * { visibility: hidden !important; }' });
+  await loaded(page);
   return { page, close: () => ctx.close() };
+}
+
+// The margins' picture, if there is one: its address, once it has loaded and been drawn
+async function loaded(page) {
+  const url = await page.evaluate(async () => {
+    const m = getComputedStyle(document.body, '::before').backgroundImage.match(/url\("?([^")]*)"?\)/);
+    if (!m) return null;
+    const img = new Image();
+    img.src = m[1];
+    await img.decode();
+    return m[1];
+  });
+  await page.waitForTimeout(150);
+  return url;
 }
 
 // A band of the screen: { x, y, width, height } -> its pixels
@@ -51,6 +71,20 @@ function farthest(shot, x0, x1, from) {
   return most;
 }
 
+// How many different grey levels (a channel) columns x0 to x1 hold: a photograph has many, a flat color one
+function levels(shot, x0, x1) {
+  const seen = new Set();
+  for (let y = 0; y < shot.height; y++) for (let x = x0; x <= x1; x++) seen.add(shot.rgb(x, y)[1]);
+  return seen.size;
+}
+
+// The mean of a channel over columns x0 to x1
+function mean(shot, x0, x1) {
+  let sum = 0, n = 0;
+  for (let y = 0; y < shot.height; y++) for (let x = x0; x <= x1; x++) { sum += shot.rgb(x, y)[1]; n++; }
+  return sum / n;
+}
+
 // The share of pixels in column x that are a color (a channel, to within 2)
 function share(shot, x, color) {
   let n = 0;
@@ -58,20 +92,17 @@ function share(shot, x, color) {
   return n / shot.height;
 }
 
-test('on a wide screen both margins are the canvas, its dots quiet, and nothing is drawn within 20px of the column', async () => {
+test('on a wide screen both margins are the backdrop photograph, and nothing is drawn within 20px of the column', async () => {
   const width = 1600, margin = (width - COLUMN) / 2;   // the column's words start 208px in
   for (const scheme of ['light', 'dark']) {
     for (const path of PAGES) {
       const { page, close } = await bare(path, width, scheme);
       const shot = await band(page, { x: 0, y: 120, width, height: 360 });
       const at = `${path} (${scheme})`;
-      const left = farthest(shot, 0, margin - 60, PAGE[scheme]);
-      const right = farthest(shot, width - 1 - (margin - 60), width - 1, PAGE[scheme]);
-      assert.ok(left > 30 && right > 30, `${at}: the dots show in both margins (${left}, ${right})`);
-      // quiet: never stronger than the Studio canvas's own dots (#cfcfcf on white, #2c2c2c on black)
-      assert.ok(left <= 52 && right <= 52, `${at}: the dots stay quiet (${left}, ${right})`);
-      assert.ok(share(shot, 30, CANVAS[scheme]) > 0.8 && share(shot, width - 31, CANVAS[scheme]) > 0.8,
-        `${at}: between the dots, the canvas's grey`);
+      for (const [x0, x1] of [[0, margin - 60], [width - 1 - (margin - 60), width - 1]]) {
+        assert.ok(share(shot, x0 + 30, PAGE[scheme]) < 0.05, `${at}: the picture, not the page, at x ${x0 + 30}`);
+        assert.ok(levels(shot, x0, x1) > 40, `${at}: a photograph's tones at x ${x0} to ${x1} (${levels(shot, x0, x1)})`);
+      }
       assert.equal(farthest(shot, margin - 20, width - 1 - (margin - 20), PAGE[scheme]), 0,
         `${at}: nothing behind the column or in the 20px before it`);
       await close();
@@ -79,7 +110,20 @@ test('on a wide screen both margins are the canvas, its dots quiet, and nothing 
   }
 });
 
-test('the middle stands out: a sheet of the page’s color under the column, with an edge, on the canvas', async () => {
+test('in dark the backdrop is dimmed: under half as bright as in light', async () => {
+  const width = 1600, margin = (width - COLUMN) / 2;
+  for (const backdrop of ['mountains', 'clouds-summer']) {
+    const bright = {};
+    for (const scheme of ['light', 'dark']) {
+      const { page, close } = await bare('/', width, scheme, 1000, backdrop);
+      bright[scheme] = mean(await band(page, { x: 0, y: 120, width: margin - 60, height: 360 }), 0, margin - 61);
+      await close();
+    }
+    assert.ok(bright.dark < bright.light * 0.5, `${backdrop}: dark ${bright.dark.toFixed(0)}, light ${bright.light.toFixed(0)}`);
+  }
+});
+
+test('the middle stands out: a sheet of the page’s color under the column, with an edge, on the picture', async () => {
   const width = 1600, left = (width - SHEET) / 2, right = left + SHEET;   // the sheet runs from 160px to 1440px
   for (const scheme of ['light', 'dark']) {
     for (const path of ['/', '/privacy/']) {
@@ -89,50 +133,99 @@ test('the middle stands out: a sheet of the page’s color under the column, wit
       assert.equal(share(shot, left - 1, EDGE[scheme]), 1, `${at}: the sheet's left edge`);
       assert.equal(share(shot, right, EDGE[scheme]), 1, `${at}: the sheet's right edge`);
       assert.equal(farthest(shot, left, right - 1, PAGE[scheme]), 0, `${at}: the sheet is the page's color`);
-      assert.ok(share(shot, left - 6, CANVAS[scheme]) > 0.8 && share(shot, right + 5, CANVAS[scheme]) > 0.8,
-        `${at}: the canvas right up to the edge`);
+      assert.ok(share(shot, left - 6, PAGE[scheme]) < 0.05 && share(shot, right + 5, PAGE[scheme]) < 0.05,
+        `${at}: the picture right up to the edge`);
       await close();
     }
   }
 });
 
-test('the dots are the Studio canvas’s grid: 20px apart', async () => {
-  const { page, close } = await bare('/', 1600);
-  const shot = await band(page, { x: 0, y: 120, width: 140, height: 40 });
-  // the row through the dots' middles is the one with the darkest pixel; each dot is a run of its darkest pixels
-  let row = 0, darkest = 255;
-  for (let y = 0; y < shot.height; y++) {
-    for (let x = 0; x < shot.width; x++) {
-      if (shot.rgb(x, y)[0] < darkest) [darkest, row] = [shot.rgb(x, y)[0], y];
-    }
+// The page's own pick, with Math.random's answers set (each pick takes two: which set, then which picture in it)
+async function pickWith(answers, last) {
+  const ctx = await browser.newContext({ viewport: { width: 1600, height: 1000 }, reducedMotion: 'reduce' });
+  await ctx.addInitScript(([seq, prev]) => {
+    Math.random = () => (seq.length ? seq.shift() : 0.5);
+    if (prev) localStorage.setItem('ov-backdrop-last', prev);
+  }, [answers, last]);
+  const page = await ctx.newPage();
+  await page.goto(server.url + '/');
+  const picked = await page.evaluate(() => document.documentElement.getAttribute('data-backdrop'));
+  await ctx.close();
+  return picked;
+}
+
+test('the backdrop is one of seven photographs: mountains, the ocean or clouds, a third of the time each', async () => {
+  // which set: under a third mountains, then the ocean, then clouds; which clouds: five equal shares
+  assert.equal(await pickWith([0.1, 0.7]), 'mountains');
+  assert.equal(await pickWith([0.32, 0.0]), 'mountains');
+  assert.equal(await pickWith([0.34, 0.9]), 'ocean');
+  assert.equal(await pickWith([0.66, 0.2]), 'ocean');
+  assert.equal(await pickWith([0.67, 0.0]), 'clouds-summer');
+  assert.equal(await pickWith([0.9, 0.3]), 'clouds-towers');
+  assert.equal(await pickWith([0.9, 0.5]), 'clouds-drift');
+  assert.equal(await pickWith([0.9, 0.7]), 'clouds-bank');
+  assert.equal(await pickWith([0.99, 0.99]), 'clouds-above');
+  // never the last visit's twice running: its draw is thrown back and drawn again
+  assert.equal(await pickWith([0.1, 0.5, 0.5, 0.5], 'mountains'), 'ocean');
+  assert.equal(await pickWith([0.9, 0.1, 0.9, 0.1, 0.1, 0.1], 'clouds-summer'), 'mountains');
+  // each one is a 2560 x 1440 photograph, and the margins show the one picked
+  for (const name of BACKDROPS) {
+    const { page, close } = await bare('/', 1600, 'light', 1000, name);
+    const shown = await page.evaluate(() => getComputedStyle(document.body, '::before').backgroundImage);
+    assert.ok(shown.endsWith(`/img/backdrops/${name}.webp")`), `${name}: ${shown}`);
+    const size = await page.evaluate(async (src) => {
+      const img = new Image(); img.src = src; await img.decode(); return [img.naturalWidth, img.naturalHeight];
+    }, `/img/backdrops/${name}.webp`);
+    assert.deepEqual(size, [2560, 1440], name);
+    await close();
   }
-  const middles = [];
-  for (let x = 0; x < shot.width; x++) {
-    if (shot.rgb(x, row)[0] > darkest + 4) continue;
-    const last = middles[middles.length - 1];
-    if (last && x - last.to <= 2) last.to = x; else middles.push({ from: x, to: x });
-  }
-  // (a dot cut off by the band's edge has its middle out of the band)
-  const at = middles.filter(m => m.from > 0 && m.to < shot.width - 1).map(m => (m.from + m.to) / 2);
-  assert.ok(at.length >= 5, `dots along the row: ${at}`);
-  for (let i = 1; i < at.length; i++) assert.equal(at[i] - at[i - 1], 20, `dots along the row: ${at}`);
-  await close();
 });
 
-test('a phone, or a laptop with no room beside the column, gets no canvas and no sheet', async () => {
+test('one picture per visit: the same on every page while the visit lasts, another next visit, never twice running', async () => {
+  const ctx = await browser.newContext({ viewport: { width: 1600, height: 1000 }, reducedMotion: 'reduce' });
+  let before = null;
+  for (let visit = 0; visit < 6; visit++) {   // a new tab is a new visit; a tab keeps its pick
+    const page = await ctx.newPage();
+    const fetched = [];
+    page.on('request', (r) => { if (r.url().includes('/img/backdrops/')) fetched.push(new URL(r.url()).pathname); });
+    const seen = [];
+    for (const path of ['/', '/tools/', '/privacy/', '/']) {
+      await page.goto(server.url + path);
+      seen.push(await page.evaluate(() => document.documentElement.getAttribute('data-backdrop')));
+    }
+    await page.reload();
+    seen.push(await page.evaluate(() => document.documentElement.getAttribute('data-backdrop')));
+    assert.ok(BACKDROPS.includes(seen[0]), `visit ${visit}: ${seen[0]}`);
+    assert.deepEqual(seen, Array(seen.length).fill(seen[0]), `visit ${visit}: the same picture on every page`);
+    assert.notEqual(seen[0], before, `visit ${visit}: not the last visit's picture again`);
+    assert.deepEqual([...new Set(fetched)], [`/img/backdrops/${seen[0]}.webp`], `visit ${visit}: only its picture is fetched`);
+    before = seen[0];
+    await page.close();
+  }
+  await ctx.close();
+});
+
+test('a phone, or a laptop with no room beside the column, gets no picture and no sheet, and fetches no picture', async () => {
   for (const [width, height] of [[390, 844], [1280, 860]]) {
     for (const path of PAGES) {
-      const { page, close } = await bare(path, width, 'light', height);
+      const ctx = await browser.newContext({ viewport: { width, height }, reducedMotion: 'reduce' });
+      const page = await ctx.newPage();
+      const fetched = [];
+      page.on('request', (r) => { if (r.url().includes('/img/backdrops/')) fetched.push(r.url()); });
+      await page.goto(server.url + path);
+      await page.addStyleTag({ content: 'main * { visibility: hidden !important; }' });
+      await page.waitForTimeout(150);
       const shot = await band(page, { x: 0, y: 120, width, height: 360 });
       assert.equal(farthest(shot, 0, width - 1, PAGE.light), 0, `${path} at ${width}px`);
-      await close();
+      assert.deepEqual(fetched, [], `${path} at ${width}px: no picture fetched`);
+      await ctx.close();
     }
   }
 });
 
 // Ryan, 22:29 (the header's white over both margins circled): "can you also remove these two sides". Beside the
 // header the canvas runs on up to the top of the screen; the header covers only the column, as the sheet's top.
-test('beside the header the canvas runs to the top of the screen: the header is the sheet’s top, with its rule once the page scrolls; the footer has a canvas of its own', async () => {
+test('beside the header the picture runs to the top of the screen: the header is the sheet’s top, with its rule once the page scrolls; the footer has a canvas of its own', async () => {
   const width = 1600, left = (width - SHEET) / 2, right = left + SHEET;
   for (const scheme of ['light', 'dark']) {
     const { page, close } = await bare('/', width, scheme);
@@ -145,20 +238,21 @@ test('beside the header the canvas runs to the top of the screen: the header is 
     const top = await band(page, clip);
     const at = `${scheme}`;
     for (const shot of [still, top]) {
-      assert.ok(share(shot, 30, CANVAS[scheme]) > 0.8 && share(shot, width - 31, CANVAS[scheme]) > 0.8,
-        `${at}: the canvas beside the header`);
-      assert.ok(farthest(shot, 0, left - 20, PAGE[scheme]) > 30, `${at}: its dots too`);
+      assert.ok(share(shot, 30, PAGE[scheme]) < 0.05 && share(shot, width - 31, PAGE[scheme]) < 0.05,
+        `${at}: the picture beside the header`);
+      // (a flat fill is one level; the dimmed sky in dark keeps fewer than in light)
+      assert.ok(levels(shot, 0, left - 20) > 8, `${at}: a photograph's tones there (${levels(shot, 0, left - 20)})`);
       assert.equal(share(shot, left - 1, EDGE[scheme]), 1, `${at}: the sheet's left edge, from the top of the screen`);
       assert.equal(share(shot, right, EDGE[scheme]), 1, `${at}: and its right edge`);
     }
-    // the canvas beside it stays still while the page scrolls under the header
+    // the picture beside it stays still while the page scrolls under the header
     let moved = 0;
     for (let y = 0; y < still.height; y++) {
       for (const x of [0, 40, 80, 120, width - 121, width - 81, width - 41, width - 1]) {
         if (still.rgb(x, y).join() !== top.rgb(x, y).join()) moved++;
       }
     }
-    assert.equal(moved, 0, `${at}: the canvas beside the header doesn't move`);
+    assert.equal(moved, 0, `${at}: the picture beside the header doesn't move`);
     // the header's part of the sheet: the page's color (beside the logo and Request access), and its rule only once
     // the page has scrolled, only across the sheet
     const inside = [left + 20, right - 21];
@@ -179,12 +273,12 @@ test('beside the header the canvas runs to the top of the screen: the header is 
   }
 });
 
-test('the canvas stays still while the page scrolls: only the column moves', async () => {
+test('the picture stays still while the page scrolls: only the column moves', async () => {
   const width = 1600, margin = (width - COLUMN) / 2;
   const { page, close } = await bare('/', width);
   const clip = { x: 0, y: 120, width: margin - 60, height: 300 };
   const before = await band(page, clip);
-  await page.evaluate(() => scrollTo(0, 310));   // (not a multiple of 20: dots that scrolled along would be 10px off)
+  await page.evaluate(() => scrollTo(0, 310));
   await page.waitForTimeout(100);
   assert.equal(await page.evaluate(() => scrollY), 310, 'the page scrolled');
   const after = await band(page, clip);
@@ -223,7 +317,7 @@ test('the Privacy Policy and the Terms: wires run in to the title from the left 
         const ctx = await browser.newContext({ viewport: { width, height: 1000 }, colorScheme: scheme, reducedMotion: 'reduce' });
         const page = await ctx.newPage();
         await page.goto(server.url + path);
-        await page.addStyleTag({ content: '.lg-title h1, .lg-main section { visibility: hidden !important; }' });
+        await page.addStyleTag({ content: '.lg-title h1, .lg-main section { visibility: hidden !important; } body::before { background: none !important; }' });
         const title = await page.locator('.lg-title').boundingBox();
         const middle = Math.round(title.y + title.height / 2);
         const shot = await band(page, { x: 0, y: middle - 80, width, height: 160 });
