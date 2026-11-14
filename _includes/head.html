@@ -15,16 +15,36 @@
   Runs before the first paint so the page never flashes the wrong theme: the saved choice (localStorage "ov-theme")
   or the system's. Also marks that JS is on (ov-js) and, on pages with reveal: true, that animations are
   allowed (ov-motion: not with Reduce Motion).
+  And picks the margins' backdrop (site.css, html[data-backdrop]): one picture per visit, kept while the visit lasts
+  (sessionStorage "ov-backdrop"), never the last visit's twice running (localStorage "ov-backdrop-last"). Mountains,
+  the ocean or clouds, a third of the time each; clouds are one of five. Where the margins show, the picture starts
+  loading at once.
 {%- endcomment %}
 <script>
 (function (d) {
-  var w = window, theme, meta;
+  var w = window, theme, meta, sets, all, pick, last, set, link;
   try { theme = localStorage.getItem('ov-theme'); } catch (e) {}
   if (theme !== 'light' && theme !== 'dark') {
     theme = w.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   }
   d.setAttribute('data-theme', theme);
   d.classList.add('ov-js');
+  sets = [['mountains'], ['ocean'], ['clouds-summer', 'clouds-towers', 'clouds-drift', 'clouds-bank', 'clouds-above']];
+  all = sets[0].concat(sets[1], sets[2]);
+  try { pick = sessionStorage.getItem('ov-backdrop'); last = localStorage.getItem('ov-backdrop-last'); } catch (e) {}
+  if (all.indexOf(pick) < 0) {
+    do {
+      set = sets[Math.floor(Math.random() * sets.length)];
+      pick = set[Math.floor(Math.random() * set.length)];
+    } while (pick === last);
+    try { sessionStorage.setItem('ov-backdrop', pick); localStorage.setItem('ov-backdrop-last', pick); } catch (e) {}
+  }
+  d.setAttribute('data-backdrop', pick);
+  if (w.matchMedia && matchMedia('(min-width: 1360px)').matches) {
+    link = document.createElement('link');
+    link.rel = 'preload'; link.as = 'image'; link.type = 'image/webp'; link.href = '/img/backdrops/' + pick + '.webp';
+    document.head.appendChild(link);
+  }
 {%- if page.reveal %}
   if (w.matchMedia && matchMedia('(prefers-reduced-motion: no-preference)').matches && 'IntersectionObserver' in w) {
     d.classList.add('ov-motion');
