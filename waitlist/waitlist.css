@@ -2,7 +2,7 @@
    which pops open after the page loads.
    Builds on site.css: the tokens (light and dark), the header, buttons, panels and the footer. */
 
-.wl-main { padding: clamp(32px, 6vw, 88px) 0 clamp(72px, 9vw, 128px); }
+.wl-main { padding: clamp(32px, 4vw, 64px) 0 clamp(72px, 9vw, 128px); }   /* as close under the header as the home page's title (Nov 14) */
 .wl-grid { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: clamp(40px, 6vw, 96px); align-items: center; }
 .wl-panel { width: 100%; max-width: 460px; }
 
