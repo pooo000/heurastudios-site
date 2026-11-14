@@ -28,8 +28,8 @@
   --edge: transparent; /* a panel's outline: only with Increase Contrast */
   --field: #8a8a8a;   /* input borders: 3.4:1 */
   --foot-edge: #000000; /* the footer's top edge: in light it's the footer itself */
-  --canvas: #f3f3f3;  /* the Studio's canvas (its #f2f2f4, without the blue) in the page's margins, */
-  --canvas-dot: #cfcfcf; /* and its dots (#cfcfd4) */
+  --canvas: #f3f3f3;  /* the margins' grey while their backdrop picture loads (the Studio canvas's #f2f2f4, no blue) */
+  --canvas-dot: #cfcfcf; /* the Studio canvas's dots (#cfcfd4); the margins no longer draw them */
   --sans: "Cantarell", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --serif: "Cantarell", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --gutter: clamp(20px, 4vw, 48px);
@@ -91,22 +91,35 @@ button, input { font: inherit; color: inherit; }
 ::selection { background: var(--ink); color: var(--page); }
 .ov-wrap { width: 100%; max-width: 1280px; margin: 0 auto; padding: 0 var(--gutter); }
 
-/* the margins: the Studio's canvas (its grey, and its dot grid 20px apart, as at 100%) on the left and the right, from
-   the top of the screen down to the footer, and the column a sheet on it: the page's color with an edge, so the middle
-   stands out. The canvas stays still while the page scrolls over it: fixed to the screen, under everything (the
-   footer has a canvas of its own). The header covers only the column: it's the sheet's top, with the same edges and,
-   once the page scrolls, its rule (Ryan, Oct 29: "remove these two sides"). Only where a screen leaves room beside
-   the column. */
+/* the margins: a backdrop picture on the left and the right, from the top of the screen down to the footer, and the
+   column a sheet on it: the page's color with an edge, so the middle stands out. The picture is one photograph per
+   visit (Ryan, Nov 14: "a shuffle between the mountains, the ocean and the clouds"): the inline script in
+   _includes/head.html picks it and sets html[data-backdrop]; with no script it's the mountains. It covers the screen
+   and stays still while the page scrolls over it: fixed, under everything (the footer has a canvas of its own). In
+   dark it's dimmed. The header covers only the column: it's the sheet's top, with the same edges and, once the page
+   scrolls, its rule (Ryan, Oct 29: "remove these two sides"). Only where a screen leaves room beside the column, so
+   phones and small laptops never download a picture. (--canvas shows while it loads.) */
 @media (min-width: 1360px) {
   body::before {
     content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
-    background: radial-gradient(circle, var(--canvas-dot) 1px, transparent 1.4px) center top / 20px 20px var(--canvas);
+    background: var(--canvas) url(/img/backdrops/mountains.webp) center / cover no-repeat;
+    transition: filter .25s ease;
   }
+  :root[data-backdrop="ocean"] body::before { background-image: url(/img/backdrops/ocean.webp); }
+  :root[data-backdrop="clouds-summer"] body::before { background-image: url(/img/backdrops/clouds-summer.webp); }
+  :root[data-backdrop="clouds-towers"] body::before { background-image: url(/img/backdrops/clouds-towers.webp); }
+  :root[data-backdrop="clouds-drift"] body::before { background-image: url(/img/backdrops/clouds-drift.webp); }
+  :root[data-backdrop="clouds-bank"] body::before { background-image: url(/img/backdrops/clouds-bank.webp); }
+  :root[data-backdrop="clouds-above"] body::before { background-image: url(/img/backdrops/clouds-above.webp); }
+  :root[data-theme="dark"] body::before { filter: brightness(.45); }
   main { position: relative; isolation: isolate; }
   main::before {   /* the sheet: as wide as .ov-wrap, its words 48px in from each edge */
     content: ""; position: absolute; top: 0; bottom: 0; left: calc(50% - 640px); width: 1280px; z-index: -1;
     background: var(--page); box-shadow: -1px 0 var(--line), 1px 0 var(--line); pointer-events: none;
   }
+}
+@media (min-width: 1360px) and (prefers-color-scheme: dark) {   /* (dark with no script: the system's setting) */
+  :root:not([data-theme="light"]) body::before { filter: brightness(.45); }
 }
 
 /* the pipeline's wires (decoration, _includes/wires.html, beside the legal pages' titles): the box they sit in as a
