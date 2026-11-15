@@ -1,4 +1,5 @@
-// Every page: the Appearance setting in the footer, and the header's bottom rule once the page scrolls.
+// Every page: the Appearance setting in the footer, the header's bottom rule once the page scrolls, and the root's
+// background in the page's lower half (the footer's canvas, for a bounce past the end).
 // (The theme itself is applied before the first paint by the inline script in _includes/head.html.)
 (function () {
   'use strict';
@@ -79,18 +80,23 @@
   if (!root.getAttribute('data-theme')) apply(saved() || system(), false);
   check(saved() || 'system');
 
-  // ---- the header's bottom rule, once the page has scrolled
+  // ---- the header's bottom rule, once the page has scrolled; and in the page's lower half, the footer's canvas under
+  //      the page, for a bounce past its end to uncover (site.css, "pulled on past the page's end")
 
   var header = document.querySelector('.ov-top');
   var queued = false;
-  function updateHeader() {
+  function update() {
     queued = false;
-    if (header) header.classList.toggle('is-scrolled', (window.scrollY || window.pageYOffset) > 2);
+    var y = window.scrollY || window.pageYOffset;
+    if (header) header.classList.toggle('is-scrolled', y > 2);
+    root.classList.toggle('ov-lower-half', y > (root.scrollHeight - root.clientHeight) / 2);
   }
-  window.addEventListener('scroll', function () {
+  function queue() {
     if (queued) return;
     queued = true;
-    window.requestAnimationFrame(updateHeader);
-  }, { passive: true });
-  updateHeader();
+    window.requestAnimationFrame(update);
+  }
+  window.addEventListener('scroll', queue, { passive: true });
+  window.addEventListener('resize', queue);
+  update();
 })();

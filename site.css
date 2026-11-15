@@ -250,6 +250,21 @@ button, input { font: inherit; color: inherit; }
   color: var(--ink); font-size: 15px; line-height: 1.5;
   overflow-x: hidden; overflow-x: clip;   /* (the wires at its ends run on past the screen's edges) */
 }
+/* pulled on past the page's end (the browser's bounce), more footer: not the margins' picture or the page's color under
+   it (Ryan, Nov 15: "fix that gap too"). What a bounce uncovers there, in Chromium: where something is fixed (the
+   margins' picture, on a wide screen), the picture and whatever the page draws past its end on a layer of its own; so
+   the footer's canvas runs a screen's height on below it, the shadow of an empty box at its bottom, on its own layer
+   (will-change). A shadow is drawn but never scrolled to: the page still ends where the footer does. Where nothing is
+   fixed, the root's background: the footer's canvas too while the page is in its lower half (site.js sets
+   .ov-lower-half), the page's own color in its upper half, so a pull past the top shows the page's. */
+@media screen {
+  .ov-foot { position: relative; }
+  .ov-foot::after {
+    content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 0; pointer-events: none;
+    box-shadow: 0 50vh 0 50vh var(--page); will-change: transform;
+  }
+  :root.ov-lower-half { background: #0c0c0c; }
+}
 @media (prefers-contrast: more) { .ov-foot { --ink-2: #d6d6d6; --line: #7a7a7a; --node-edge: #7a7a7a; --wire: #a3a3a3; } }
 
 /* the nodes, in a row, a wire between each two (its cell stretches; the drawing's height is the cells', 1:1) */
