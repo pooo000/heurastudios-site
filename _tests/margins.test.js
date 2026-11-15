@@ -302,6 +302,34 @@ test('pulled down past its top, the page shows more sheet between the margins, n
   }
 });
 
+// Ryan, Nov 15: "The bottom is kina cooked too bro fix that gap too". Pulled up past its end, the page showed the
+// picture under the dark footer (or, where there's no picture, the page's own color: white in light). The footer's
+// canvas runs a screen's height on below the page now, as ink that doesn't scroll (a shadow), so a pull past the end
+// shows more footer and the page still ends where the footer does. (Pulled as above, deeper than a bounce goes;
+// bounce.test.js pulls with Chromium's own bounce.)
+test('pulled up past its end, the page shows more footer, not the picture or the page color', async () => {
+  const FOOT = 12;   // the footer's canvas, #0c0c0c
+  for (const [width, height] of [[1600, 1000], [1280, 900], [390, 844]]) {
+    for (const scheme of ['light', 'dark']) {
+      const { page, close } = await bare('/', width, scheme, height);
+      const end = await page.evaluate(() => {
+        scrollTo(0, document.documentElement.scrollHeight);
+        const root = document.documentElement;
+        return { foot: document.querySelector('.ov-foot').getBoundingClientRect().bottom, sideways: root.scrollWidth - root.clientWidth };
+      });
+      assert.ok(Math.abs(end.foot - height) < 1, `${width} ${scheme}: the page ends where the footer does (${end.foot})`);
+      assert.equal(end.sideways, 0, `${width} ${scheme}: and doesn't scroll sideways`);
+      await page.evaluate(() => { for (const el of document.body.children) if (el.tagName !== 'SCRIPT') el.style.translate = '0 -150px'; });
+      await page.waitForTimeout(100);
+      const shot = await band(page, { x: 0, y: height - 140, width, height: 140 });
+      for (const x of [2, 30, Math.round(width / 2), width - 31, width - 3]) {
+        assert.equal(share(shot, x, FOOT), 1, `${width} ${scheme}: footer below the page at x ${x}`);
+      }
+      await close();
+    }
+  }
+});
+
 test('the picture stays still while the page scrolls: only the column moves', async () => {
   const width = 1600, margin = (width - COLUMN) / 2;
   const { page, close } = await bare('/', width);
