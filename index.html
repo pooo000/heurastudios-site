@@ -8,39 +8,41 @@ css: [/home.css]
 js: [/form.js, /recording.js, /home.js]
 ---
 <main id="main">
-  <section class="hm-hero" aria-labelledby="hm-title">
-    <div class="ov-wrap hm-hero-row">
-      <h1 id="hm-title" class="ov-display hm-title">Specialize the base before you ship the agent.</h1>
-      <div class="hm-hero-side">
-        <p class="ov-lead">Fine-tune the base on your team’s examples.<br> Test every version on your eval set.<br> Ship only the ones that don’t get worse.</p>
-      </div>
-    </div>
-  </section>
-
-  {%- comment -%}
-    Screen recording of one run (made with _tools/record-pipeline.py). home.js handles play/pause, light/dark and
-    reduced motion. Without JS the browser's own controls show. Phone-sized files first; .mp4 before .webm for iPhones.
-  {%- endcomment %}
-  <section class="hm-run" aria-labelledby="hm-run-title">
-    <div class="ov-wrap">
-      <h2 id="hm-run-title" class="ov-sr">A run in Heura Studios</h2>
-      <figure class="hm-film">
-        <div class="hm-frame">
-          <video class="hm-video" width="1440" height="900" muted loop playsinline controls preload="none"
-            data-light="/img/pipeline-run" data-dark="/img/pipeline-run-dark"
-            data-phone-light="/img/pipeline-run-phone" data-phone-dark="/img/pipeline-run-phone-dark"
-            aria-describedby="hm-run-caption">
-            <source src="/img/pipeline-run-phone.mp4" type="video/mp4" media="(max-width: 599px)">
-            <source src="/img/pipeline-run-phone.webm" type="video/webm" media="(max-width: 599px)">
-            <source src="/img/pipeline-run.mp4" type="video/mp4">
-            <source src="/img/pipeline-run.webm" type="video/webm">
-          </video>
+  <div class="hm-top">
+    <section class="hm-hero" aria-labelledby="hm-title">
+      <div class="ov-wrap hm-hero-row">
+        <h1 id="hm-title" class="ov-display hm-title">Training agents without Machine Learning specialists</h1>
+        <div class="hm-hero-side">
+          <p class="ov-lead">Fine-tune the base on your team’s examples.<br> Test every version on your eval set.<br> Ship only the ones that don’t get worse.</p>
         </div>
-        <button class="hm-toggle" type="button" aria-label="Pause the recording" hidden>Pause</button>
-        <figcaption id="hm-run-caption" class="hm-caption">One run on a sample model in Heura Studios: 82 training rows (10 demonstrations and the replay mix), scored on the eval set before and after, promoted on a tie.</figcaption>
-      </figure>
-    </div>
-  </section>
+      </div>
+    </section>
+
+    {%- comment -%}
+      Screen recording of one run (made with _tools/record-pipeline.py). home.js handles play/pause, light/dark and
+      reduced motion. Without JS the browser's own controls show. Phone-sized files first; .mp4 before .webm for iPhones.
+    {%- endcomment %}
+    <section class="hm-run" aria-labelledby="hm-run-title">
+      <div class="ov-wrap">
+        <h2 id="hm-run-title" class="ov-sr">A run in Heura Studios</h2>
+        <figure class="hm-film">
+          <div class="hm-frame">
+            <video class="hm-video" width="1440" height="900" muted loop playsinline controls preload="none"
+              data-light="/img/pipeline-run" data-dark="/img/pipeline-run-dark"
+              data-phone-light="/img/pipeline-run-phone" data-phone-dark="/img/pipeline-run-phone-dark"
+              aria-describedby="hm-run-caption">
+              <source src="/img/pipeline-run-phone.mp4" type="video/mp4" media="(max-width: 599px)">
+              <source src="/img/pipeline-run-phone.webm" type="video/webm" media="(max-width: 599px)">
+              <source src="/img/pipeline-run.mp4" type="video/mp4">
+              <source src="/img/pipeline-run.webm" type="video/webm">
+            </video>
+          </div>
+          <button class="hm-toggle" type="button" aria-label="Pause the recording" hidden>Pause</button>
+          <figcaption id="hm-run-caption" class="hm-caption">One run on a sample model in Heura Studios: 82 training rows (10 demonstrations and the replay mix), scored on the eval set before and after, promoted on a tie.</figcaption>
+        </figure>
+      </div>
+    </section>
+  </div>
 
   <section class="ov-section" id="specs" aria-labelledby="hm-specs-title">
     <div class="ov-wrap ov-split">

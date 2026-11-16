@@ -91,15 +91,28 @@ button, input { font: inherit; color: inherit; }
 ::selection { background: var(--ink); color: var(--page); }
 .ov-wrap { width: 100%; max-width: 1280px; margin: 0 auto; padding: 0 var(--gutter); }
 
-/* the margins: a backdrop picture on the left and the right, from the top of the screen down to the footer, and the
-   column a sheet on it: the page's color with an edge, so the middle stands out. The picture is one photograph per
-   visit (Ryan, Nov 14: "a shuffle between the mountains, the ocean and the clouds"): the inline script in
-   _includes/head.html picks it and sets html[data-backdrop]; with no script it's the mountains. It covers the screen
-   and stays still while the page scrolls over it: fixed, under everything (the footer has a canvas of its own). In
-   dark it's dimmed. The header covers only the column: it's the sheet's top, with the same edges and, once the page
-   scrolls, its rule (Ryan, Oct 29: "remove these two sides"). Only where a screen leaves room beside the column, so
-   phones and small laptops never download a picture. (--canvas shows while it loads.) */
-@media (min-width: 1360px) {
+/* the picture and the islands (Ryan, Nov 16: "a new concept of just having floating islands for text and make
+   everything else just the background ... like cut the strip in the middle", then "ship the computer version"). On a
+   computer (1024px and wider) the backdrop picture is the background of the whole page, and the words sit on islands
+   floating over it: each section of a page is one (a reading page's one block is one), the page's color, rounded,
+   the picture between and beside them; the header's capsule floats over it and the footer is an island of its own.
+   The picture is one photograph per visit (Ryan, Nov 14: "a shuffle between the mountains, the ocean and the clouds"):
+   the inline script in _includes/head.html picks it and sets html[data-backdrop]; with no script it's the mountains.
+   It covers the screen and stays still while the page scrolls over it: fixed, under everything. In dark it's dimmed.
+   Phones and tablets (under 1024px) keep the page as it was, its own color from edge to edge, and never download a
+   picture. (--canvas shows while it loads.) */
+:root {
+  --isle-w: 1280px;                         /* an island at its widest: as wide as the column's sheet was */
+  --isle-side: clamp(12px, 2.2vw, 32px);    /* the picture beside an island, at least */
+  --isle-gap: clamp(20px, 2.6vw, 36px);     /* the picture between two islands */
+  --isle-pad: clamp(20px, 4vw, 56px);       /* the words in from an island's edges */
+  --isle-r: clamp(20px, 2.4vw, 32px);       /* its corners */
+  --isle-edge: transparent;                 /* its outline: in dark the line, so a black island stands off the picture */
+  --isle-shadow: 0 1px 2px rgb(0 0 0 / .06), 0 24px 60px -28px rgb(0 0 0 / .45);   /* in light a shadow does that */
+}
+:root[data-theme="dark"] { --isle-edge: #262626; --isle-shadow: 0 0 #0000; }   /* (no shadow: one that draws nothing) */
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --isle-edge: #262626; --isle-shadow: 0 0 #0000; } }
+@media (min-width: 1024px) {
   body::before {
     content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
     background: var(--canvas) url(/img/backdrops/mountains.webp) center / cover no-repeat;
@@ -112,13 +125,18 @@ button, input { font: inherit; color: inherit; }
   :root[data-backdrop="clouds-bank"] body::before { background-image: url(/img/backdrops/clouds-bank.webp); }
   :root[data-backdrop="clouds-above"] body::before { background-image: url(/img/backdrops/clouds-above.webp); }
   :root[data-theme="dark"] body::before { filter: brightness(.45); }
-  main { position: relative; isolation: isolate; }
-  main::before {   /* the sheet: as wide as .ov-wrap, its words 48px in from each edge */
-    content: ""; position: absolute; top: 0; bottom: 0; left: calc(50% - 640px); width: 1280px; z-index: -1;
-    background: var(--page); box-shadow: -1px 0 var(--line), 1px 0 var(--line); pointer-events: none;
+  :root > body > main { padding: 0 0 var(--isle-gap); }   /* (the pages' own spacing is the islands' now) */
+  main > :is(section, article, .ov-wrap, .hm-top) {
+    width: min(var(--isle-w), 100% - 2 * var(--isle-side)); max-width: none;
+    margin: var(--isle-gap) auto 0; padding: var(--isle-pad);
+    border-radius: var(--isle-r); background: var(--page);
+    box-shadow: 0 0 0 1px var(--isle-edge), var(--isle-shadow);
+    overflow-x: clip;   /* (what's drawn past an island's sides, the legal titles' wires, stops at its edge) */
   }
+  main > :is(.lg-wrap, .bl-wrap) { --isle-w: 880px; }   /* a reading page's island: as narrow as its column was */
+  main > :is(section, .hm-top) .ov-wrap { max-width: none; padding: 0; }   /* (the island holds the words in) */
 }
-@media (min-width: 1360px) and (prefers-color-scheme: dark) {   /* (dark with no script: the system's setting) */
+@media (min-width: 1024px) and (prefers-color-scheme: dark) {   /* (dark with no script: the system's setting) */
   :root:not([data-theme="light"]) body::before { filter: brightness(.45); }
 }
 
@@ -167,16 +185,13 @@ button, input { font: inherit; color: inherit; }
 .ov-btn-small::before { content: ""; position: absolute; inset: -4px 0; } /* 44px to tap */
 
 /* ---- header (Ryan, Nov 14: a redesign of the top; he chose "the one thats on the side"): a capsule floating at the
-   top of the page, outlined in the page's line, holding the logo, the two sections and Request access. The strip
-   it floats in is the page's color, so the page scrolls away under it. */
+   top of the page, outlined in the page's line, holding the logo, the two sections and Request access. On a phone or
+   a tablet the strip it floats in is the page's color, so the page scrolls away under it; on a computer there's no
+   strip: it floats over the picture, the islands passing under it (see the islands, above). */
 .ov-top { position: sticky; top: 0; z-index: 10; padding-top: 12px; background: var(--page); }
-@media (min-width: 1360px) {   /* beside the column, the picture (see the margins, above): the header is the sheet's top */
+@media (min-width: 1024px) {
   .ov-top { background: none; }
-  .ov-top::before {   /* and the sheet runs on a screen's height above the page (Ryan, Nov 14: "when i scroll up theres
-                         still the black part"): pulling the page down past its top shows more sheet, not the picture */
-    content: ""; position: absolute; top: -100vh; bottom: 0; left: calc(50% - 640px); width: 1280px; z-index: -1;
-    background: var(--page); box-shadow: -1px 0 var(--line), 1px 0 var(--line); pointer-events: none;
-  }
+  .ov-top-row { box-shadow: var(--isle-shadow); }
 }
 .ov-top-row {
   display: flex; align-items: center; gap: 24px; min-height: 56px;
@@ -250,13 +265,13 @@ button, input { font: inherit; color: inherit; }
   color: var(--ink); font-size: 15px; line-height: 1.5;
   overflow-x: hidden; overflow-x: clip;   /* (the wires at its ends run on past the screen's edges) */
 }
-/* pulled on past the page's end (the browser's bounce), more footer: not the margins' picture or the page's color under
-   it (Ryan, Nov 15: "fix that gap too"). What a bounce uncovers there, in Chromium: where something is fixed (the
-   margins' picture, on a wide screen), the picture and whatever the page draws past its end on a layer of its own; so
-   the footer's canvas runs a screen's height on below it, the shadow of an empty box at its bottom, on its own layer
-   (will-change). A shadow is drawn but never scrolled to: the page still ends where the footer does. Where nothing is
-   fixed, the root's background: the footer's canvas too while the page is in its lower half (site.js sets
-   .ov-lower-half), the page's own color in its upper half, so a pull past the top shows the page's. */
+/* pulled on past the page's end (the browser's bounce) on a phone or a tablet, more footer: not the page's color under
+   it (Ryan, Nov 15: "fix that gap too"). What a bounce uncovers there, in Chromium: where nothing is fixed, the root's
+   background, so it's the footer's canvas while the page is in its lower half (site.js sets .ov-lower-half) and the
+   page's own color in its upper half, so a pull past the top shows the page's. Where something is fixed, whatever the
+   page draws past its end on a layer of its own: so the footer's canvas also runs a screen's height on below it, the
+   shadow of an empty box at its bottom, on its own layer (will-change); a shadow is drawn but never scrolled to, so
+   the page still ends where the footer does. (On a computer a bounce shows the picture, fixed behind it all.) */
 @media screen {
   .ov-foot { position: relative; }
   .ov-foot::after {
@@ -264,6 +279,15 @@ button, input { font: inherit; color: inherit; }
     box-shadow: 0 50vh 0 50vh var(--page); will-change: transform;
   }
   :root.ov-lower-half { background: #0c0c0c; }
+}
+/* on a computer the footer is an island too, the last one, the picture around it (Ryan, Nov 16); past the end of the
+   page is the picture, so there's nothing to run on below it */
+@media (min-width: 1024px) {
+  .ov-foot {
+    width: min(var(--isle-w), 100% - 2 * var(--isle-side)); margin: var(--isle-gap) auto;
+    border-top: 0; border-radius: var(--isle-r); box-shadow: 0 0 0 1px var(--isle-edge), var(--isle-shadow);
+  }
+  .ov-foot::after { display: none; }
 }
 @media (prefers-contrast: more) { .ov-foot { --ink-2: #d6d6d6; --line: #7a7a7a; --node-edge: #7a7a7a; --wire: #a3a3a3; } }
 

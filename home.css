@@ -3,8 +3,11 @@
 /* the hero (Ryan, Nov 14: "the one thats on the side", then "make the spacing a bit tighter"): the headline and,
    under it, the lead, on the left */
 .hm-hero { padding-top: clamp(32px, 4vw, 64px); }
-.hm-title { max-width: 15em; }
+.hm-title { max-width: 16em; }   /* (two lines on a computer: "Training agents without / Machine Learning specialists") */
 .hm-hero-side { max-width: 40em; margin-top: clamp(14px, 1.2vw, 18px); }
+/* on a computer the hero and the recording share the first island (Ryan, Nov 16: fewer boxes up top), its own
+   padding the hero's top (site.css, the islands) */
+@media (min-width: 1024px) { .hm-top > .hm-hero { padding-top: 0; } }
 
 /* the recording: a run in Heura Studios, in a thin frame */
 .hm-run { margin-top: clamp(32px, 3.6vw, 56px); }
@@ -52,6 +55,13 @@
 .hm-specs dd { font-size: 16px; line-height: 1.5; color: var(--ink-2); text-wrap: pretty; }
 .hm-specs code { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: .9em; }
 @media (max-width: 559px) { .hm-specs > div { grid-template-columns: minmax(0, 1fr); row-gap: 4px; } }
+/* on a computer, on its island: the title over the list, the list in two columns, so the island has no empty side */
+@media (min-width: 1024px) {
+  #specs > .ov-split { grid-template-columns: minmax(0, 1fr); }
+  #specs > .ov-split > .ov-head + * { margin-top: clamp(32px, 3vw, 48px); }
+  .hm-specs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: clamp(32px, 4vw, 64px); }
+  .hm-specs > div:nth-last-child(2):nth-child(odd) { border-bottom: 1px solid var(--line); }
+}
 
 .hm-request { padding-bottom: clamp(88px, 10vw, 144px); }
 /* the way in for teams that have access: where Request access leads, not in the header (Ryan, Oct 19) */
