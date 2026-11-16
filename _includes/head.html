@@ -15,10 +15,10 @@
   Runs before the first paint so the page never flashes the wrong theme: the saved choice (localStorage "ov-theme")
   or the system's. Also marks that JS is on (ov-js) and, on pages with reveal: true, that animations are
   allowed (ov-motion: not with Reduce Motion).
-  And picks the margins' backdrop (site.css, html[data-backdrop]): one picture per visit, kept while the visit lasts
+  And picks the backdrop picture (site.css, html[data-backdrop]): one picture per visit, kept while the visit lasts
   (sessionStorage "ov-backdrop"), never the last visit's twice running (localStorage "ov-backdrop-last"). Mountains,
-  the ocean or clouds, a third of the time each; clouds are one of five. Where the margins show, the picture starts
-  loading at once.
+  the ocean or clouds, a third of the time each; clouds are one of five. On a computer (1024px and wider), where the
+  picture shows, it starts loading at once.
 {%- endcomment %}
 <script>
 (function (d) {
@@ -40,7 +40,7 @@
     try { sessionStorage.setItem('ov-backdrop', pick); localStorage.setItem('ov-backdrop-last', pick); } catch (e) {}
   }
   d.setAttribute('data-backdrop', pick);
-  if (w.matchMedia && matchMedia('(min-width: 1360px)').matches) {
+  if (w.matchMedia && matchMedia('(min-width: 1024px)').matches) {
     link = document.createElement('link');
     link.rel = 'preload'; link.as = 'image'; link.type = 'image/webp'; link.href = '/img/backdrops/' + pick + '.webp';
     document.head.appendChild(link);
@@ -71,7 +71,7 @@
 <meta property="og:image" content="https://heurastudios.com/og-image.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="Heura Studios. Specialize the base before you ship the agent. Beside it, a model’s pipeline in Heura Studios.">
+<meta property="og:image:alt" content="Heura Studios. Training agents without Machine Learning specialists. Beside it, a model’s pipeline in Heura Studios.">
 {%- if page.layout == 'post' %}
 <meta property="article:published_time" content="{{ page.date | date: '%Y-%m-%d' }}">
 {%- endif %}
