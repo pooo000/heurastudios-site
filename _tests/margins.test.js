@@ -8,11 +8,16 @@
 // - Nov 14: the margins are a photograph now, not the canvas: "a shuffle between the mountains, the ocean and the
 //   clouds". One picture per visit (mountains, the ocean or clouds, a third of the time each; clouds are one of five),
 //   the same on every page while the visit lasts, never the last visit's twice running; dimmed in dark.
-// - "make the middle section stand out more": the column is a sheet on the canvas, the page's color with an edge.
+// - "make the middle section stand out more": the column was a sheet on the canvas, the page's color with an edge.
+// - Nov 16: "a new concept of just having floating islands for text and make everything else just the background ...
+//   like cut the strip in the middle", then "ship the computer version". On a computer (1024px and wider) there's no
+//   sheet: the picture is the whole page's background and each section is an island floating on it (a reading page's
+//   one block is one, as narrow as its column was), the header's capsule floats over it with no strip, and the footer
+//   is an island too. Phones and tablets keep the page as it was, with no picture.
 // - "for the privacy policy ... add like the pipeline lines as deco", then "make the terms like that too": each legal
-//   page's title is a node on a pipeline, wires running in from the screen's left edge and out past its right edge,
-//   never over the words. And ("make the bottom privacy and terms and blog thing into the pipelines themselves") the
-//   footer is a pipeline: its sections are nodes on the Studio's dark canvas, wired in order.
+//   page's title is a node on a pipeline, wires running in from the left and out past the right, never over the words
+//   (on a computer they run to its island's edges). And ("make the bottom privacy and terms and blog thing into the
+//   pipelines themselves") the footer is a pipeline: its sections are nodes on the Studio's dark canvas, wired in order.
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const { startServer, launch, readPng } = require('./helpers');
@@ -20,23 +25,24 @@ const { startServer, launch, readPng } = require('./helpers');
 const PAGES = ['/', '/tools/', '/waitlist/', '/privacy/', '/terms/'];
 const LEGAL = ['/privacy/', '/terms/'];
 const COLUMN = 1184;   // what .ov-wrap leaves for the words and panels on a wide screen: 1280px less 48px each side
-const SHEET = 1280;    // the sheet under the column: .ov-wrap's own width
+const ISLAND = 1280;   // an island at its widest (a reading page's: 880)
 const PAGE = { light: 255, dark: 0 };     // the page's own color, a channel
 const BACKDROPS = ['mountains', 'ocean', 'clouds-summer', 'clouds-towers', 'clouds-drift', 'clouds-bank', 'clouds-above'];
-const EDGE = { light: 228, dark: 38 };    // the sheet's edge, the page's rule (#e4e4e4, #262626)
+const EDGE = { light: 228, dark: 38 };    // the page's rule (#e4e4e4, #262626): the capsule's outline; in dark, an island's
 
 let server, browser;
 test.before(async () => { server = await startServer(); browser = await launch(); });
 test.after(async () => { await browser.close(); await server.close(); });
 
-// A page at a size, with what's in main hidden, so a screenshot shows only what's drawn behind it; its backdrop the one
-// named (this visit's pick, as the page's own script keeps it), loaded before anything is measured
-async function bare(path, width, scheme = 'light', height = 1000, backdrop = 'mountains') {
+// A page at a size, with what's in main hidden (or what `hide` names), so a screenshot shows only what's drawn behind
+// it; its backdrop the one named (this visit's pick, as the page's own script keeps it), loaded before anything is
+// measured
+async function bare(path, width, scheme = 'light', height = 1000, backdrop = 'mountains', hide = 'main *') {
   const ctx = await browser.newContext({ viewport: { width, height }, colorScheme: scheme, reducedMotion: 'reduce' });
   await ctx.addInitScript((name) => sessionStorage.setItem('ov-backdrop', name), backdrop);
   const page = await ctx.newPage();
   await page.goto(server.url + path);
-  await page.addStyleTag({ content: 'main * { visibility: hidden !important; }' });
+  await page.addStyleTag({ content: `${hide} { visibility: hidden !important; }` });
   await loaded(page);
   return { page, close: () => ctx.close() };
 }
@@ -92,19 +98,60 @@ function share(shot, x, color) {
   return n / shot.height;
 }
 
-test('on a wide screen both margins are the backdrop photograph, and nothing is drawn within 20px of the column', async () => {
-  const width = 1600, margin = (width - COLUMN) / 2;   // the column's words start 208px in
-  for (const scheme of ['light', 'dark']) {
-    for (const path of PAGES) {
-      const { page, close } = await bare(path, width, scheme);
-      const shot = await band(page, { x: 0, y: 120, width, height: 360 });
-      const at = `${path} (${scheme})`;
-      for (const [x0, x1] of [[0, margin - 60], [width - 1 - (margin - 60), width - 1]]) {
-        assert.ok(share(shot, x0 + 30, PAGE[scheme]) < 0.05, `${at}: the picture, not the page, at x ${x0 + 30}`);
-        assert.ok(levels(shot, x0, x1) > 40, `${at}: a photograph's tones at x ${x0} to ${x1} (${levels(shot, x0, x1)})`);
+test('on a computer the backdrop photograph is the whole page’s background, from edge to edge, on every page', async () => {
+  for (const width of [1024, 1600]) {
+    const q = Math.round(width / 4);
+    for (const scheme of ['light', 'dark']) {
+      for (const path of PAGES) {
+        const { page, close } = await bare(path, width, scheme, 1000, 'mountains', 'body > *');
+        const shot = await band(page, { x: 0, y: 120, width, height: 360 });
+        const at = `${path} at ${width}px (${scheme})`;
+        for (const [x0, x1] of [[0, q - 1], [q, 3 * q - 1], [3 * q, width - 1]]) {
+          assert.ok(share(shot, x0 + 30, PAGE[scheme]) < 0.05, `${at}: the picture, not the page, at x ${x0 + 30}`);
+          assert.ok(levels(shot, x0, x1) > 12, `${at}: a photograph's tones at x ${x0} to ${x1} (${levels(shot, x0, x1)})`);
+        }
+        await close();
       }
-      assert.equal(farthest(shot, margin - 20, width - 1 - (margin - 20), PAGE[scheme]), 0,
-        `${at}: nothing behind the column or in the 20px before it`);
+    }
+  }
+});
+
+// An island on the screen: main's n-th child
+async function island(page, n = 0) {
+  return page.evaluate((n) => {
+    const r = document.querySelector('main').children[n].getBoundingClientRect();
+    return { x: r.x, y: r.y, w: r.width, h: r.height };
+  }, n);
+}
+
+test('on a computer the words sit on islands: the page’s color, rounded, the picture beside and between them', async () => {
+  const width = 1600, r = 32;   // (an island's corners at this width)
+  for (const scheme of ['light', 'dark']) {
+    const color = [PAGE[scheme], PAGE[scheme], PAGE[scheme]].join();
+    for (const [path, wide] of [['/', ISLAND], ['/tools/', ISLAND], ['/privacy/', 880]]) {
+      const { page, close } = await bare(path, width, scheme, 1000, 'mountains', 'main > * *');
+      const isle = await island(page);
+      const at = `${path} (${scheme})`;
+      assert.ok(Math.abs(isle.w - wide) < 1 && Math.abs(isle.x - (width - wide) / 2) < 1, `${at}: ${wide}px wide, in the middle (${isle.x}, ${isle.w})`);
+      const left = Math.round(isle.x), right = Math.round(isle.x + isle.w) - 1;
+      const shot = await band(page, { x: 0, y: Math.round(isle.y) + r, width, height: 200 });
+      assert.equal(farthest(shot, left, right, PAGE[scheme]), 0, `${at}: the island is the page's color`);
+      assert.ok(share(shot, 30, PAGE[scheme]) < 0.05 && share(shot, width - 31, PAGE[scheme]) < 0.05, `${at}: the picture beside it`);
+      assert.ok(levels(shot, 0, left - 10) > 12, `${at}: a photograph's tones there`);
+      if (scheme === 'dark') assert.equal(share(shot, left - 1, EDGE.dark), 1, `${at}: its outline, the page's rule`);
+      // its corners rounded: the picture at the very corner, the island a radius in
+      const corner = await band(page, { x: left, y: Math.round(isle.y), width: r, height: r });
+      assert.notEqual(corner.rgb(1, 1).join(), color, `${at}: a rounded corner`);
+      assert.equal(corner.rgb(r - 1, r - 1).join(), color, `${at}: the island inside it`);
+      if (path === '/') {   // the picture between the first island and the next (scrolled to the middle of the screen)
+        await page.evaluate((y) => scrollTo(0, y), Math.round(isle.y + isle.h) - 500);
+        await page.waitForTimeout(100);
+        const first = await island(page), next = await island(page, 1);
+        const top = Math.round(first.y + first.h) + 2, gap = Math.round(next.y) - 2 - top;
+        assert.ok(gap >= 20, `${at}: a gap between them (${gap}px)`);
+        const between = await band(page, { x: 0, y: top, width, height: gap });
+        assert.ok(share(between, width / 2, PAGE[scheme]) < 0.05 && levels(between, 0, width - 1) > 12, `${at}: the picture between two islands`);
+      }
       await close();
     }
   }
@@ -120,23 +167,6 @@ test('in dark the backdrop is dimmed: under half as bright as in light', async (
       await close();
     }
     assert.ok(bright.dark < bright.light * 0.5, `${backdrop}: dark ${bright.dark.toFixed(0)}, light ${bright.light.toFixed(0)}`);
-  }
-});
-
-test('the middle stands out: a sheet of the page’s color under the column, with an edge, on the picture', async () => {
-  const width = 1600, left = (width - SHEET) / 2, right = left + SHEET;   // the sheet runs from 160px to 1440px
-  for (const scheme of ['light', 'dark']) {
-    for (const path of ['/', '/privacy/']) {
-      const { page, close } = await bare(path, width, scheme);
-      const shot = await band(page, { x: 0, y: 120, width, height: 360 });
-      const at = `${path} (${scheme})`;
-      assert.equal(share(shot, left - 1, EDGE[scheme]), 1, `${at}: the sheet's left edge`);
-      assert.equal(share(shot, right, EDGE[scheme]), 1, `${at}: the sheet's right edge`);
-      assert.equal(farthest(shot, left, right - 1, PAGE[scheme]), 0, `${at}: the sheet is the page's color`);
-      assert.ok(share(shot, left - 6, PAGE[scheme]) < 0.05 && share(shot, right + 5, PAGE[scheme]) < 0.05,
-        `${at}: the picture right up to the edge`);
-      await close();
-    }
   }
 });
 
@@ -205,8 +235,8 @@ test('one picture per visit: the same on every page while the visit lasts, anoth
   await ctx.close();
 });
 
-test('a phone, or a laptop with no room beside the column, gets no picture and no sheet, and fetches no picture', async () => {
-  for (const [width, height] of [[390, 844], [1280, 860]]) {
+test('a phone or a tablet (under 1024px) gets no picture and no islands, and fetches no picture', async () => {
+  for (const [width, height] of [[390, 844], [768, 1024], [1000, 800]]) {
     for (const path of PAGES) {
       const ctx = await browser.newContext({ viewport: { width, height }, reducedMotion: 'reduce' });
       const page = await ctx.newPage();
@@ -218,36 +248,41 @@ test('a phone, or a laptop with no room beside the column, gets no picture and n
       const shot = await band(page, { x: 0, y: 120, width, height: 360 });
       assert.equal(farthest(shot, 0, width - 1, PAGE.light), 0, `${path} at ${width}px`);
       assert.deepEqual(fetched, [], `${path} at ${width}px: no picture fetched`);
+      const corners = await page.evaluate(() => [...document.querySelector('main').children, document.querySelector('.ov-foot')]
+        .map(e => getComputedStyle(e).borderTopLeftRadius));
+      assert.ok(corners.every(c => c === '0px'), `${path} at ${width}px: no islands (${corners})`);
       await ctx.close();
     }
   }
 });
 
-// Ryan, 22:29 (the header's white over both margins circled): "can you also remove these two sides". Beside the
-// header the canvas runs on up to the top of the screen; the header covers only the column, as the sheet's top.
-// Nov 14: the header is a capsule floating in the sheet's top (option B), outlined, with no rule under it.
-test('beside the header the picture runs to the top of the screen: the header is the sheet’s top, its capsule outlined; the footer has a canvas of its own', async () => {
-  const width = 1600, left = (width - SHEET) / 2, right = left + SHEET;
+// Ryan, 22:29 (the header's white over both margins circled): "can you also remove these two sides". Nov 14: the header
+// is a capsule floating at the top (option B), outlined, with no rule under it. Nov 16, on a computer: no strip at all,
+// the capsule floats on the picture; the footer is an island of the Studio's dark canvas.
+test('on a computer the header’s capsule floats on the picture, no strip beside or above it, outlined; the footer is an island of the Studio’s dark canvas', async () => {
+  const width = 1600;
   for (const scheme of ['light', 'dark']) {
     const { page, close } = await bare('/', width, scheme);
     const header = await page.locator('header.ov-top').boundingBox();
-    const rule = Math.round(header.y + header.height) - 1;   // the header's bottom row (no rule there now)
     const capsule = await page.locator('.ov-top-row').boundingBox();
-    const clip = { x: 0, y: 0, width, height: rule + 1 };
+    const clip = { x: 0, y: 0, width, height: Math.round(header.y + header.height) };
     const still = await band(page, clip);
     await page.evaluate(() => scrollTo(0, 700));
     await page.waitForTimeout(150);
     const top = await band(page, clip);
-    const at = `${scheme}`;
+    const at = `${scheme}`, cl = Math.round(capsule.x), cr = Math.round(capsule.x + capsule.width) - 1;
+    const color = `${PAGE[scheme]},${PAGE[scheme]},${PAGE[scheme]}`, edge = `${EDGE[scheme]},${EDGE[scheme]},${EDGE[scheme]}`;
     for (const shot of [still, top]) {
-      assert.ok(share(shot, 30, PAGE[scheme]) < 0.05 && share(shot, width - 31, PAGE[scheme]) < 0.05,
-        `${at}: the picture beside the header`);
+      for (const x of [30, cl - 30, cr + 30, width - 31]) {
+        assert.ok(share(shot, x, PAGE[scheme]) < 0.05, `${at}: the picture beside the capsule, at x ${x}`);
+      }
       // (a flat fill is one level; the dimmed sky in dark keeps fewer than in light)
-      assert.ok(levels(shot, 0, left - 20) > 8, `${at}: a photograph's tones there (${levels(shot, 0, left - 20)})`);
-      assert.equal(share(shot, left - 1, EDGE[scheme]), 1, `${at}: the sheet's left edge, from the top of the screen`);
-      assert.equal(share(shot, right, EDGE[scheme]), 1, `${at}: and its right edge`);
+      assert.ok(levels(shot, 0, cl - 10) > 8, `${at}: a photograph's tones there (${levels(shot, 0, cl - 10)})`);
+      let flat = 0;   // above it too: the picture, not a strip of the page's color
+      for (let x = cl + 40; x < cr - 40; x += 10) if (shot.rgb(x, Math.round(capsule.y) - 5).join() === color) flat++;
+      assert.ok(flat < 5, `${at}: the picture above the capsule (${flat} of the page's color)`);
     }
-    // the picture beside it stays still while the page scrolls under the header
+    // the picture beside the capsule stays still while the page scrolls under it
     let moved = 0;
     for (let y = 0; y < still.height; y++) {
       for (const x of [0, 40, 80, 120, width - 121, width - 81, width - 41, width - 1]) {
@@ -255,75 +290,79 @@ test('beside the header the picture runs to the top of the screen: the header is
       }
     }
     assert.equal(moved, 0, `${at}: the picture beside the header doesn't move`);
-    // the header's part of the sheet: the page's color beside the capsule, before and after the page scrolls (no rule
-    // under it); the capsule's outline in the page's line color, its inside the page's color
-    const sheet = `${PAGE[scheme]},${PAGE[scheme]},${PAGE[scheme]}`, edge = `${EDGE[scheme]},${EDGE[scheme]},${EDGE[scheme]}`;
-    for (const x of [left + 20, right - 21]) {
-      for (const shot of [still, top]) for (let y = 0; y <= rule; y++) assert.equal(shot.rgb(x, y).join(), sheet, `${at}: the sheet, (${x}, ${y})`);
-    }
+    // the capsule's outline in the page's line color, its inside the page's color
     const mid = Math.round(width / 2);
     for (const shot of [still, top]) {
       assert.equal(shot.rgb(mid, Math.round(capsule.y)).join(), edge, `${at}: the capsule's top edge`);
       assert.equal(shot.rgb(mid, Math.round(capsule.y + capsule.height) - 1).join(), edge, `${at}: its bottom edge`);
-      assert.equal(shot.rgb(mid, Math.round(capsule.y) + 3).join(), sheet, `${at}: inside it`);
-      assert.equal(shot.rgb(mid, Math.round(capsule.y) - 3).join(), sheet, `${at}: the sheet above it`);
+      assert.equal(shot.rgb(mid, Math.round(capsule.y) + 3).join(), color, `${at}: inside it`);
     }
     await page.evaluate(() => scrollTo(0, document.documentElement.scrollHeight));
     await page.waitForTimeout(100);
+    const foot = await page.locator('.ov-foot').boundingBox();
     const row = await page.locator('.ov-foot-bottom').boundingBox();   // (the wires run higher up, by the nodes)
     const shot = await band(page, { x: 0, y: Math.ceil(row.y) + 2, width, height: 40 });
-    // the footer's own canvas, always the Studio's dark one: #0c0c0c, its dots #2c2c2c
-    const dark = farthest(shot, 0, 140, 12);
-    assert.ok(dark > 20 && dark <= 33, `${scheme}: the footer's dark canvas and its dots (${dark})`);
+    const fx = Math.round(foot.x);
+    assert.ok(Math.abs(foot.width - ISLAND) < 1 && Math.abs(foot.x - (width - ISLAND) / 2) < 1, `${at}: the footer as wide as an island (${foot.x}, ${foot.width})`);
+    // its own canvas, always the Studio's dark one: #0c0c0c, its dots #2c2c2c (between its edge and its words)
+    const dark = farthest(shot, fx + 6, fx + 40, 12);
+    assert.ok(dark > 20 && dark <= 33, `${at}: the footer's dark canvas and its dots (${dark})`);
+    assert.ok(share(shot, 30, 12) < 0.05 && levels(shot, 0, fx - 10) > 8, `${at}: the picture beside the footer`);
     await close();
   }
 });
 
 // Ryan, Nov 14 (dark, the page pulled down past its top, the picture showing above the sheet): "elongate the strip so
-// like when i scroll up theres still the black part". The header's part of the sheet runs a screen's height up above
-// the page, so a pull past the top shows sheet between the margins. (Pulled here by moving the page's own boxes down,
-// as the browser's bounce does; the picture is fixed and stays.)
-test('pulled down past its top, the page shows more sheet between the margins, not the picture', async () => {
-  const width = 1600, left = (width - SHEET) / 2, right = left + SHEET;
-  for (const scheme of ['light', 'dark']) {
-    const { page, close } = await bare('/', width, scheme);
-    const reach = await page.evaluate(() => -parseFloat(getComputedStyle(document.querySelector('.ov-top'), '::before').top));
-    assert.ok(reach >= 1000, `${scheme}: the sheet runs ${reach}px above the page`);
-    await page.evaluate(() => { for (const el of document.body.children) if (el.tagName !== 'SCRIPT') el.style.translate = '0 150px'; });
-    await page.waitForTimeout(100);
-    const shot = await band(page, { x: 0, y: 0, width, height: 140 });
-    for (const x of [left + 2, Math.round(width / 2), right - 3]) {
-      assert.equal(share(shot, x, PAGE[scheme]), 1, `${scheme}: sheet above the page at x ${x}`);
+// like when i scroll up theres still the black part"; that sheet ran a screen's height above the page. Nov 16, on a
+// computer, the picture is the background of it all: pulled down past its top the page shows more picture, with no
+// strip to run out. (Pulled here by moving the page's own boxes down, as the browser's bounce does; the picture is
+// fixed and stays. bounce.test.js pulls with Chromium's own bounce, phones and tablets too.)
+test('on a computer, pulled down past its top, the page shows the picture above it, all the way across', async () => {
+  for (const width of [1600, 1024]) {
+    for (const scheme of ['light', 'dark']) {
+      const { page, close } = await bare('/', width, scheme);
+      assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector('.ov-top'), '::before').content), 'none',
+        `${width} ${scheme}: no strip above the header`);
+      await page.evaluate(() => { for (const el of document.body.children) if (el.tagName !== 'SCRIPT') el.style.translate = '0 150px'; });
+      await page.waitForTimeout(100);
+      const shot = await band(page, { x: 0, y: 0, width, height: 140 });
+      for (const x of [30, Math.round(width / 2), width - 31]) {
+        assert.ok(share(shot, x, PAGE[scheme]) < 0.05, `${width} ${scheme}: the picture above the page at x ${x}`);
+      }
+      assert.ok(levels(shot, 0, width - 1) > 12, `${width} ${scheme}: a photograph's tones`);
+      await close();
     }
-    assert.equal(share(shot, left - 1, EDGE[scheme]), 1, `${scheme}: with its left edge`);
-    assert.equal(share(shot, right, EDGE[scheme]), 1, `${scheme}: and its right edge`);
-    assert.ok(share(shot, 30, PAGE[scheme]) < 0.05, `${scheme}: the picture beside it`);
-    await close();
   }
 });
 
 // Ryan, Nov 15: "The bottom is kina cooked too bro fix that gap too". Pulled up past its end, the page showed the
-// picture under the dark footer (or, where there's no picture, the page's own color: white in light). The footer's
-// canvas runs a screen's height on below the page now, as ink that doesn't scroll (a shadow), so a pull past the end
-// shows more footer and the page still ends where the footer does. (Pulled as above, deeper than a bounce goes;
-// bounce.test.js pulls with Chromium's own bounce.)
-test('pulled up past its end, the page shows more footer, not the picture or the page color', async () => {
+// picture under the dark footer (or, where there's no picture, the page's own color: white in light). On a phone or a
+// tablet the footer's canvas runs a screen's height on below the page now, as ink that doesn't scroll (a shadow), so
+// a pull past the end shows more footer and the page still ends where the footer does. Nov 16, on a computer: the
+// footer is an island, the picture below it, so a pull shows more picture. (Pulled as above, deeper than a bounce goes.)
+test('pulled up past its end: on a phone or a tablet more footer, not the page color; on a computer the picture', async () => {
   const FOOT = 12;   // the footer's canvas, #0c0c0c
-  for (const [width, height] of [[1600, 1000], [1280, 900], [390, 844]]) {
+  const tones = (shot, x) => levels(shot, Math.max(0, x - 5), Math.min(shot.width - 1, x + 5));
+  for (const [width, height] of [[1600, 1000], [1280, 900], [1024, 768], [768, 1024], [390, 844]]) {
+    const computer = width >= 1024;
     for (const scheme of ['light', 'dark']) {
       const { page, close } = await bare('/', width, scheme, height);
       const end = await page.evaluate(() => {
         scrollTo(0, document.documentElement.scrollHeight);
-        const root = document.documentElement;
-        return { foot: document.querySelector('.ov-foot').getBoundingClientRect().bottom, sideways: root.scrollWidth - root.clientWidth };
+        const root = document.documentElement, foot = document.querySelector('.ov-foot');
+        return { foot: foot.getBoundingClientRect().bottom, after: parseFloat(getComputedStyle(foot).marginBottom),
+          sideways: root.scrollWidth - root.clientWidth };
       });
-      assert.ok(Math.abs(end.foot - height) < 1, `${width} ${scheme}: the page ends where the footer does (${end.foot})`);
-      assert.equal(end.sideways, 0, `${width} ${scheme}: and doesn't scroll sideways`);
+      const at = `${width} ${scheme}`;
+      assert.ok(Math.abs(end.foot + end.after - height) < 1, `${at}: the page ends at the footer and its margin (${end.foot} + ${end.after})`);
+      assert.equal(end.after > 0, computer, `${at}: ${computer ? 'picture' : 'nothing'} below the footer`);
+      assert.equal(end.sideways, 0, `${at}: and doesn't scroll sideways`);
       await page.evaluate(() => { for (const el of document.body.children) if (el.tagName !== 'SCRIPT') el.style.translate = '0 -150px'; });
       await page.waitForTimeout(100);
       const shot = await band(page, { x: 0, y: height - 140, width, height: 140 });
       for (const x of [2, 30, Math.round(width / 2), width - 31, width - 3]) {
-        assert.equal(share(shot, x, FOOT), 1, `${width} ${scheme}: footer below the page at x ${x}`);
+        if (computer) assert.ok(tones(shot, x) > 8 && share(shot, x, PAGE[scheme]) < 0.05, `${at}: the picture below the page at x ${x}`);
+        else assert.equal(share(shot, x, FOOT), 1, `${at}: footer below the page at x ${x}`);
       }
       await close();
     }
@@ -356,18 +395,19 @@ function wire(shot, x0, x1, from) {
   return n;
 }
 
-// A node's wires: in from the screen's left edge to ports left of box, out of one right of it past the right edge,
-// nothing between (box: the node's words, hidden)
-function wired(shot, box, width, from, at) {
+// A node's wires: in from the left edge x0 to ports left of box, out of one right of it to the right edge x1, nothing
+// between (box: the node's words, hidden), and nothing past the edges
+function wired(shot, box, x0, x1, from, at) {
   const left = Math.floor(box.x) - 9, right = Math.ceil(box.x + box.width) + 8;
-  assert.ok(wire(shot, 0, left, from) > 0, `${at}: wires on the left`);
-  assert.ok(wire(shot, right, width - 1, from) > 0, `${at}: wires on the right`);
-  assert.ok(wire(shot, 0, 2, from) > 0, `${at}: in from the screen's left edge`);
-  assert.ok(wire(shot, width - 3, width - 1, from) > 0, `${at}: out past its right edge`);
+  assert.ok(wire(shot, x0, left, from) > 0, `${at}: wires on the left`);
+  assert.ok(wire(shot, right, x1, from) > 0, `${at}: wires on the right`);
+  assert.ok(wire(shot, x0, x0 + 2, from) > 0, `${at}: in from the left edge (${x0})`);
+  assert.ok(wire(shot, x1 - 2, x1, from) > 0, `${at}: out to the right edge (${x1})`);
   assert.equal(farthest(shot, left + 9, right - 8, from), 0, `${at}: nothing over the words`);
+  if (x0 > 2) assert.equal(wire(shot, 0, x0 - 3, from) + wire(shot, x1 + 3, shot.width - 1, from), 0, `${at}: nothing past the edges`);
 }
 
-test('the Privacy Policy and the Terms: wires run in to the title from the left edge and out to the right edge, never over the words', async () => {
+test('the Privacy Policy and the Terms: wires run in to the title and out, never over the words; on a computer from its island’s left edge to its right edge', async () => {
   for (const path of LEGAL) {
     for (const scheme of ['light', 'dark']) {
       for (const width of [1600, 1180]) {
@@ -376,9 +416,10 @@ test('the Privacy Policy and the Terms: wires run in to the title from the left 
         await page.goto(server.url + path);
         await page.addStyleTag({ content: '.lg-title h1, .lg-main section { visibility: hidden !important; } body::before { background: none !important; }' });
         const title = await page.locator('.lg-title').boundingBox();
+        const isle = await page.locator('main > .lg-wrap').boundingBox();
         const middle = Math.round(title.y + title.height / 2);
         const shot = await band(page, { x: 0, y: middle - 80, width, height: 160 });
-        wired(shot, title, width, PAGE[scheme], `${path} at ${width}px (${scheme})`);
+        wired(shot, title, Math.round(isle.x), Math.round(isle.x + isle.width) - 1, PAGE[scheme], `${path} at ${width}px (${scheme})`);
         await ctx.close();
       }
     }

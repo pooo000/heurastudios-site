@@ -70,7 +70,7 @@ test('every page describes the share card it shows: the headline and a model’s
     const { page, errors, close } = await open(path);
     assert.equal(await page.locator('meta[property="og:image"]').getAttribute('content'), 'https://heurastudios.com/og-image.png', path);
     assert.equal(await page.locator('meta[property="og:image:alt"]').getAttribute('content'),
-      'Heura Studios. Specialize the base before you ship the agent. Beside it, a model’s pipeline in Heura Studios.', path);
+      'Heura Studios. Training agents without Machine Learning specialists. Beside it, a model’s pipeline in Heura Studios.', path);
     assert.deepEqual(errors, [], path);
     await close();
   }

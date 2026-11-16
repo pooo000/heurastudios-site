@@ -51,7 +51,8 @@ async function fill(page, values) {
 test('the hero: the headline and the lead, and the header has the one Request access', async () => {
   const { page, errors, close } = await open('/');
   assert.equal(await page.title(), 'Post-training for AI-native companies – Heura Studios');
-  assert.equal(await page.locator('h1').innerText(), 'Specialize the base before you ship the agent.');
+  // (Ryan, Nov 16: "can you change the heading into Training agents without Machine Learning specialists")
+  assert.equal(await page.locator('h1').innerText(), 'Training agents without Machine Learning specialists');
   // (Ryan, Nov 14: "make it straight to the point"): three short lines
   assert.equal((await page.locator('.hm-hero .ov-lead').innerText()).replace(/\s+/g, ' '),
     'Fine-tune the base on your team’s examples. Test every version on your eval set. Ship only the ones that don’t get worse.');
