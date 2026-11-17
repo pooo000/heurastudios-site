@@ -1,7 +1,7 @@
 // Ryan, Oct 14, 2026: "change the website name into heura studios with an S and add the logo to the thing where you
 // see the link". A browser tab, a bookmark and a search result show the site's icon; a shared link's preview shows
 // the site's name and a picture. All of them are the Heura Studios logo and name. The logo since Oct 26, 2026 ("make
-// that our company logo now"): five pipeline wires plugged in on the left, three running as one bundle through the
+// that our company logo now"): five pipeline wires (no plugs since Nov 17), three running as one bundle through the
 // middle, black and white only. favicon.svg is the bare mark (white in dark mode); the other icons are the mark in
 // white on a black tile, so they show on light and dark tab bars alike.
 const test = require('node:test');
@@ -84,7 +84,8 @@ test('each icon is the logo: the wires in white on a black tile, and favicon.svg
   }
   const svg = await draw(page, `${server.url}/favicon.svg`);
   assert.ok(black(svg.wire), `favicon.svg: the middle wire is black, got ${svg.wire}`);
-  assert.ok(black(svg.plug), `favicon.svg: the middle wire's plug is black, got ${svg.plug}`);
+  assert.ok(black(svg.plug), `favicon.svg: the middle wire's round end is black, got ${svg.plug}`);
+  assert.doesNotMatch(fs.readFileSync(path.join(ROOT, 'favicon.svg'), 'utf8'), /<circle/, 'favicon.svg: no plugs (Nov 17)');
   assert.ok(svg.gap[3] < 30, `favicon.svg: nothing between the wires, got ${svg.gap}`);
   await ctx.close();
   const dark = await browser.newContext({ colorScheme: 'dark' });

@@ -1,8 +1,9 @@
 """Makes the site's logo files from the one drawing of the Heura Studios mark.
 
-The mark (Ryan, Oct 26, 2026: "make that our company logo"): five pipeline wires, each plugged in on the left. The
-outer two run straight; the next two dip into the middle wire and climb back out, so three wires run as one bundle
-through the model, then split again. Black and white only.
+The mark (Ryan, Oct 26, 2026: "make that our company logo"): five pipeline wires. The outer two run straight; the
+next two dip into the middle wire and climb back out, so three wires run as one bundle through the model, then split
+again. Black and white only. Since Nov 17, 2026 (Ryan sent "Bundle_no_dots"): no plugs, every wire centred, so the
+mark is mirror-symmetric both ways; the numbers below are fitted to his image.
 
 usage: python3 _tools/make-logo.py [--card]   (needs Playwright for Python and Pillow)
   Writes, at the repo's root:
@@ -25,10 +26,11 @@ from playwright.sync_api import sync_playwright
 ROOT = Path(__file__).resolve().parent.parent
 
 # ── the drawing ────────────────────────────────────────────────────────────────
-R, PITCH, T, PLUG = 50.0, 20.0, 8.4, 7.56     # the circle the wires fill, the wires' pitch and width, a plug's radius
+PITCH, T = 20.8, 8.7                          # the wires' pitch and width
 CX = CY = 60.0
-XB, L, M = 12.0, 12.0, 0.52                   # the bundle's half-length, a bend's length, how far the wires pull in
-VIEW = (10.0, 12.44, 100.0, 95.12)            # the mark's bounds: x 10 to 110, y 12.44 to 107.56
+XB, L, M = 13.0, 13.3, 0.635                  # the bundle's half-length, a bend's length, where the dipped wires sit
+HALF = (17.25, 40.9, 45.9)                    # each wire's half-length to its round end's centre: outer, dipping, middle
+VIEW = (9.75, 14.05, 100.5, 91.9)             # the mark's bounds: x 9.75 to 110.25, y 14.05 to 105.95
 
 
 def f(v):
@@ -37,13 +39,12 @@ def f(v):
 
 
 def wires():
-    """[(path, plug centre)], top to bottom. A bend is a cubic whose height follows smoothstep: level at both ends."""
+    """the five wires' paths, top to bottom. A bend is a cubic whose height follows smoothstep: level at both ends."""
     out = []
     for k in (-2, -1, 0, 1, 2):
         dy = k * PITCH
         y = CY + dy
-        xl = CX - math.sqrt((R - PLUG) ** 2 - dy * dy)     # the plug touches the circle from inside
-        xr = CX + math.sqrt((R - T / 2) ** 2 - dy * dy)    # so does the wire's round end
+        xl, xr = CX - HALF[2 - abs(k)], CX + HALF[2 - abs(k)]
         if abs(k) == 1:
             yi = CY + dy * M
             a, b, c, d = CX - XB - L, CX - XB, CX + XB, CX + XB + L
@@ -51,7 +52,7 @@ def wires():
                     f'H{f(c)}C{f(c + L / 3)} {f(yi)} {f(c + 2 * L / 3)} {f(y)} {f(d)} {f(y)}H{f(xr)}')
         else:
             path = f'M{f(xl)} {f(y)}H{f(xr)}'
-        out.append((path, (xl, y)))
+        out.append(path)
     return out
 
 
@@ -59,8 +60,7 @@ def body(color, transform=''):
     tr = f' transform="{transform}"' if transform else ''
     ws = wires()
     return (f'<g{tr}><g fill="none" stroke="{color}" stroke-width="{f(T)}" stroke-linecap="round">'
-            + ''.join(f'<path d="{d}"/>' for d, _ in ws) + f'</g><g fill="{color}">'
-            + ''.join(f'<circle cx="{f(x)}" cy="{f(y)}" r="{f(PLUG)}"/>' for _, (x, y) in ws) + '</g></g>')
+            + ''.join(f'<path d="{d}"/>' for d in ws) + '</g></g>')
 
 
 # The inline SVG the pages use for `.ov-mark` (currentColor follows the logo's ink, light or dark).
@@ -71,11 +71,10 @@ MARK = (f'<svg class="ov-mark" viewBox="{" ".join(f(v) for v in VIEW)}" aria-hid
 def favicon_svg():
     """the bare mark on a square grid (10..110), black, white when the browser is dark"""
     ws = wires()
-    return ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="10 10 100 100"><style>.w{stroke:#000}.p{fill:#000}'
-            '@media (prefers-color-scheme:dark){.w{stroke:#fff}.p{fill:#fff}}</style>'
+    return ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="10 10 100 100"><style>.w{stroke:#000}'
+            '@media (prefers-color-scheme:dark){.w{stroke:#fff}}</style>'
             f'<g class="w" fill="none" stroke-width="{f(T)}" stroke-linecap="round">'
-            + ''.join(f'<path d="{d}"/>' for d, _ in ws) + '</g><g class="p">'
-            + ''.join(f'<circle cx="{f(x)}" cy="{f(y)}" r="{f(PLUG)}"/>' for _, (x, y) in ws) + '</g></svg>\n')
+            + ''.join(f'<path d="{d}"/>' for d in ws) + '</g></svg>\n')
 
 
 def tile_svg(size, width, radius=0.225, bg='#000', fg='#fff'):
@@ -102,13 +101,13 @@ def save_png(img, path):
 
 
 def card(page):
-    """Puts the mark into og-image.png where the old one was: the card's logo (a 40 px square at 72,66) and the
-    recorded Studio's sidebar logo (a 10 px square at 689,172 on the sidebar's #141416)."""
+    """Puts the mark into og-image.png where the old one was: the card's logo (40 px wide at 72,64, on white) and the
+    recorded Studio's top bar logo (15 px wide at 722,170, on the bar's #141316). Coordinates are the Nov 16 card's."""
     path = ROOT / 'og-image.png'
     im = Image.open(path).convert('RGBA')
     px = im.load()
-    page_bg, side_bg = px[30, 30], px[700, 200]
-    for (x0, y0, x1, y1), bg in (((68, 62, 116, 110), page_bg), ((687, 170, 702, 184), side_bg)):
+    page_bg, side_bg = px[30, 30], px[705, 165]
+    for (x0, y0, x1, y1), bg in (((70, 62, 114, 104), page_bg), ((720, 168, 739, 187), side_bg)):
         for yy in range(y0, y1):
             for xx in range(x0, x1):
                 px[xx, yy] = bg
@@ -120,7 +119,7 @@ def card(page):
         return body(color, f'translate({f(cx - (x + w / 2) * s)} {f(cy - (y + h / 2) * s)}) scale({f(s)})')
 
     over = render(page, f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}">'
-                        + place(92, 86, 42, '#000') + place(694.5, 176.5, 11, '#f5f5f5') + '</svg>', W, H)
+                        + place(92, 83, 40, '#090909') + place(730, 177.5, 15, '#e9e8eb') + '</svg>', W, H)
     im.alpha_composite(over)
     im.convert('RGB').save(path, optimize=True)
 

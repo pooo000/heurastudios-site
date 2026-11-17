@@ -204,7 +204,7 @@ button, input { font: inherit; color: inherit; }
 }
 /* the mark: five pipeline wires plugged in on the left, three running as one bundle through the middle;
    drawn in currentColor, so it is the ink, light or dark (the drawing: _tools/make-logo.py) */
-.ov-mark { flex: none; display: block; width: 24px; height: 22.83px; }
+.ov-mark { flex: none; display: block; width: 24px; height: 21.95px; }
 .ov-nav { display: flex; align-items: center; gap: 4px; margin-left: auto; }
 .ov-nav a {
   display: inline-flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 8px;
