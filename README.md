@@ -1,6 +1,6 @@
 # heurastudios.com
 
-The Heura Studios marketing site: home page, Tools page, blog, legal pages and the old `/waitlist/` page. It's a
+The Heura Studios marketing site: home page, Tools page, Datasets page, blog, legal pages and the old `/waitlist/` page. It's a
 static site that GitHub Pages builds with Jekyll 3.10, plus a small Google Apps Script that saves form sign-ups to a
 Google Sheet.
 
@@ -27,6 +27,9 @@ Pushing to `main` deploys (GitHub Pages, about a minute). CI runs `npm test` on 
 | `index.html` + `home.css` + `home.js` | Home page: hero, screen recording, specs, Request access form |
 | `tools/index.html` + `tools.css` + `tools.js` | Tools page: every Studio tool, what it takes and gives, and its recording |
 | `_data/tools.yml` | The tools on the Tools page, in the Studio's groups and order (edit copy here, not in the HTML) |
+| `datasets/index.html` + `datasets.css` + `datasets.js` | Datasets page: the app's 100 ready-made datasets by topic, search and the topic filter, and each set's preview (three rows with their credits, its source and license) |
+| `_data/datasets.json` | The sets on the Datasets page, made from the app's library by `_tools/make-datasets.py` (don't edit by hand) |
+| `_data/datasets_page.yml` | The Datasets page's featured row and each topic's icon |
 | `recording.js` | Plays a screen recording while it's on screen, in the files for the current appearance (home and Tools) |
 | `privacy/`, `terms/` + `legal.css` | Privacy Policy and Terms of Service |
 | `waitlist/` | The old waitlist page (kept for old links) |
@@ -35,7 +38,7 @@ Pushing to `main` deploys (GitHub Pages, about a minute). CI runs `npm test` on 
 | `form.js` | Shared form logic for both forms (validation, posting, error and success messages) |
 | `_backend/` | The Apps Script behind the forms: `core.js` (logic, tested in Node) and `Code.gs` (Google wiring) |
 | `_tests/` | Playwright page tests (run against the Jekyll build) |
-| `_tools/` | Python scripts that make the screen recordings and the logo/icon files |
+| `_tools/` | Python scripts that make the screen recordings, the logo/icon files and the Datasets page's data |
 | `img/`, `reports/` | Images, recordings, report PDFs |
 | `_config.yml` | Site config, including `form_endpoint` (the Apps Script URL) |
 
@@ -49,6 +52,11 @@ Folders starting with `_` are never published.
 - **A new page:** create `something/index.html` with front matter (`layout: default`, `title`, `description`, and
   `css:` / `js:` for any page-specific files), then write the page's `<main>…</main>`.
 - **A tool on the Tools page:** edit `_data/tools.yml`. A new tool also needs its recording (`clip:`, see below).
+- **The Datasets page's sets:** they're the app's library (`studio/dataset_library/` in pooo000/heurastudios-app). After it
+  changes, run `python3 _tools/make-datasets.py <app checkout>` on a checkout of the app's `live` and commit
+  `_data/datasets.json`. The tool stops, saying why, when a set's samples, credits, licenses or topics don't fit the page
+  (a new topic needs an icon in `_data/datasets_page.yml` first). The featured row is `featured:` there. The page shows
+  each set's preview only: downloads stay in the app, behind log-in.
 - **The forms' endpoint:** `form_endpoint` in `_config.yml`.
 - **Colors:** tokens at the top of `site.css`. Every color has a light, dark and high-contrast value. The site is
   black and white only.

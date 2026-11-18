@@ -72,10 +72,10 @@ test('the header and the footer go to sections that exist', async () => {
   const { page, close } = await open('/');
   const header = await page.locator('header a').evaluateAll(as => as.map(a => [a.textContent.trim(), a.getAttribute('href')]));
   // (Oct 29: Tools is a page of its own, /tools/, each tool with its recording; the home page keeps Request access)
-  assert.deepEqual(header, [['Heura Studios', '/'], ['Tools', '/tools/'], ['Blog', '/blog/'],
+  assert.deepEqual(header, [['Heura Studios', '/'], ['Tools', '/tools/'], ['Datasets', '/datasets/'], ['Blog', '/blog/'],
     ['Request access', '#request']]);
   assert.deepEqual(await page.locator('footer nav').first().locator('a').allTextContents(),
-    ['Tools', 'Request access', 'Blog']);
+    ['Tools', 'Datasets', 'Request access', 'Blog']);
   assert.equal(await page.locator('footer nav').first().getByRole('link', { name: 'Tools' }).getAttribute('href'), '/tools/');
   assert.equal(await page.locator('main #request').count(), 1);
   assert.equal(await page.locator('main #tools').count(), 0, 'the tools are on their own page now');

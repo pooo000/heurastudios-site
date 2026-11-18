@@ -19,7 +19,7 @@ async function open(path, options = {}) {
 }
 
 test('no prices on the public pages: the plans are in Heura Studios, after logging in', async () => {
-  for (const path of ['/', '/tools/', '/privacy/', '/terms/', '/waitlist/']) {
+  for (const path of ['/', '/tools/', '/datasets/', '/privacy/', '/terms/', '/waitlist/']) {
     const { page, errors, close } = await open(path);
     assert.equal(await page.locator('#pricing, .ov-plans').count(), 0, path);
     assert.equal(await page.locator('a[href$="#pricing"]').count(), 0, path);
@@ -29,9 +29,10 @@ test('no prices on the public pages: the plans are in Heura Studios, after loggi
   }
 });
 
-// The header: the logo, the two sections (from 760px) and the button, at the right. No Log in (Ryan, Oct 19: not on the
-// public pages; it's beside the Request access form on the home page).
-for (const path of ['/', '/tools/', '/privacy/', '/terms/']) {
+// The header: the logo, the three sections (from 760px) and the button, at the right. No Log in (Ryan, Oct 19: not on
+// the public pages; it's beside the Request access form on the home page). Datasets since Nov 18 (Ryan: "have it as a
+// seperate tab at the top"), between Tools and Blog.
+for (const path of ['/', '/tools/', '/datasets/', '/privacy/', '/terms/']) {
   test(`${path}: the header fits from 320px to 1280px, its one button Request access at the right`, async () => {
     for (const width of [320, 360, 375, 390, 414, 420, 479, 480, 520, 600, 759, 760, 834, 880, 960, 1024, 1280]) {
       const { page, close } = await open(path, { viewport: { width, height: 700 } });
@@ -56,7 +57,7 @@ for (const path of ['/', '/tools/', '/privacy/', '/terms/']) {
       const last = row.shown[row.shown.length - 1];
       assert.ok(last.what.includes('ov-btn') && Math.abs(last.right - row.inner[1]) <= 1, `${where}: the button sits at the right`);
       const nav = await header.locator('nav a').evaluateAll(as => as.filter(a => a.getBoundingClientRect().width > 0).map(a => a.textContent.trim()));
-      assert.deepEqual(nav, width >= 760 ? ['Tools', 'Blog'] : [], where);
+      assert.deepEqual(nav, width >= 760 ? ['Tools', 'Datasets', 'Blog'] : [], where);
       await close();
     }
   });
@@ -66,7 +67,7 @@ for (const path of ['/', '/tools/', '/privacy/', '/terms/']) {
 // 12px under the top of the screen, outlined in the page's line color and fully round, the section you're on in the
 // ink and the others quieter.
 test('the header is a capsule: outlined, fully round, floating under the top; the section you are on in the ink', async () => {
-  for (const [width, path] of [[390, '/'], [1024, '/tools/'], [1600, '/blog/']]) {
+  for (const [width, path] of [[390, '/'], [1024, '/tools/'], [1280, '/datasets/'], [1600, '/blog/']]) {
     const { page, close } = await open(path, { viewport: { width, height: 800 } });
     const look = await page.evaluate(() => {
       const top = document.querySelector('.ov-top'), row = document.querySelector('.ov-top-row');

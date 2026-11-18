@@ -7,10 +7,11 @@ const path = require('node:path');
 const { startServer, launch, ROOT } = require('./helpers');
 
 const OLD = /Heura Studio(?!s)/;
-const PAGES = ['/', '/tools/', '/waitlist/', '/privacy/', '/terms/'];
+const PAGES = ['/', '/tools/', '/datasets/', '/waitlist/', '/privacy/', '/terms/'];
 const SERVED = ['index.html', 'waitlist/index.html', 'privacy/index.html', 'terms/index.html', 'site.css', 'site.js',
   'legal.css', 'waitlist/waitlist.js', 'home.css', 'home.js', 'form.js', '_includes/head.html', '_includes/header.html',
-  '_includes/footer.html', '_includes/logo.html', '_data/tools.yml', 'tools/index.html', 'tools.css', 'tools.js', 'recording.js'];
+  '_includes/footer.html', '_includes/logo.html', '_data/tools.yml', 'tools/index.html', 'tools.css', 'tools.js', 'recording.js',
+  'datasets/index.html', 'datasets.css', 'datasets.js', '_data/datasets.json', '_data/datasets_page.yml'];
 
 let server, browser;
 test.before(async () => { server = await startServer(); browser = await launch(); });

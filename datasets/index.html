@@ -1,0 +1,181 @@
+---
+layout: default
+title: "Datasets"
+description: "100 ready-made datasets for training a model in Heura Studios, from engineering, CAD and coding to languages: question,answer CSVs written by people and openly licensed."
+og_title: "Heura Studios Datasets"
+current: datasets
+css: [/datasets.css]
+js: [/datasets.js]
+---
+{%- comment -%}
+  The Datasets page (Ryan, Nov 18: "build a seperate tab on the heura studios site and have the dataset preview list of
+  it, have like different slots for each topic and stuff something like https://www.argalabs.com/twins", then "have it
+  as a seperate tab at the top"). The library the app's Datasets page has (app.heurastudios.com, #/datasets, behind
+  log-in): the title and a featured row, then search and the topics, then each topic on its own island, a card for
+  each set. A card opens its preview: three of its rows with their credits, how its rows were picked, its source and
+  license. Downloads stay in the app. The sets are _data/datasets.json (made from the app with
+  _tools/make-datasets.py); the featured row and the topics' icons are _data/datasets_page.yml. datasets.js runs search,
+  the topic filter and the previews (<dialog>); with no script every topic shows, and a card's link opens its preview
+  as the page's target.
+{%- endcomment -%}
+{%- assign lib = site.data.datasets -%}
+{%- assign icons = site.data.datasets_page.icons -%}
+{%- capture arrow %}<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="square" stroke-linejoin="miter" aria-hidden="true" focusable="false"><path d="M2.5 8h10M8.5 4l4 4-4 4"/></svg>{% endcapture -%}
+{%- comment %} each topic's icon, once; every tile uses its topic's (datasets.css draws them: line icons, 1.3 strokes) {% endcomment %}
+<svg class="ds-sprite" width="0" height="0" aria-hidden="true" focusable="false">
+{%- for t in lib.topics %}
+  <symbol id="ds-i-{{ t.id }}" viewBox="0 0 20 20">{{ icons[t.id] }}</symbol>
+{%- endfor %}
+</svg>
+<main id="main" class="ds-main">
+  <section class="ds-hero" aria-labelledby="ds-title">
+    <div class="ov-wrap">
+      <div class="ds-hero-row">
+        <div class="ds-hero-words">
+          <h1 id="ds-title" class="ov-display">Datasets</h1>
+          <p class="ov-lead ds-lead">Ready-made examples for training a model in Heura Studios.<br> One question,answer CSV each, up to 1,000 rows.<br> Written by people and openly licensed.</p>
+        </div>
+        <dl class="ds-stats">
+          <div><dt>Datasets</dt><dd>{{ lib.count }}</dd></div>
+          <div><dt>Examples</dt><dd>{{ lib.rows_label }}</dd></div>
+          <div><dt>Topics</dt><dd>{{ lib.topics.size }}</dd></div>
+        </dl>
+      </div>
+      <h2 class="ds-kicker" id="ds-featured-title">Featured</h2>
+      <ul class="ds-featured" aria-labelledby="ds-featured-title">
+{%- for slug in site.data.datasets_page.featured %}
+{%- assign d = lib.datasets | where: "slug", slug | first %}
+        <li class="ds-card is-featured">
+          <p class="ds-card-topic"><span class="ds-tile" aria-hidden="true"><svg viewBox="0 0 20 20" width="18" height="18" focusable="false"><use href="#ds-i-{{ d.topic }}"/></svg></span>{{ d.topic_name | escape }}</p>
+          <h3 class="ds-card-title"><a class="ds-open" href="#{{ d.slug }}" aria-haspopup="dialog">{{ d.title | escape }}</a></h3>
+          <dl class="ds-peek">
+            <div><dt>question</dt><dd>{{ d.teaser.q | escape }}</dd></div>
+            <div><dt>answer</dt><dd>{{ d.teaser.a | escape }}</dd></div>
+          </dl>
+          <div class="ds-card-foot"><p class="ds-tags"><span class="ds-tag">{{ d.rows_label }} examples</span><span class="ds-tag">{{ d.source.license | escape }}</span></p><span class="ds-more" aria-hidden="true">Preview{{ arrow }}</span></div>
+        </li>
+{%- endfor %}
+      </ul>
+    </div>
+  </section>
+
+  <section class="ds-browse" id="all" aria-labelledby="ds-all-title">
+    <div class="ov-wrap">
+      <div class="ds-browse-head">
+        <div class="ds-browse-title">
+          <h2 id="ds-all-title" class="ov-h2">All datasets</h2>
+          <p class="ds-shown" id="ds-shown" aria-live="polite">{{ lib.count }} datasets</p>
+        </div>
+        <div class="ds-search">
+          <label class="ov-sr" for="ds-search">Search datasets</label>
+          <svg class="ds-search-icon" viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="square" aria-hidden="true" focusable="false"><circle cx="8.5" cy="8.5" r="5.5"/><path d="M12.5 12.5l5 5"/></svg>
+          <input id="ds-search" type="search" placeholder="Search datasets" autocomplete="off" spellcheck="false">
+        </div>
+      </div>
+      <div class="ds-filters" role="group" aria-label="Topics">
+        <button class="ds-chip" type="button" data-topic="all" aria-pressed="true">All <span class="ds-chip-n">{{ lib.count }}</span></button>
+{%- for t in lib.topics %}
+        <button class="ds-chip" type="button" data-topic="{{ t.id }}" aria-pressed="false">{{ t.name | escape }} <span class="ds-chip-n">{{ t.count }}</span></button>
+{%- endfor %}
+      </div>
+      <div class="ds-none" id="ds-none" hidden>
+        <p>No dataset matches that.</p>
+        <button class="ov-btn ov-btn-quiet ov-btn-small" type="button" data-reset>Show all datasets</button>
+      </div>
+    </div>
+  </section>
+{%- for t in lib.topics %}
+
+  <section class="ds-topic" id="{{ t.id }}" data-topic="{{ t.id }}" aria-labelledby="ds-t-{{ t.id }}">
+    <div class="ov-wrap">
+      <div class="ds-topic-head">
+        <h2 class="ds-topic-name" id="ds-t-{{ t.id }}"><span class="ds-tile is-big" aria-hidden="true"><svg viewBox="0 0 20 20" width="18" height="18" focusable="false"><use href="#ds-i-{{ t.id }}"/></svg></span>{{ t.name | escape }}</h2>
+        <p class="ds-topic-count">{{ t.count }} {% if t.count == 1 %}dataset{% else %}datasets{% endif %} · {{ t.rows_label }} examples</p>
+      </div>
+      <ul class="ds-grid" aria-labelledby="ds-t-{{ t.id }}">
+{%- assign sets = lib.datasets | where: "topic", t.id %}
+{%- for d in sets %}
+        <li class="ds-card" data-slug="{{ d.slug }}" data-words="{{ d.source.name | escape }}">
+          <h3 class="ds-card-title"><a class="ds-open" href="#{{ d.slug }}" aria-haspopup="dialog">{{ d.title | escape }}</a></h3>
+          <p class="ds-card-desc">{{ d.description | escape }}</p>
+          <div class="ds-card-foot"><p class="ds-tags"><span class="ds-tag">{{ d.rows_label }} examples</span><span class="ds-tag">{{ d.source.license | escape }}</span></p><span class="ds-more" aria-hidden="true">Preview{{ arrow }}</span></div>
+        </li>
+{%- endfor %}
+      </ul>
+    </div>
+  </section>
+{%- endfor %}
+
+  <section class="ds-ask" id="ask" aria-labelledby="ds-ask-title">
+    <div class="ov-wrap ds-ask-row">
+      <div class="ds-ask-words">
+        <h2 id="ds-ask-title" class="ov-h2">Don’t see the dataset you need?</h2>
+        <p class="ov-section-lead">Tell us the subject and the work your model should do with it.</p>
+      </div>
+      <div class="ds-ask-actions">
+        <a class="ov-btn ov-btn-primary" href="mailto:ryan@heurastudios.com,william@heurastudios.com,tsun@heurastudios.com,ethan@heurastudios.com?subject=Dataset%20request">Request a dataset</a>
+        <a class="ov-btn ov-btn-quiet" href="/#request">Request access</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+{%- comment -%}
+  The previews, one per set, outside main (they aren't islands). datasets.js opens one as a modal dialog when its
+  card's link is followed (and when the page is opened at its address, /datasets/#<slug>); with no script the link
+  makes it the page's target, which datasets.css shows the same way. Its Close goes back to the set's topic.
+{%- endcomment %}
+<div class="ds-previews">
+{%- for d in lib.datasets %}
+  <dialog class="ds-preview" id="{{ d.slug }}" aria-labelledby="ds-p-{{ d.slug }}">
+    <div class="ds-sheet">
+      <div class="ds-p-top">
+        <p class="ds-card-topic"><span class="ds-tile" aria-hidden="true"><svg viewBox="0 0 20 20" width="18" height="18" focusable="false"><use href="#ds-i-{{ d.topic }}"/></svg></span>{{ d.topic_name | escape }}</p>
+        <a class="ov-btn ov-btn-quiet ov-btn-small ds-close" href="#{{ d.topic }}">Close</a>
+      </div>
+      <h2 class="ds-p-title" id="ds-p-{{ d.slug }}">{{ d.title | escape }}</h2>
+      <p class="ds-p-desc">{{ d.description | escape }}</p>
+      <p class="ds-tags"><span class="ds-tag">{{ d.rows_label }} examples</span><span class="ds-tag">{{ d.size_label }} CSV</span><span class="ds-tag">{{ d.source.license | escape }}</span></p>
+
+      <h3 class="ds-p-sub">A few of its rows</h3>
+      <div class="ds-rows-box">
+      <table class="ds-rows">
+        <thead><tr><th class="ds-n" scope="col">row</th><th scope="col">question</th><th scope="col">answer</th></tr></thead>
+{%- for s in d.samples %}
+        <tbody>
+          <tr><td class="ds-n">{{ s.row }}</td><td class="ds-q" data-label="question">{{ s.q | escape }}</td><td class="ds-a" data-label="answer">{{ s.a | escape }}</td></tr>
+{%- if s.credit %}
+          <tr class="ds-credit"><td class="ds-n"></td><td colspan="2">
+{%- for p in s.credit.parts -%}
+{%- unless forloop.first %} · {% endunless -%}
+<a href="{{ p.url | escape }}">{{ p.what | escape }}</a>
+{%- if p.by %} by {% if p.by_url %}<a href="{{ p.by_url | escape }}">{{ p.by | escape }}</a>{% else %}{{ p.by | escape }}{% endif %}{% endif -%}
+{%- if p.license %} (<a class="ds-lic" href="{{ p.license_url }}">{{ p.license }}</a>){% endif -%}
+{%- endfor -%}
+{%- if s.credit.site %} · {{ s.credit.site | escape }}{% endif -%}
+{%- if s.credit.license %} · <a class="ds-lic" href="{{ s.credit.license_url }}">{{ s.credit.license }}</a>{% endif -%}
+</td></tr>
+{%- endif %}
+        </tbody>
+{%- endfor %}
+      </table>
+      </div>
+{%- if d.note != "" %}
+      <p class="ds-fine">{{ d.note }}</p>
+{%- endif %}
+
+      <h3 class="ds-p-sub">How the rows were picked</h3>
+      <p class="ds-p-text">{{ d.how | escape }}</p>
+
+      <h3 class="ds-p-sub">Source and license</h3>
+      <p class="ds-p-text">{% if d.source.url != "" %}<a href="{{ d.source.url | escape }}">{{ d.source.name | escape }}</a>{% else %}{{ d.source.name | escape }}{% endif %} · {% if d.source.license_url != "" %}<a href="{{ d.source.license_url | escape }}">{{ d.source.license | escape }}</a>{% else %}{{ d.source.license | escape }}{% endif %}</p>
+      <p class="ds-fine">{{ d.source.attribution | escape }}</p>
+
+      <div class="ds-p-foot">
+        <p>In Heura Studios, add it to a model in one step, or download its CSV.</p>
+        <a class="ov-btn ov-btn-primary" href="/#request">Request access</a>
+      </div>
+    </div>
+  </dialog>
+{%- endfor %}
+</div>

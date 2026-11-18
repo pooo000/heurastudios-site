@@ -35,7 +35,7 @@ test('every page and layout asks Google Fonts for Roboto Mono, 400 and 700, upri
     return fs.statSync(path.join(site, r)).isDirectory() ? built(r) : r.endsWith('.html') ? [r] : [];
   });
   const pages = built();
-  for (const f of ['index.html', 'waitlist/index.html', 'privacy/index.html', 'terms/index.html', 'blog/index.html']) {
+  for (const f of ['index.html', 'datasets/index.html', 'waitlist/index.html', 'privacy/index.html', 'terms/index.html', 'blog/index.html']) {
     assert.ok(pages.includes(path.normalize(f)), `${f} is built`);
   }
   for (const f of pages) {
@@ -106,7 +106,7 @@ async function checkWords(url, p) {
 }
 
 test('every word on every page is set in Roboto Mono, at 400 or 700', async () => {
-  for (const p of ['/', '/tools/', '/waitlist/', '/privacy/', '/terms/']) await checkWords(server.url, p);
+  for (const p of ['/', '/tools/', '/datasets/', '/waitlist/', '/privacy/', '/terms/']) await checkWords(server.url, p);
 });
 
 test('and on the blog as Jekyll builds it, a post’s italics included', async () => {

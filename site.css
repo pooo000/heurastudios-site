@@ -321,7 +321,7 @@ button, input { font: inherit; color: inherit; }
 .ov-port.is-out { right: -6px; }
 .ov-node.is-brand .ov-port { background: #1d1d1f; }
 /* the wires: solid, the Studio's grey; a faint one, and a dashed one (context, at answer time) */
-.ov-wire { display: block; width: 100%; height: 220px; overflow: visible; }
+.ov-wire { display: block; width: 100%; height: 250px; overflow: visible; }   /* (the drawings' viewBox height: 1:1) */
 .ov-wire path, .ov-edge path { fill: none; stroke: var(--wire); stroke-width: 1.5px; stroke-linecap: round; vector-effect: non-scaling-stroke; }
 .ov-wire .is-context { stroke-dasharray: 4px 4px; }
 /* a wire passing a node: straight under (or over) it at its lane's height on the canvas (--lane from the row's top;

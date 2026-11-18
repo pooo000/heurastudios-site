@@ -23,7 +23,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const { startServer, launch, readPng } = require('./helpers');
 
-const PAGES = ['/', '/tools/', '/waitlist/', '/privacy/', '/terms/'];
+const PAGES = ['/', '/tools/', '/datasets/', '/waitlist/', '/privacy/', '/terms/'];
 const LEGAL = ['/privacy/', '/terms/'];
 const COLUMN = 1184;   // what .ov-wrap leaves for the words and panels on a wide screen: 1280px less 48px each side
 const ISLAND = 1280;   // an island at its widest (a reading page's: 880)
@@ -126,7 +126,7 @@ test('on a computer the words sit on islands: the page’s color, rounded, the p
   const width = 1600, r = 32;   // (an island's corners at this width)
   for (const scheme of ['light', 'dark']) {
     const color = [PAGE[scheme], PAGE[scheme], PAGE[scheme]].join();
-    for (const [path, wide] of [['/', ISLAND], ['/tools/', ISLAND], ['/privacy/', 880]]) {
+    for (const [path, wide] of [['/', ISLAND], ['/tools/', ISLAND], ['/datasets/', ISLAND], ['/privacy/', 880]]) {
       const { page, close } = await bare(path, width, scheme, 1000, 'main > * *');
       const isle = await island(page);
       const at = `${path} (${scheme})`;
