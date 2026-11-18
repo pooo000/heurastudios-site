@@ -7,7 +7,8 @@
 // - "make the canvas thing still and only have the center part scroll": it stays still while the page scrolls.
 // - Nov 14: the margins are a photograph now, not the canvas: "a shuffle between the mountains, the ocean and the
 //   clouds". One picture per visit (mountains, the ocean or clouds, a third of the time each; clouds are one of five),
-//   the same on every page while the visit lasts, never the last visit's twice running; dimmed in dark.
+//   the same on every page while the visit lasts, never the last visit's twice running; dimmed in dark. Nov 17: "just
+//   ditch the ocean stuff and go for the mountain background only": the mountains, always.
 // - "make the middle section stand out more": the column was a sheet on the canvas, the page's color with an edge.
 // - Nov 16: "a new concept of just having floating islands for text and make everything else just the background ...
 //   like cut the strip in the middle", then "ship the computer version". On a computer (1024px and wider) there's no
@@ -27,7 +28,6 @@ const LEGAL = ['/privacy/', '/terms/'];
 const COLUMN = 1184;   // what .ov-wrap leaves for the words and panels on a wide screen: 1280px less 48px each side
 const ISLAND = 1280;   // an island at its widest (a reading page's: 880)
 const PAGE = { light: 255, dark: 0 };     // the page's own color, a channel
-const BACKDROPS = ['mountains', 'ocean', 'clouds-summer', 'clouds-towers', 'clouds-drift', 'clouds-bank', 'clouds-above'];
 const EDGE = { light: 228, dark: 38 };    // the page's rule (#e4e4e4, #262626): the capsule's outline; in dark, an island's
 
 let server, browser;
@@ -35,11 +35,9 @@ test.before(async () => { server = await startServer(); browser = await launch()
 test.after(async () => { await browser.close(); await server.close(); });
 
 // A page at a size, with what's in main hidden (or what `hide` names), so a screenshot shows only what's drawn behind
-// it; its backdrop the one named (this visit's pick, as the page's own script keeps it), loaded before anything is
-// measured
-async function bare(path, width, scheme = 'light', height = 1000, backdrop = 'mountains', hide = 'main *') {
+// it; its backdrop loaded before anything is measured
+async function bare(path, width, scheme = 'light', height = 1000, hide = 'main *') {
   const ctx = await browser.newContext({ viewport: { width, height }, colorScheme: scheme, reducedMotion: 'reduce' });
-  await ctx.addInitScript((name) => sessionStorage.setItem('ov-backdrop', name), backdrop);
   const page = await ctx.newPage();
   await page.goto(server.url + path);
   await page.addStyleTag({ content: `${hide} { visibility: hidden !important; }` });
@@ -103,7 +101,7 @@ test('on a computer the backdrop photograph is the whole page’s background, fr
     const q = Math.round(width / 4);
     for (const scheme of ['light', 'dark']) {
       for (const path of PAGES) {
-        const { page, close } = await bare(path, width, scheme, 1000, 'mountains', 'body > *');
+        const { page, close } = await bare(path, width, scheme, 1000, 'body > *');
         const shot = await band(page, { x: 0, y: 120, width, height: 360 });
         const at = `${path} at ${width}px (${scheme})`;
         for (const [x0, x1] of [[0, q - 1], [q, 3 * q - 1], [3 * q, width - 1]]) {
@@ -129,7 +127,7 @@ test('on a computer the words sit on islands: the page’s color, rounded, the p
   for (const scheme of ['light', 'dark']) {
     const color = [PAGE[scheme], PAGE[scheme], PAGE[scheme]].join();
     for (const [path, wide] of [['/', ISLAND], ['/tools/', ISLAND], ['/privacy/', 880]]) {
-      const { page, close } = await bare(path, width, scheme, 1000, 'mountains', 'main > * *');
+      const { page, close } = await bare(path, width, scheme, 1000, 'main > * *');
       const isle = await island(page);
       const at = `${path} (${scheme})`;
       assert.ok(Math.abs(isle.w - wide) < 1 && Math.abs(isle.x - (width - wide) / 2) < 1, `${at}: ${wide}px wide, in the middle (${isle.x}, ${isle.w})`);
@@ -159,79 +157,42 @@ test('on a computer the words sit on islands: the page’s color, rounded, the p
 
 test('in dark the backdrop is dimmed: under half as bright as in light', async () => {
   const width = 1600, margin = (width - COLUMN) / 2;
-  for (const backdrop of ['mountains', 'clouds-summer']) {
-    const bright = {};
-    for (const scheme of ['light', 'dark']) {
-      const { page, close } = await bare('/', width, scheme, 1000, backdrop);
-      bright[scheme] = mean(await band(page, { x: 0, y: 120, width: margin - 60, height: 360 }), 0, margin - 61);
-      await close();
-    }
-    assert.ok(bright.dark < bright.light * 0.5, `${backdrop}: dark ${bright.dark.toFixed(0)}, light ${bright.light.toFixed(0)}`);
-  }
-});
-
-// The page's own pick, with Math.random's answers set (each pick takes two: which set, then which picture in it)
-async function pickWith(answers, last) {
-  const ctx = await browser.newContext({ viewport: { width: 1600, height: 1000 }, reducedMotion: 'reduce' });
-  await ctx.addInitScript(([seq, prev]) => {
-    Math.random = () => (seq.length ? seq.shift() : 0.5);
-    if (prev) localStorage.setItem('ov-backdrop-last', prev);
-  }, [answers, last]);
-  const page = await ctx.newPage();
-  await page.goto(server.url + '/');
-  const picked = await page.evaluate(() => document.documentElement.getAttribute('data-backdrop'));
-  await ctx.close();
-  return picked;
-}
-
-test('the backdrop is one of seven photographs: mountains, the ocean or clouds, a third of the time each', async () => {
-  // which set: under a third mountains, then the ocean, then clouds; which clouds: five equal shares
-  assert.equal(await pickWith([0.1, 0.7]), 'mountains');
-  assert.equal(await pickWith([0.32, 0.0]), 'mountains');
-  assert.equal(await pickWith([0.34, 0.9]), 'ocean');
-  assert.equal(await pickWith([0.66, 0.2]), 'ocean');
-  assert.equal(await pickWith([0.67, 0.0]), 'clouds-summer');
-  assert.equal(await pickWith([0.9, 0.3]), 'clouds-towers');
-  assert.equal(await pickWith([0.9, 0.5]), 'clouds-drift');
-  assert.equal(await pickWith([0.9, 0.7]), 'clouds-bank');
-  assert.equal(await pickWith([0.99, 0.99]), 'clouds-above');
-  // never the last visit's twice running: its draw is thrown back and drawn again
-  assert.equal(await pickWith([0.1, 0.5, 0.5, 0.5], 'mountains'), 'ocean');
-  assert.equal(await pickWith([0.9, 0.1, 0.9, 0.1, 0.1, 0.1], 'clouds-summer'), 'mountains');
-  // each one is a 2560 x 1440 photograph, and the margins show the one picked
-  for (const name of BACKDROPS) {
-    const { page, close } = await bare('/', 1600, 'light', 1000, name);
-    const shown = await page.evaluate(() => getComputedStyle(document.body, '::before').backgroundImage);
-    assert.ok(shown.endsWith(`/img/backdrops/${name}.webp")`), `${name}: ${shown}`);
-    const size = await page.evaluate(async (src) => {
-      const img = new Image(); img.src = src; await img.decode(); return [img.naturalWidth, img.naturalHeight];
-    }, `/img/backdrops/${name}.webp`);
-    assert.deepEqual(size, [2560, 1440], name);
+  const bright = {};
+  for (const scheme of ['light', 'dark']) {
+    const { page, close } = await bare('/', width, scheme);
+    bright[scheme] = mean(await band(page, { x: 0, y: 120, width: margin - 60, height: 360 }), 0, margin - 61);
     await close();
   }
+  assert.ok(bright.dark < bright.light * 0.5, `dark ${bright.dark.toFixed(0)}, light ${bright.light.toFixed(0)}`);
 });
 
-test('one picture per visit: the same on every page while the visit lasts, another next visit, never twice running', async () => {
+// Ryan, Nov 17: "just ditch the ocean stuff and go for the mountain background only". Since Nov 14 the backdrop was
+// one of seven photographs per visit (the mountains, the ocean or one of five skies); now it's the mountains, always.
+test('the backdrop is the mountains, on every page and every visit, the only picture fetched', async () => {
   const ctx = await browser.newContext({ viewport: { width: 1600, height: 1000 }, reducedMotion: 'reduce' });
-  let before = null;
-  for (let visit = 0; visit < 6; visit++) {   // a new tab is a new visit; a tab keeps its pick
+  for (let visit = 0; visit < 2; visit++) {   // (a new tab is a new visit)
     const page = await ctx.newPage();
     const fetched = [];
     page.on('request', (r) => { if (r.url().includes('/img/backdrops/')) fetched.push(new URL(r.url()).pathname); });
-    const seen = [];
-    for (const path of ['/', '/tools/', '/privacy/', '/']) {
+    for (const path of PAGES) {
       await page.goto(server.url + path);
-      seen.push(await page.evaluate(() => document.documentElement.getAttribute('data-backdrop')));
+      const shown = await page.evaluate(() => getComputedStyle(document.body, '::before').backgroundImage);
+      assert.ok(shown.endsWith('/img/backdrops/mountains.webp")'), `${path}: ${shown}`);
+      assert.equal(await page.evaluate(() => document.documentElement.hasAttribute('data-backdrop')), false, `${path}: nothing picked`);
     }
-    await page.reload();
-    seen.push(await page.evaluate(() => document.documentElement.getAttribute('data-backdrop')));
-    assert.ok(BACKDROPS.includes(seen[0]), `visit ${visit}: ${seen[0]}`);
-    assert.deepEqual(seen, Array(seen.length).fill(seen[0]), `visit ${visit}: the same picture on every page`);
-    assert.notEqual(seen[0], before, `visit ${visit}: not the last visit's picture again`);
-    assert.deepEqual([...new Set(fetched)], [`/img/backdrops/${seen[0]}.webp`], `visit ${visit}: only its picture is fetched`);
-    before = seen[0];
+    assert.deepEqual([...new Set(fetched)], ['/img/backdrops/mountains.webp'], `visit ${visit}: only the mountains fetched`);
     await page.close();
   }
+  // a 2560 x 1440 photograph, asked for by the head on a computer, before the styles do
+  const page = await ctx.newPage();
+  await page.goto(server.url + '/');
+  const preload = page.locator('link[rel="preload"][as="image"]');
+  assert.equal(await preload.getAttribute('href'), '/img/backdrops/mountains.webp');
+  assert.equal(await preload.getAttribute('media'), '(min-width: 1024px)');
+  const size = await page.evaluate(async () => {
+    const img = new Image(); img.src = '/img/backdrops/mountains.webp'; await img.decode(); return [img.naturalWidth, img.naturalHeight];
+  });
+  assert.deepEqual(size, [2560, 1440]);
   await ctx.close();
 });
 

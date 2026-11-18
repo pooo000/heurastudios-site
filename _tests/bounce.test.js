@@ -28,7 +28,6 @@ test.after(async () => { await browser.close(); await server.close(); });
 // column up with the screen before the pull), and the screen with only what's fixed behind the page drawn (the picture)
 async function pull(path, width, height, scheme, end) {
   const ctx = await browser.newContext({ viewport: { width, height }, colorScheme: scheme, hasTouch: true, reducedMotion: 'reduce' });
-  await ctx.addInitScript(() => sessionStorage.setItem('ov-backdrop', 'mountains'));
   const page = await ctx.newPage();
   await page.goto(server.url + path);
   await page.evaluate(async () => {   // the margins' picture, if there is one, loaded and drawn
