@@ -100,7 +100,8 @@ test('"Email the founders" writes to Ryan, William, Tsun and Ethan at heurastudi
 // Leo stays the privacy officer, and the Terms' contact is Ryan or Leo.
 test('every email on the site is at heurastudios.com, and the legal pages name Ryan and Leo', async () => {
   const pages = ['/', '/tools/', '/datasets/', '/privacy/', '/terms/', '/waitlist/', '/blog/',
-    '/blog/why-heura-studios-fits-small-business/', '/blog/heura-eval-004/', '/blog/sleep-training/'];
+    '/blog/why-heura-studios-fits-small-business/', '/blog/heura-eval-004/', '/blog/sleep-training/',
+    '/blog/what-teams-train/'];
   for (const path of pages) {
     const { page, errors, close } = await open(path);
     assert.doesNotMatch(await page.content(), /ostravanne\.com/i, path);

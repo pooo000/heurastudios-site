@@ -53,6 +53,11 @@
 .bl-post strong { font-weight: 700; }
 .bl-post em { font-style: italic; }
 .bl-post blockquote { padding-left: 16px; border-left: 2px solid var(--rule); color: var(--ink-2); }
+/* a few lines of a model's script (the teams post, Nov 18): no browser indent, so a phone keeps the width; one sentence
+   a line with a › before it, as the Studio's script editor shows them; a line that wraps hangs under its first word */
+.bl-post blockquote { margin-inline: 0; margin-bottom: 0; }
+.bl-post blockquote p { max-width: 68ch; padding-left: 2ch; text-indent: -2ch; }
+.bl-post blockquote p::before { content: "›"; display: inline-block; width: 2ch; text-indent: 0; }
 .bl-post code { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: .9em; }
 /* tables: numbers line up, and a wide one scrolls inside itself on a phone, never the page */
 .bl-post table {
