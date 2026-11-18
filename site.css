@@ -28,7 +28,7 @@
   --edge: transparent; /* a panel's outline: only with Increase Contrast */
   --field: #8a8a8a;   /* input borders: 3.4:1 */
   --foot-edge: #000000; /* the footer's top edge: in light it's the footer itself */
-  --canvas: #f3f3f3;  /* the margins' grey while their backdrop picture loads (the Studio canvas's #f2f2f4, no blue) */
+  --canvas: #f3f3f3;  /* the grey behind the backdrop picture while it loads (the Studio canvas's #f2f2f4, no blue) */
   --canvas-dot: #cfcfcf; /* the Studio canvas's dots (#cfcfd4); the margins no longer draw them */
   --sans: "Roboto Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   --serif: "Roboto Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
@@ -96,9 +96,9 @@ button, input { font: inherit; color: inherit; }
    computer (1024px and wider) the backdrop picture is the background of the whole page, and the words sit on islands
    floating over it: each section of a page is one (a reading page's one block is one), the page's color, rounded,
    the picture between and beside them; the header's capsule floats over it and the footer is an island of its own.
-   The picture is one photograph per visit (Ryan, Nov 14: "a shuffle between the mountains, the ocean and the clouds"):
-   the inline script in _includes/head.html picks it and sets html[data-backdrop]; with no script it's the mountains.
-   It covers the screen and stays still while the page scrolls over it: fixed, under everything. In dark it's dimmed.
+   The picture is the mountains (Ryan, Nov 17: "just ditch the ocean stuff and go for the mountain background only";
+   it was one of seven per visit, the ocean and five skies the others, since Nov 14). It covers the screen and stays
+   still while the page scrolls over it: fixed, under everything. In dark it's dimmed.
    Phones and tablets (under 1024px) keep the page as it was, its own color from edge to edge, and never download a
    picture. (--canvas shows while it loads.) */
 :root {
@@ -118,12 +118,6 @@ button, input { font: inherit; color: inherit; }
     background: var(--canvas) url(/img/backdrops/mountains.webp) center / cover no-repeat;
     transition: filter .25s ease;
   }
-  :root[data-backdrop="ocean"] body::before { background-image: url(/img/backdrops/ocean.webp); }
-  :root[data-backdrop="clouds-summer"] body::before { background-image: url(/img/backdrops/clouds-summer.webp); }
-  :root[data-backdrop="clouds-towers"] body::before { background-image: url(/img/backdrops/clouds-towers.webp); }
-  :root[data-backdrop="clouds-drift"] body::before { background-image: url(/img/backdrops/clouds-drift.webp); }
-  :root[data-backdrop="clouds-bank"] body::before { background-image: url(/img/backdrops/clouds-bank.webp); }
-  :root[data-backdrop="clouds-above"] body::before { background-image: url(/img/backdrops/clouds-above.webp); }
   :root[data-theme="dark"] body::before { filter: brightness(.45); }
   :root > body > main { padding: 0 0 var(--isle-gap); }   /* (the pages' own spacing is the islands' now) */
   main > :is(section, article, .ov-wrap, .hm-top) {
