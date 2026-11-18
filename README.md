@@ -101,10 +101,14 @@ error and the site keeps its last good version. Fix the file and commit again.
 ## Media and icons
 
 - **Screen recording** (`img/notebook-run*`): a sample model written in its notebook's script.md, then Train v1 and
-  its first run, in the real Studio, in desktop and phone sizes, light and dark, as `.mp4` (H.264, for iPhones) and
-  `.webm`, each with a `.webp` poster. To re-record: `python3 _tools/record-notebook.py <app checkout> img` with
-  `--dark`, `--phone` and `--phone --dark`. Needs ffmpeg and Playwright for Python. The Studio runs with stand-ins
-  for Heura Arche (it answers as its brief says) and its trainer (seconds a run, and a LoRA a real one's size); the
+  its first run, in the real Studio, signed in as William Wu, in desktop and phone sizes, light and dark, as `.mp4`
+  (H.264, for iPhones) and `.webm`, each with a `.webp` poster. 60 frames a second, at the screen's density: 2880 x
+  1800 on a computer (the page at 1280 x 800), 1170 x 1800 on a phone (390 x 600). Frames that big come slower than
+  that here, so the tool plays the scene slowed down (5x on a computer, 3x on a phone) and speeds the frames' times
+  back up. The pointer is the tool's own, an iris arrowhead that glides and sends out a ring on a click (a fingertip
+  on a phone). To re-record: `python3 _tools/record-notebook.py <app checkout> img` with `--dark`, `--phone` and
+  `--phone --dark` (about 5 minutes each). Needs ffmpeg and Playwright for Python. The Studio runs with stand-ins for
+  Heura Arche (it answers as its brief says) and its trainer (seconds a run, and a LoRA a real one's size); the
   caption says they're simulated. Last recorded Nov 18, 2026, from the app's `live` (48e2b71): Rosé Pine Dawn in
   light, Rosé Pine in dark.
 - **Tool recordings** (`img/tools/<clip>*`): one short clip per tool on the Tools page, a close-up of its panel in the

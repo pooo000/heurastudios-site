@@ -161,7 +161,7 @@ for (const scheme of ['light', 'dark']) {
 }
 
 // Ryan, Oct 24, 13:54: "like even the iphone thing too". On a phone the desktop recording was a stamp: phones get a
-// recording of the Studio at a phone's size (taps and swipes, drawn at 2x), in a frame of its shape. The .mp4 comes
+// recording of the Studio at a phone's size (taps, drawn at 3x), in a frame of its shape. The .mp4 comes
 // first: every iPhone decodes H.264 itself, and it's the smaller file.
 const PHONE = { width: 390, height: 844 };
 for (const scheme of ['light', 'dark']) {

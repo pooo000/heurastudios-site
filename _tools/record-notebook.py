@@ -2,11 +2,16 @@
 then Train v1, its first run, and v1 going live, with a pointer (a fingertip on a phone).
 
 It drives a real Heura Studios (the app's web.py) through Chromium and captures every frame the page paints (CDP
-screencast, so text stays sharp), then encodes them at a steady frame rate with ffmpeg. The server runs with two
-stand-ins, so a run takes seconds and needs no model:
+screencast) at the screen's own density, 2880 x 1800 on a computer and 1170 x 1800 on a phone, then encodes them at 60
+frames a second with ffmpeg. Frames that big come slower than that, so the whole scene is played slowed down
+(--slow: the pointer, the typing, the pauses, the page's animations and the trainer) and the frames' times are sped
+back up when they're encoded. The page's own timers (its 1 s polling, the script's read after a pause) aren't slowed,
+so they come a little sooner in the video than they would.
+
+The server runs with two stand-ins, so a run takes seconds and needs no model:
 - for Heura Arche, a stand-in that does what its brief says. The Studio puts what the script says about the model (its
-  name, who made it, what it goes by) at the top of the brief; the stand-in answers who it is, who made it and the four
-  built-in test questions the way the brief tells it to, and anything else as web.py --fake-engine does;
+  name, who made it) at the top of the brief; the stand-in answers who it is, who made it and the four built-in test
+  questions the way the brief tells it to, and anything else as web.py --fake-engine does;
 - for train.py, a stand-in that takes the real trainer's number of steps for the run's rows, at a third of a second
   each, prints its progress and loss as train.py does, and leaves a LoRA the size of Heura Arche's own (r=32 on every
   linear layer, float32: 188 MiB, written as a sparse file).
@@ -15,9 +20,8 @@ Every number on screen is the Studio's own, worked out from those answers and th
 usage: python3 _tools/record-notebook.py APP_DIR OUT_DIR [--dark] [--phone]   (needs ffmpeg, and Playwright for Python)
   APP_DIR: a checkout of the app (started from it with a fresh, throwaway studio_data)
   OUT_DIR: gets notebook-run[-phone][-dark].mp4, .webm and a poster (.webp, the first frame)
-  --dark: the browser set to dark
-  --phone: the Studio at a phone's size (390 x 600, drawn at 2x so its words stay sharp on a phone's screen), with taps
-  and a fingertip in place of the pointer
+  --dark: the browser set to dark (the Studio follows it: Rosé Pine Dawn in light, Rosé Pine in dark)
+  --phone: the Studio at a phone's size (390 x 600, drawn at 3x), with taps and a fingertip in place of the pointer
 """
 import argparse
 import base64
@@ -42,20 +46,26 @@ ap.add_argument("app"); ap.add_argument("out")
 ap.add_argument("--port", type=int, default=8150)
 ap.add_argument("--dark", action="store_true")
 ap.add_argument("--phone", action="store_true", help="a phone's size, with taps")
-ap.add_argument("--width", type=int, default=1440); ap.add_argument("--height", type=int, default=900)
-ap.add_argument("--zoom", type=float, default=1.125,
-                help="a computer's page drawn this much larger, so the console's small type reads in the video (the "
-                     "frames stay WIDTH x HEIGHT; the page is WIDTH/ZOOM x HEIGHT/ZOOM: 1280 x 800, wide enough that "
-                     "a model's page keeps the words Heura Studios in its bar)")
+ap.add_argument("--scale", type=float, help="pixels a CSS pixel (2.25 on a computer: 1280 x 800 -> 2880 x 1800; 3 on "
+                                            "a phone: 390 x 600 -> 1170 x 1800)")
+ap.add_argument("--slow", type=float, help="how much slower than the video the scene is played, so frames come often "
+                                           "enough for --fps (5 on a computer, 3 on a phone)")
+ap.add_argument("--fps", type=int, default=60)
 ap.add_argument("--keep", action="store_true", help="keep the frames folder")
 a = ap.parse_args()
-if a.phone:
-    a.width, a.height, a.zoom = 390, 600, 2.0   # a phone's frames are drawn at 2x
-VIEW = (round(a.width / a.zoom), round(a.height / a.zoom)) if not a.phone else (a.width, a.height)
-FRAME = (a.width, a.height) if not a.phone else (round(a.width * a.zoom), round(a.height * a.zoom))
+# a computer: 1280 x 800, wide enough that a model's page keeps the words Heura Studios in its bar
+VIEW = (390, 600) if a.phone else (1280, 800)
+SCALE = a.scale or (3.0 if a.phone else 2.25)
+SLOW = a.slow or (3.0 if a.phone else 5.0)   # (about 12 frames a second come at 2880 x 1800 on 2 CPUs, 20 at 1170 x 1800)
+FRAME = (round(VIEW[0] * SCALE), round(VIEW[1] * SCALE))
 URL = f"http://127.0.0.1:{a.port}"
 OUT = Path(a.out); OUT.mkdir(parents=True, exist_ok=True)
 tag = "notebook-run" + ("-phone" if a.phone else "") + ("-dark" if a.dark else "")
+THEME = "dark" if a.dark else "light"
+
+# the account, shown in the Studio's bar
+ACCOUNT = {"name": "William Wu", "email": "william@fernbrook.example", "company": "Fernbrook",
+           "password": "correct-horse-battery", "agree": True}
 
 # what's typed into script.md: who the model is, in the person's own words (one line a breath). No "You go by ...": the
 # brief's top line doesn't carry a nickname, so the stand-in, which only reads the brief, can't learn one
@@ -72,8 +82,9 @@ from pathlib import Path
 import config
 from studio import bases, engine, training
 
-STEP_SECONDS = 0.3
-LORA_BYTES = 188 * 1024 * 1024   # Heura Arche's own LoRA: r=32 on every linear layer, float32 (about 49M parameters)
+STEP_SECONDS = 0.3                 # a step, as the video shows it
+SLOW = float(sys.argv[2])          # ... and as it's played (the recorder slows the whole scene this much)
+LORA_BYTES = 188 * 1024 * 1024     # Heura Arche's own LoRA: r=32 on every linear layer, float32 (about 49M parameters)
 
 
 def lora_file(path, size):
@@ -98,7 +109,7 @@ def runner(cmd, on_chunk):
     total = max(1, math.ceil(rows / config.GRAD_ACCUM)) * epochs
     clock = lambda s: "%02d:%02d" % divmod(int(round(s)), 60)
     for step in range(1, total + 1):
-        time.sleep(STEP_SECONDS)
+        time.sleep(STEP_SECONDS * SLOW)
         pct = 100 * step // total
         on_chunk(f"\r{pct:3d}%|{'#' * (pct // 10):<10}| {step}/{total} [{clock(step * STEP_SECONDS)}<"
                  f"{clock((total - step) * STEP_SECONDS)},  {STEP_SECONDS:.2f}s/it]")
@@ -176,12 +187,17 @@ class BriefReader(engine.FakeEngine):
 row = {"messages": [{"role": "user", "content": "(replay)"}, {"role": "assistant", "content": "(replay)"}]}
 training.set_runner(runner, mix_fn=lambda: [dict(row) for _ in range(training.MIX_ROWS)])
 engine.FakeEngine = BriefReader   # (web.py --fake-engine makes the engine it names)
+
+# a round's seconds as the video shows them: the server times it by the clock, and the scene is played SLOW slower
+_summary = training.TrainJob._summary
+training.TrainJob._summary = lambda self, k, before, run, check, rows, split, epochs, took: _summary(
+    self, k, before, run, check, rows, split, epochs, took / SLOW)
 import web
 web.main(["--fake-engine", "--port", sys.argv[1]])
 '''
 data = Path(tempfile.mkdtemp(prefix="heura-rec-"))
 env = {**os.environ, "HEURA_STUDIO_DIR": str(data / "studio_data"), "HEURA_MASTER_KEY_FILE": str(data / "master.key")}
-server = subprocess.Popen([sys.executable, "-c", LAUNCH, str(a.port)],
+server = subprocess.Popen([sys.executable, "-c", LAUNCH, str(a.port), str(SLOW)],
                           cwd=a.app, env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 
@@ -202,48 +218,117 @@ def call(method, path, body=None, cookie=None):
         return r.headers, json.loads(r.read() or b"{}")
 
 
-# a pointer the recording can see (the real one isn't painted): an arrow that follows the mouse, pressed in on a click
-ARROW = """
+# Rosé Pine's iris (the Studio's own color for focus and what's current), Dawn's in light; a light rim and a soft
+# shadow keep it crisp on either
+TINT = {"light": {"fill": "#907aa9", "rim": "#fffaf3", "shadow": "rgba(87,82,121,.42)", "ring": "144,122,169"},
+        "dark": {"fill": "#c4a7e7", "rim": "#e0def4", "shadow": "rgba(0,0,0,.6)", "ring": "196,167,231"}}[THEME]
+
+# the page as the recording wants it: the caret doesn't blink (played slowed down, a blink would flicker in the video)
+PAGE = """
   addEventListener('DOMContentLoaded', () => {
-    const c = document.createElement('div');
-    c.setAttribute('aria-hidden', 'true');
-    c.style.cssText = 'position:fixed;left:0;top:0;width:22px;height:22px;z-index:2147483647;pointer-events:none;'
-      + 'transform:translate(-80px,-80px);will-change:transform';
-    const ns = 'http://www.w3.org/2000/svg';
-    const s = document.createElementNS(ns, 'svg');
-    s.setAttribute('viewBox', '0 0 22 22'); s.setAttribute('width', '22'); s.setAttribute('height', '22');
-    const p = document.createElementNS(ns, 'path');
-    p.setAttribute('d', 'M3 2.5v15.2l4.1-3.9 2.6 6 3-1.3-2.6-5.9h5.7z');
-    p.setAttribute('fill', '#111114'); p.setAttribute('stroke', '#ffffff'); p.setAttribute('stroke-width', '1.4');
-    p.setAttribute('stroke-linejoin', 'round');
-    s.append(p); c.append(s);
-    document.documentElement.append(c);
-    let x = -80, y = -80, k = 1;
-    const put = () => { c.style.transform = `translate(${x - 3}px,${y - 2}px) scale(${k})`; };
-    addEventListener('mousemove', (e) => { x = e.clientX; y = e.clientY; put(); }, true);
-    addEventListener('mousedown', () => { k = 0.86; put(); }, true);
-    addEventListener('mouseup', () => { k = 1; put(); }, true);
+    const s = document.createElement('style');
+    s.textContent = '*, *::before, *::after { caret-animation: manual !important; }';
+    document.head.append(s);
   });
 """
 
-# a fingertip the recording can see: a soft dark disc with a light ring (it reads on light and dark pages), shown while
-# a finger is down
-FINGER = """
+# a pointer the recording can see (the real one isn't painted): an arrowhead in iris with a light rim and a soft
+# shadow. It glides itself (window.__cursor.glide: eased, on a slight arc, a frame at a time), follows the real mouse
+# otherwise, and on a press dips and sends out a ring. Its press and ring are Web Animations, slowed with the page's.
+CURSOR = """
   addEventListener('DOMContentLoaded', () => {
-    const d = document.createElement('div');
-    d.setAttribute('aria-hidden', 'true');
-    d.style.cssText = 'position:fixed;left:0;top:0;width:34px;height:34px;margin:-17px 0 0 -17px;border-radius:50%;'
-      + 'z-index:2147483647;pointer-events:none;background:rgba(17,17,20,.28);box-shadow:0 0 0 2px rgba(255,255,255,.85);'
-      + 'opacity:0;transform:translate(-80px,-80px) scale(.8);transition:opacity .14s ease-out;will-change:transform,opacity';
-    document.documentElement.append(d);
-    let x = -80, y = -80, k = .8;
-    const put = () => { d.style.transform = `translate(${x}px,${y}px) scale(${k})`; };
-    window.__finger = {
-      down(px, py) { x = px; y = py; k = .8; put(); d.style.opacity = '1'; requestAnimationFrame(() => { k = 1; put(); }); },
-      up() { d.style.opacity = '0'; },
+    const T = %(tint)s;
+    const ns = 'http://www.w3.org/2000/svg';
+    const c = document.createElement('div');
+    c.setAttribute('aria-hidden', 'true');
+    c.style.cssText = 'position:fixed;left:0;top:0;width:28px;height:28px;z-index:2147483647;pointer-events:none;'
+      + 'will-change:transform;filter:drop-shadow(0 1.6px 2.6px ' + T.shadow + ')';
+    const body = document.createElement('div');   // what dips on a press (about the tip)
+    body.style.cssText = 'width:28px;height:28px;transform-origin:4px 3px';
+    const s = document.createElementNS(ns, 'svg');
+    s.setAttribute('viewBox', '0 0 24 24'); s.setAttribute('width', '28'); s.setAttribute('height', '28');
+    const p = document.createElementNS(ns, 'path');
+    p.setAttribute('d', 'M4.2 3.1L20.4 9.4C21.3 9.75 21.25 11.05 20.3 11.3L13.6 13.1L11.8 19.9C11.55 20.85 10.25 20.9 '
+      + '9.9 20L3.6 3.8C3.35 3.25 3.65 2.9 4.2 3.1Z');
+    p.setAttribute('fill', T.fill); p.setAttribute('stroke', T.rim); p.setAttribute('stroke-width', '1.7');
+    p.setAttribute('stroke-linejoin', 'round');
+    s.append(p); body.append(s); c.append(body);
+    document.documentElement.append(c);
+    let x = -80, y = -80;
+    const put = () => { c.style.transform = `translate(${x - 4}px,${y - 3}px)`; };   // the tip, at (x, y)
+    put();
+    addEventListener('mousemove', (e) => { x = e.clientX; y = e.clientY; put(); }, true);
+    addEventListener('mousedown', () => {
+      body.animate([{ transform: 'scale(1)' }, { transform: 'scale(.82)' }],
+                   { duration: 90, easing: 'cubic-bezier(.3,0,.2,1)', fill: 'forwards' });
+      const r = document.createElement('div');
+      r.setAttribute('aria-hidden', 'true');
+      r.style.cssText = `position:fixed;left:${x - 22}px;top:${y - 22}px;width:44px;height:44px;border-radius:50%%;`
+        + `z-index:2147483646;pointer-events:none;border:2px solid rgb(${T.ring});background:rgba(${T.ring},.16)`;
+      document.documentElement.append(r);
+      r.animate([{ transform: 'scale(.25)', opacity: .9 }, { transform: 'scale(1)', opacity: 0 }],
+                { duration: 520, easing: 'cubic-bezier(.2,.7,.3,1)', fill: 'forwards' }).finished.then(() => r.remove());
+    }, true);
+    addEventListener('mouseup', () => {
+      body.animate([{ transform: 'scale(.82)' }, { transform: 'scale(1.04)', offset: .6 }, { transform: 'scale(1)' }],
+                   { duration: 220, easing: 'ease-out', fill: 'forwards' });
+    }, true);
+    window.__cursor = {
+      glide(tx, ty, ms) {   // ms: as played (the recorder has slowed it already)
+        const x0 = x, y0 = y, dx = tx - x0, dy = ty - y0, len = Math.hypot(dx, dy) || 1;
+        const bend = Math.min(60, .1 * len), nx = -dy / len, ny = dx / len;
+        return new Promise((done) => {
+          // performance.now(), not the frame's own time: that one runs at the slowed animations' speed
+          const t0 = performance.now();
+          const step = () => {
+            const t = Math.min(1, (performance.now() - t0) / ms);
+            const e = t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;   // ease in and out
+            const arc = Math.sin(Math.PI * e) * bend;
+            x = x0 + dx * e + nx * arc; y = y0 + dy * e + ny * arc; put();
+            if (t < 1) requestAnimationFrame(step); else { x = tx; y = ty; put(); done(); }
+          };
+          requestAnimationFrame(step);
+        });
+      },
     };
   });
-"""
+""" % {"tint": json.dumps(TINT)}
+
+# a fingertip the recording can see: a soft iris disc with a rim, shown while a finger is down, and a ring sent out on
+# a tap (Web Animations, slowed with the page's)
+FINGER = """
+  addEventListener('DOMContentLoaded', () => {
+    const T = %(tint)s;
+    const d = document.createElement('div');
+    d.setAttribute('aria-hidden', 'true');
+    d.style.cssText = 'position:fixed;left:0;top:0;width:38px;height:38px;margin:-19px 0 0 -19px;border-radius:50%%;'
+      + `z-index:2147483647;pointer-events:none;background:rgba(${T.ring},.30);box-shadow:0 0 0 2px rgba(${T.ring},.9),`
+      + `0 2px 8px ${T.shadow};opacity:0;will-change:transform,opacity`;
+    document.documentElement.append(d);
+    window.__finger = {
+      down(px, py) {
+        d.style.transform = `translate(${px}px,${py}px)`;
+        d.animate([{ opacity: 0, scale: .7 }, { opacity: 1, scale: 1 }], { duration: 120, easing: 'ease-out', fill: 'forwards' });
+        const r = document.createElement('div');
+        r.setAttribute('aria-hidden', 'true');
+        r.style.cssText = `position:fixed;left:${px - 30}px;top:${py - 30}px;width:60px;height:60px;border-radius:50%%;`
+          + `z-index:2147483646;pointer-events:none;border:2px solid rgb(${T.ring})`;
+        document.documentElement.append(r);
+        r.animate([{ transform: 'scale(.3)', opacity: .8 }, { transform: 'scale(1)', opacity: 0 }],
+                  { duration: 520, easing: 'cubic-bezier(.2,.7,.3,1)', fill: 'forwards' }).finished.then(() => r.remove());
+      },
+      up() { d.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 160, easing: 'ease-in', fill: 'forwards' }); },
+    };
+  });
+""" % {"tint": json.dumps(TINT)}
+
+
+def slowed(ctx, page):
+    """the page's CSS animations and transitions (and the Web Animations above) at 1/SLOW speed"""
+    cdp = ctx.new_cdp_session(page)
+    cdp.send("Animation.enable")
+    cdp.send("Animation.setPlaybackRate", {"playbackRate": 1 / SLOW})
+    return cdp
 
 
 def capture(ctx, page):
@@ -267,93 +352,90 @@ def capture(ctx, page):
     return got, stop
 
 
-def type_script(page, text):
+def type_script(page, wait, text):
     """types text into the focused editor as a quick hand would: a character to three at a time, a little uneven, a
     beat after punctuation, and a breath at the end of each line (the Studio reads the script in the pauses: each line
-    gets its tag). (One key a call is slower than a hand: each call costs the browser a round trip.)"""
+    gets its tag)"""
     rnd = random.Random(7)   # (the same rhythm every time)
     i = 0
     while i < len(text):
         if text[i] == "\n":
-            page.wait_for_timeout(rnd.randint(140, 220))
+            wait(rnd.randint(150, 230))
             page.keyboard.press("Enter")
-            page.wait_for_timeout(rnd.randint(240, 320))
+            wait(rnd.randint(280, 360))
             i += 1
             continue
         chunk = text[i:i + rnd.choice((1, 2, 2, 2, 3))].split("\n")[0]
         page.keyboard.insert_text(chunk)
         i += len(chunk)
-        page.wait_for_timeout(max(8, int(rnd.gauss(26, 8) + (55 if chunk[-1] in ".,:" else 0))))
+        wait(max(10, rnd.gauss(34, 9) + (70 if chunk[-1] in ".,:" else 0)))
 
 
 def finished(page):
     """waits for the run to end (the console says how), then prints what it says and what Output says"""
-    page.locator(".nb-console .nbr-outcome").first.wait_for(timeout=90000)
+    page.locator(".nb-console .nbr-outcome").first.wait_for(timeout=180000)
     print("console:", page.locator(".nb-console .nbr-outcome").first.inner_text().replace("\n", " "))
     print("output:", page.locator(".nb-section[data-section=output]").first.inner_text().replace("\n", " ")[:200])
 
 
-def desktop_run(pw, name, value):
-    browser = pw.chromium.launch()
-    ctx = browser.new_context(viewport={"width": VIEW[0], "height": VIEW[1]}, device_scale_factor=a.zoom,
-                              color_scheme="dark" if a.dark else "light", reduced_motion="no-preference")
+def open_studio(pw, name, value, mobile):
+    browser = pw.chromium.launch(args=[f"--force-device-scale-factor={SCALE}"])   # (else the screencast is CSS-size)
+    ctx = browser.new_context(viewport={"width": VIEW[0], "height": VIEW[1]}, device_scale_factor=SCALE,
+                              is_mobile=mobile, has_touch=mobile, color_scheme=THEME, reduced_motion="no-preference")
     ctx.add_cookies([{"name": name, "value": value, "url": URL}])
-    ctx.add_init_script(ARROW)
+    ctx.add_init_script(PAGE)
+    ctx.add_init_script(FINGER if mobile else CURSOR)
     page = ctx.new_page()
     page.goto(f"{URL}/studio#/new")   # New model: the notebook before its first run, script.md's outline in the middle
-    editor = page.locator("#f-script")
-    editor.wait_for()
-    page.wait_for_timeout(900)
+    page.locator("#f-script").wait_for()
+    return browser, ctx, page
 
-    mouse = {"x": VIEW[0] * 0.5, "y": VIEW[1] * 0.62}
-    page.mouse.move(mouse["x"], mouse["y"])
+
+def desktop_run(pw, name, value):
+    browser, ctx, page = open_studio(pw, name, value, False)
+    editor = page.locator("#f-script")
+    slowed(ctx, page)
+    wait = lambda ms: page.wait_for_timeout(ms * SLOW)
+    wait(900)
+    page.mouse.move(VIEW[0] * 0.5, VIEW[1] * 0.62)
 
     def glide(x, y, ms=900):
-        """moves the pointer to (x, y) along a soft curve, easing in and out, as a hand would"""
-        x0, y0 = mouse["x"], mouse["y"]
-        n = max(12, int(ms / 16))
-        bend = 0.12 * math.hypot(x - x0, y - y0)   # a slight arc, not a ruler line
-        nx, ny = (-(y - y0), x - x0)
-        norm = math.hypot(nx, ny) or 1
-        for i in range(1, n + 1):
-            t = i / n
-            e = t * t * (3 - 2 * t)   # smoothstep
-            arc = math.sin(math.pi * e) * bend
-            page.mouse.move(x0 + (x - x0) * e + nx / norm * arc, y0 + (y - y0) * e + ny / norm * arc)
-            page.wait_for_timeout(16)
-        mouse.update(x=x, y=y)
+        # (never longer than it should take, plus a little: setTimeout isn't slowed either)
+        page.evaluate("([x, y, ms]) => Promise.race([window.__cursor.glide(x, y, ms), "
+                      "new Promise((r) => setTimeout(r, ms + 2000))])", [x, y, ms * SLOW])
+        page.mouse.move(x, y)   # the real pointer there too, for what it's over
 
     def at(locator, dx=0.5, dy=0.5):
         b = locator.bounding_box()
         return b["x"] + b["width"] * dx, b["y"] + b["height"] * dy
 
-    def click_on(locator, dx=0.5, dy=0.5, ms=900, hold=110):
+    def click_on(locator, dx=0.5, dy=0.5, ms=900, hold=120):
         glide(*at(locator, dx, dy), ms=ms)
-        page.wait_for_timeout(140)
+        wait(130)
         page.mouse.down()
-        page.wait_for_timeout(hold)
+        wait(hold)
         page.mouse.up()
 
     got, stop_cast = capture(ctx, page)
-    page.wait_for_timeout(1200)                                   # an empty script.md: the outline of one
+    wait(1200)                                                    # an empty script.md: the outline of one
     # a click in the empty editor puts the caret at its start; the pointer stays there, right of and below what's typed
     box = editor.bounding_box()
-    click_on(editor, 0.72, min(0.86, 190 / box["height"]), ms=800)
-    page.wait_for_timeout(200)
-    type_script(page, SCRIPT)
-    page.wait_for_timeout(800)                                    # the last line's tag; Data and Tests have read it
+    click_on(editor, 0.72, min(0.86, 190 / box["height"]), ms=850)
+    wait(200)
+    type_script(page, wait, SCRIPT)
+    wait(800)                                                     # the last line's tag; Data and Tests have read it
     click_on(page.get_by_role("button", name="Train v1"), ms=900)
     page.wait_for_url(re.compile(r"#/ai/[^/]+/training$"))
     console = page.locator(".nb-console")
     console.wait_for()
-    page.wait_for_timeout(250)
-    glide(*at(console, 0.8, 0.62), ms=900)                        # aside, while it runs
+    wait(250)
+    glide(*at(console, 0.8, 0.62), ms=950)                        # aside, while it runs
     finished(page)
-    page.wait_for_timeout(1100)                                   # v1 is live
+    wait(1100)                                                    # v1 is live
     glide(*at(page.locator(".nb-section[data-section=output]").get_by_text("Download LoRA").first), ms=900)
-    page.wait_for_timeout(2400)                                   # its LoRA, to download
+    wait(2400)                                                    # its LoRA, to download
     stop_cast()
-    page.wait_for_timeout(200)
+    wait(60)
     browser.close()
     return got
 
@@ -361,73 +443,70 @@ def desktop_run(pw, name, value):
 def phone_run(pw, name, value):
     """the same on a phone: tap into script.md and write it, tap Train v1, watch the run in the console over the
     notebook, close it and tap Output: v1, live, and its LoRA"""
-    browser = pw.chromium.launch(args=[f"--force-device-scale-factor={a.zoom}"])
-    ctx = browser.new_context(viewport={"width": VIEW[0], "height": VIEW[1]}, device_scale_factor=a.zoom, is_mobile=True,
-                              has_touch=True, color_scheme="dark" if a.dark else "light", reduced_motion="no-preference")
-    ctx.add_cookies([{"name": name, "value": value, "url": URL}])
-    ctx.add_init_script(FINGER)
-    page = ctx.new_page()
-    page.goto(f"{URL}/studio#/new")
+    browser, ctx, page = open_studio(pw, name, value, True)
     editor = page.locator("#f-script")
-    editor.wait_for()
-    page.wait_for_timeout(900)
+    slowed(ctx, page)
+    wait = lambda ms: page.wait_for_timeout(ms * SLOW)
+    wait(900)
 
     def tap(locator, dx=0.5, dy=0.5):
         b = locator.bounding_box()
         x, y = b["x"] + b["width"] * dx, b["y"] + b["height"] * dy
         page.evaluate("([x, y]) => window.__finger.down(x, y)", [x, y])
-        page.wait_for_timeout(150)
+        wait(150)
         page.touchscreen.tap(x, y)
-        page.wait_for_timeout(110)
+        wait(110)
         page.evaluate("window.__finger.up()")
 
     got, stop_cast = capture(ctx, page)
-    page.wait_for_timeout(1300)                                   # an empty script.md
+    wait(1300)                                                    # an empty script.md
     box = editor.bounding_box()
     tap(editor, 0.3, min(0.5, 24 / box["height"]))                # its first line
-    page.wait_for_timeout(250)
-    type_script(page, SCRIPT)
-    page.wait_for_timeout(800)
+    wait(250)
+    type_script(page, wait, SCRIPT)
+    wait(800)
     tap(page.get_by_role("button", name="Train v1"))
     page.wait_for_url(re.compile(r"#/ai/[^/]+/training$"))
     page.locator(".nb-console").wait_for()                        # the run, in the console over the notebook
     finished(page)
-    page.wait_for_timeout(1300)
+    wait(1300)
     tap(page.get_by_role("button", name="Close console"))
-    page.wait_for_timeout(450)
+    wait(450)
     tap(page.locator(".nb-phone-item[data-show=output]"))         # v1, live, and its LoRA
-    page.wait_for_timeout(2400)
+    wait(2400)
     stop_cast()
-    page.wait_for_timeout(200)
+    wait(60)
     browser.close()
     return got
 
 
 def encode(got, frames):
-    """the frames, at a steady 30 per second: an .mp4 (H.264), a .webm (VP9) and the first frame (.webp). got: (time,
-    PNG in base64) for each frame the page painted, and (time, None) when the screencast stopped"""
+    """the frames at a steady --fps, their times sped back up by SLOW: an .mp4 (H.264), a .webm (VP9) and the first
+    frame (.webp). got: (time, PNG in base64) for each frame the page painted, and (time, None) when it stopped"""
     end = max((ts for ts, b64 in got if b64 is None), default=None)
     got = sorted((ts, b64) for ts, b64 in got if b64 is not None and (end is None or ts <= end))
-    end = end if end is not None else got[-1][0] + 0.5
+    end = end if end is not None else got[-1][0] + 0.5 * SLOW
     for i, (ts, b64) in enumerate(got):
         (frames / f"f{i:05d}.png").write_bytes(base64.b64decode(b64))
     lines = []
     for i, (ts, _) in enumerate(got):
         nxt = got[i + 1][0] if i + 1 < len(got) else end
-        lines.append(f"file 'f{i:05d}.png'\nduration {max(0.001, nxt - ts):.4f}")
+        lines.append(f"file 'f{i:05d}.png'\nduration {max(0.0005, (nxt - ts) / SLOW):.5f}")
     lines.append(f"file 'f{len(got) - 1:05d}.png'")
     (frames / "list.txt").write_text("\n".join(lines) + "\n")
-    print("frames", len(got), "seconds", round(end - got[0][0], 2))
+    seconds = (end - got[0][0]) / SLOW
+    print("frames", len(got), "seconds", round(seconds, 2), "captured a second", round(len(got) / seconds, 1))
     w, h = FRAME
-    vf = f"fps=30,scale={w}:{h}:flags=lanczos,format=yuv420p"
-    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", str(frames / "list.txt"),
-                    "-vf", vf, "-c:v", "libx264", "-preset", "veryfast", "-crf", "24", "-movflags", "+faststart", "-an",
-                    str(OUT / f"{tag}.mp4")], check=True)
-    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", str(frames / "list.txt"),
-                    "-vf", vf, "-c:v", "libvpx-vp9", "-b:v", "0", "-crf", "36", "-row-mt", "1", "-an",
+    vf = f"fps={a.fps},scale={w}:{h}:flags=lanczos,format=yuv420p"
+    src = ["-f", "concat", "-safe", "0", "-i", str(frames / "list.txt")]
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", *src, "-vf", vf, "-c:v", "libx264", "-preset", "slow",
+                    "-crf", "18", "-profile:v", "high", "-movflags", "+faststart", "-an", str(OUT / f"{tag}.mp4")],
+                   check=True)
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", *src, "-vf", vf, "-c:v", "libvpx-vp9", "-b:v", "0",
+                    "-crf", "30", "-deadline", "good", "-cpu-used", "2", "-row-mt", "1", "-tile-columns", "2", "-an",
                     str(OUT / f"{tag}.webm")], check=True)
-    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(frames / "f00000.png"), "-vf", f"scale={w}:{h}:flags=lanczos",
-                    "-quality", "86", str(OUT / f"{tag}.webp")], check=True)
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(frames / "f00000.png"), "-quality", "90",
+                    str(OUT / f"{tag}.webp")], check=True)
     for f in sorted(OUT.glob(f"{tag}.*")):
         print(f.name, f.stat().st_size)
 
@@ -439,8 +518,7 @@ try:
             break
         except Exception:
             time.sleep(0.25)
-    h, _ = call("POST", "/api/studio/signup", {"name": "Maya Chen", "email": "maya@fernbrook.example", "company": "Fernbrook",
-                                                "password": "correct-horse-battery", "agree": True})
+    h, _ = call("POST", "/api/studio/signup", ACCOUNT)
     name, value = h["Set-Cookie"].split(";")[0].split("=", 1)
     frames = Path(tempfile.mkdtemp(prefix="heura-frames-"))
     with sync_playwright() as pw:
