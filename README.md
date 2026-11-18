@@ -105,9 +105,8 @@ error and the site keeps its last good version. Fix the file and commit again.
   `.webm`, each with a `.webp` poster. To re-record: `python3 _tools/record-notebook.py <app checkout> img` with
   `--dark`, `--phone` and `--phone --dark`. Needs ffmpeg and Playwright for Python. The Studio runs with stand-ins
   for Heura Arche (it answers as its brief says) and its trainer (seconds a run, and a LoRA a real one's size); the
-  caption says they're simulated. Last recorded Nov 18, 2026, from the app's `live` (5db318f) with `logo-no-dots` (872a8ae) merged
-  in. The Studio's console is dark in either appearance, so the light and dark files look the same until it gets a
-  light look: then record them again.
+  caption says they're simulated. Last recorded Nov 18, 2026, from the app's `live` (48e2b71): Rosé Pine Dawn in
+  light, Rosé Pine in dark.
 - **Tool recordings** (`img/tools/<clip>*`): one short clip per tool on the Tools page, a close-up of its panel in the
   real Studio at 640 x 480, light and dark (`<clip>-dark.*`), in the same three files. To re-record:
   `python3 _tools/record-tools.py <app checkout> img/tools`, then again with `--dark`; `--only fine-tune,serving`
