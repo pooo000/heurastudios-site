@@ -100,9 +100,9 @@ test('the recording plays muted and looping, without controls, and Pause stops i
   const video = page.locator('.hm-video');
   await page.waitForFunction(() => !document.querySelector('.hm-video').paused);
   assert.deepEqual(await video.evaluate(v => [v.muted, v.loop, v.controls, v.playsInline]), [true, true, false, true]);
-  assert.match(await video.evaluate(v => v.currentSrc), /\/img\/pipeline-run\.(webm|mp4)$/);
+  assert.match(await video.evaluate(v => v.currentSrc), /\/img\/notebook-run\.(webm|mp4)$/);
   assert.equal(await page.locator('#' + await video.getAttribute('aria-describedby')).innerText(),
-    'One run on a sample model in Heura Studios: 82 training rows (10 demonstrations and the replay mix), scored on the eval set before and after, promoted on a tie.');
+    'A sample model in Heura Studios: its script.md, then Train v1, checked on its six test questions before and after, and live on a tie. Heura Arche’s answers and its training are simulated here, so the run takes seconds.');
   const toggle = page.getByRole('button', { name: 'Pause the recording' });
   await toggle.click();
   assert.equal(await video.evaluate(v => v.paused), true);
@@ -126,10 +126,10 @@ test('in dark mode it plays the dark recording, and changing the appearance chan
   const { page, close } = await open('/', { colorScheme: 'dark' });
   const src = () => page.locator('.hm-video').evaluate(v => v.currentSrc);
   await page.waitForFunction(() => !document.querySelector('.hm-video').paused);
-  assert.match(await src(), /pipeline-run-dark\./);
-  assert.match(await page.locator('.hm-video').getAttribute('poster'), /pipeline-run-dark\.webp$/);
+  assert.match(await src(), /notebook-run-dark\./);
+  assert.match(await page.locator('.hm-video').getAttribute('poster'), /notebook-run-dark\.webp$/);
   await page.getByRole('radiogroup', { name: 'Appearance' }).getByRole('radio', { name: 'Light' }).check();
-  await page.waitForFunction(() => /pipeline-run\.(webm|mp4)$/.test(document.querySelector('.hm-video').currentSrc));
+  await page.waitForFunction(() => /notebook-run\.(webm|mp4)$/.test(document.querySelector('.hm-video').currentSrc));
   await page.locator('.hm-video').scrollIntoViewIfNeeded();   // (the setting is in the footer: the recording rested)
   await page.waitForFunction(() => !document.querySelector('.hm-video').paused);
   await close();
@@ -142,7 +142,7 @@ for (const scheme of ['light', 'dark']) {
     const ctx = await browser.newContext({ viewport: { width: 1280, height: 860 }, colorScheme: scheme });
     const page = await ctx.newPage();
     const fetched = [];
-    page.on('request', r => { if (/\/img\/pipeline-run/.test(r.url())) fetched.push(new URL(r.url()).pathname); });
+    page.on('request', r => { if (/\/img\/notebook-run/.test(r.url())) fetched.push(new URL(r.url()).pathname); });
     await page.addInitScript(() => {
       window.loads = 0;
       const load = HTMLMediaElement.prototype.load;
@@ -150,11 +150,11 @@ for (const scheme of ['light', 'dark']) {
     });
     await page.goto(server.url + '/');
     await page.waitForFunction(() => !document.querySelector('.hm-video').paused);
-    const own = scheme === 'dark' ? /pipeline-run-dark\./ : /pipeline-run\./;
+    const own = scheme === 'dark' ? /notebook-run-dark\./ : /notebook-run\./;
     assert.ok(fetched.length > 0);
     for (const path of fetched) assert.match(path, own, `${scheme}: fetched ${path}`);
     assert.match(await page.locator('.hm-frame').evaluate(f => getComputedStyle(f).backgroundImage), scheme === 'dark'
-      ? /pipeline-run-dark\.webp/ : /pipeline-run\.webp/);
+      ? /notebook-run-dark\.webp/ : /notebook-run\.webp/);
     assert.equal(await page.evaluate(() => window.loads), scheme === 'dark' ? 1 : 0, 'load() only to change the files');
     await ctx.close();
   });
@@ -169,10 +169,10 @@ for (const scheme of ['light', 'dark']) {
     const ctx = await browser.newContext({ viewport: PHONE, colorScheme: scheme, isMobile: true, hasTouch: true });
     const page = await ctx.newPage();
     const fetched = [];
-    page.on('request', r => { if (/\/img\/pipeline-run/.test(r.url())) fetched.push(new URL(r.url()).pathname); });
+    page.on('request', r => { if (/\/img\/notebook-run/.test(r.url())) fetched.push(new URL(r.url()).pathname); });
     await page.goto(server.url + '/');
     await page.waitForFunction(() => !document.querySelector('.hm-video').paused);
-    const own = scheme === 'dark' ? /\/img\/pipeline-run-phone-dark\./ : /\/img\/pipeline-run-phone\./;
+    const own = scheme === 'dark' ? /\/img\/notebook-run-phone-dark\./ : /\/img\/notebook-run-phone\./;
     assert.match(await page.locator('.hm-video').evaluate(v => v.currentSrc), own);
     assert.match(await page.locator('.hm-video').getAttribute('poster'), own);
     assert.match(await page.locator('.hm-frame').evaluate(f => getComputedStyle(f).backgroundImage), own);
@@ -189,16 +189,16 @@ test('the recording is offered as an .mp4 first, the phone one to phones, even w
   const sources = await page.locator('.hm-video source').evaluateAll(ss => ss.map(s => [s.getAttribute('media'), s.type,
     s.getAttribute('src')]));
   assert.deepEqual(sources, [
-    ['(max-width: 599px)', 'video/mp4', '/img/pipeline-run-phone.mp4'],
-    ['(max-width: 599px)', 'video/webm', '/img/pipeline-run-phone.webm'],
-    [null, 'video/mp4', '/img/pipeline-run.mp4'],
-    [null, 'video/webm', '/img/pipeline-run.webm'],
+    ['(max-width: 599px)', 'video/mp4', '/img/notebook-run-phone.mp4'],
+    ['(max-width: 599px)', 'video/webm', '/img/notebook-run-phone.webm'],
+    [null, 'video/mp4', '/img/notebook-run.mp4'],
+    [null, 'video/webm', '/img/notebook-run.webm'],
   ]);
   await close();
   for (const scheme of ['light', 'dark']) {   // and the frame shows the phone poster on a phone
     const phone = await open('/', { javaScriptEnabled: false, colorScheme: scheme, viewport: PHONE });
     assert.match(await phone.page.locator('.hm-frame').evaluate(f => getComputedStyle(f).backgroundImage),
-      scheme === 'dark' ? /pipeline-run-phone-dark\.webp/ : /pipeline-run-phone\.webp/, scheme);
+      scheme === 'dark' ? /notebook-run-phone-dark\.webp/ : /notebook-run-phone\.webp/, scheme);
     await phone.close();
   }
 });
@@ -207,12 +207,12 @@ test('turning a phone to a wider screen changes to the desktop recording, and ba
   const ctx = await browser.newContext({ viewport: PHONE, isMobile: true, hasTouch: true });
   const page = await ctx.newPage();
   await page.goto(server.url + '/');
-  await page.waitForFunction(() => /pipeline-run-phone\./.test(document.querySelector('.hm-video').currentSrc));
+  await page.waitForFunction(() => /notebook-run-phone\./.test(document.querySelector('.hm-video').currentSrc));
   await page.setViewportSize({ width: 1024, height: 700 });
-  await page.waitForFunction(() => /\/pipeline-run\.(mp4|webm)$/.test(document.querySelector('.hm-video').currentSrc));
-  assert.match(await page.locator('.hm-video').getAttribute('poster'), /\/pipeline-run\.webp$/);
+  await page.waitForFunction(() => /\/notebook-run\.(mp4|webm)$/.test(document.querySelector('.hm-video').currentSrc));
+  assert.match(await page.locator('.hm-video').getAttribute('poster'), /\/notebook-run\.webp$/);
   await page.setViewportSize(PHONE);
-  await page.waitForFunction(() => /pipeline-run-phone\./.test(document.querySelector('.hm-video').currentSrc));
+  await page.waitForFunction(() => /notebook-run-phone\./.test(document.querySelector('.hm-video').currentSrc));
   await ctx.close();
 });
 
@@ -220,7 +220,7 @@ test('without JavaScript the frame still shows the poster for the system’s app
   for (const scheme of ['light', 'dark']) {
     const { page, close } = await open('/', { javaScriptEnabled: false, colorScheme: scheme });
     assert.match(await page.locator('.hm-frame').evaluate(f => getComputedStyle(f).backgroundImage), scheme === 'dark'
-      ? /pipeline-run-dark\.webp/ : /pipeline-run\.webp/, scheme);
+      ? /notebook-run-dark\.webp/ : /notebook-run\.webp/, scheme);
     await close();
   }
 });

@@ -19,7 +19,7 @@ js: [/form.js, /recording.js, /home.js]
     </section>
 
     {%- comment -%}
-      Screen recording of one run (made with _tools/record-pipeline.py). home.js handles play/pause, light/dark and
+      Screen recording of a model written in script.md, then Train v1 (made with _tools/record-notebook.py). home.js handles play/pause, light/dark and
       reduced motion. Without JS the browser's own controls show. Phone-sized files first; .mp4 before .webm for iPhones.
     {%- endcomment %}
     <section class="hm-run" aria-labelledby="hm-run-title">
@@ -28,17 +28,17 @@ js: [/form.js, /recording.js, /home.js]
         <figure class="hm-film">
           <div class="hm-frame">
             <video class="hm-video" width="1440" height="900" muted loop playsinline controls preload="none"
-              data-light="/img/pipeline-run" data-dark="/img/pipeline-run-dark"
-              data-phone-light="/img/pipeline-run-phone" data-phone-dark="/img/pipeline-run-phone-dark"
+              data-light="/img/notebook-run" data-dark="/img/notebook-run-dark"
+              data-phone-light="/img/notebook-run-phone" data-phone-dark="/img/notebook-run-phone-dark"
               aria-describedby="hm-run-caption">
-              <source src="/img/pipeline-run-phone.mp4" type="video/mp4" media="(max-width: 599px)">
-              <source src="/img/pipeline-run-phone.webm" type="video/webm" media="(max-width: 599px)">
-              <source src="/img/pipeline-run.mp4" type="video/mp4">
-              <source src="/img/pipeline-run.webm" type="video/webm">
+              <source src="/img/notebook-run-phone.mp4" type="video/mp4" media="(max-width: 599px)">
+              <source src="/img/notebook-run-phone.webm" type="video/webm" media="(max-width: 599px)">
+              <source src="/img/notebook-run.mp4" type="video/mp4">
+              <source src="/img/notebook-run.webm" type="video/webm">
             </video>
           </div>
           <button class="hm-toggle" type="button" aria-label="Pause the recording" hidden>Pause</button>
-          <figcaption id="hm-run-caption" class="hm-caption">One run on a sample model in Heura Studios: 82 training rows (10 demonstrations and the replay mix), scored on the eval set before and after, promoted on a tie.</figcaption>
+          <figcaption id="hm-run-caption" class="hm-caption">A sample model in Heura Studios: its script.md, then Train v1, checked on its six test questions before and after, and live on a tie. Heura Arche’s answers and its training are simulated here, so the run takes seconds.</figcaption>
         </figure>
       </div>
     </section>
