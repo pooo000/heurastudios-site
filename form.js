@@ -1,5 +1,5 @@
 // Shared by the two forms that post to the Google Apps Script in _backend/:
-// the home page's Request access form (home.js) and the waitlist form (waitlist/waitlist.js).
+// the home page's inquiry form (home.js) and the waitlist form (waitlist/waitlist.js).
 //
 // With JS: check the fields, POST them with js=1 (so the script answers JSON) and show the result in place.
 // Without JS: the browser posts the form itself and the script answers with a plain page.
@@ -34,7 +34,7 @@
   //   sendingLabel    the submit button's text while sending
   //   validate(v)     v: the trimmed values by name -> [message, fieldName] for the first problem, or nothing
   //   serverErrors    the script's error codes -> [message, fieldName]
-  //   doneMessage(email, already) -> the success text ("already": this email had already signed up)
+  //   doneMessage(email, already) -> the success text ("already": this email had already signed up; only the waitlist)
   function setupForm(opts) {
     var form = opts.form;
     var submit = form.querySelector('[type="submit"]');

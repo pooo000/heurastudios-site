@@ -1,4 +1,5 @@
-// The header: one button, at the right, that fits every width (Ryan, Oct 19, 2026; since Oct 24 it says Request access).
+// The header: Log in and Sign up, at the right, that fit every width (Ryan, Nov 18, 2026: "remove the request access
+// button and replace it with login and a sign up button at the top"; before, one button, Request access since Oct 24).
 // And no prices on the public pages (Ryan, Oct 19, 20:47: "remove the pricing thing on the main page, only have it on
 // the actual product page after the login"): the plans are on the Plan page in Heura Studios.
 const test = require('node:test');
@@ -23,17 +24,18 @@ test('no prices on the public pages: the plans are in Heura Studios, after loggi
     const { page, errors, close } = await open(path);
     assert.equal(await page.locator('#pricing, .ov-plans').count(), 0, path);
     assert.equal(await page.locator('a[href$="#pricing"]').count(), 0, path);
-    assert.doesNotMatch(await page.evaluate(() => document.body.innerText), /\$\d+ a month|\bPro\b.*\bMax\b/, path);
+    assert.doesNotMatch(await page.evaluate(() => document.body.innerText), /\$[\d,]+( a month|\/mo)|US\$|\bPro\b.*\bMax\b|\bStudio plan\b/, path);
     assert.deepEqual(errors, [], path);
     await close();
   }
 });
 
-// The header: the logo, the three sections (from 760px) and the button, at the right. No Log in (Ryan, Oct 19: not on
-// the public pages; it's beside the Request access form on the home page). Datasets since Nov 18 (Ryan: "have it as a
-// seperate tab at the top"), between Tools and Blog.
-for (const path of ['/', '/tools/', '/datasets/', '/privacy/', '/terms/']) {
-  test(`${path}: the header fits from 320px to 1280px, its one button Request access at the right`, async () => {
+// The header: the logo, the three sections (from 760px), then Log in and Sign up, at the right: both go to the app
+// (sign-up is open to anyone since Nov 18). Datasets since Nov 18 (Ryan: "have it as a seperate tab at the top"),
+// between Tools and Blog.
+const APP = 'https://app.heurastudios.com';
+for (const path of ['/', '/tools/', '/datasets/', '/blog/', '/privacy/', '/terms/', '/waitlist/']) {
+  test(`${path}: the header fits from 320px to 1280px, Log in and then Sign up at the right`, async () => {
     for (const width of [320, 360, 375, 390, 414, 420, 479, 480, 520, 600, 759, 760, 834, 880, 960, 1024, 1280]) {
       const { page, close } = await open(path, { viewport: { width, height: 700 } });
       const row = await page.evaluate(() => {
@@ -50,12 +52,20 @@ for (const path of ['/', '/tools/', '/datasets/', '/privacy/', '/terms/']) {
       for (const k of row.shown) assert.ok(k.left >= row.inner[0] - 0.5 && k.right <= row.inner[1] + 0.5, `${where}: ${k.what} spills out of the header`);
       for (let i = 1; i < row.shown.length; i++) assert.ok(row.shown[i].left >= row.shown[i - 1].right, `${where}: ${row.shown[i].what} overlaps ${row.shown[i - 1].what}`);
       const header = page.locator('header');
-      const button = header.getByRole('link', { name: 'Request access' });
-      assert.equal(await button.count(), 1, where);
-      assert.equal(await button.getAttribute('href'), path === '/' ? '#request' : '/#request', where);
-      assert.equal(await header.locator('a[href*="app.heurastudios.com"]').count(), 0, `${where}: Log in`);
+      const login = header.getByRole('link', { name: 'Log in', exact: true });
+      const signup = header.getByRole('link', { name: 'Sign up', exact: true });
+      assert.equal(await login.count(), 1, where);
+      assert.equal(await signup.count(), 1, where);
+      assert.equal(await login.getAttribute('href'), `${APP}/login`, where);
+      assert.equal(await signup.getAttribute('href'), `${APP}/signup`, where);
+      assert.equal(await header.getByText('Request access').count(), 0, `${where}: no Request access`);
       const last = row.shown[row.shown.length - 1];
-      assert.ok(last.what.includes('ov-btn') && Math.abs(last.right - row.inner[1]) <= 1, `${where}: the button sits at the right`);
+      assert.ok(last.what.includes('ov-top-acts') && Math.abs(last.right - row.inner[1]) <= 1, `${where}: they sit at the right`);
+      const [l, u] = [await login.boundingBox(), await signup.boundingBox()];
+      assert.ok(l.x + l.width <= u.x + 0.5, `${where}: Log in comes before Sign up`);
+      assert.ok(Math.abs(u.x + u.width - row.inner[1]) <= 1, `${where}: Sign up is the last thing in the header`);
+      assert.ok(l.height >= 44 && (await signup.evaluate(a => a.className)).includes('ov-btn-primary'), `${where}: Log in is a tap target; Sign up the button`);
+      for (const b of [l, u]) assert.ok(b.x >= row.inner[0] - 0.5 && b.x + b.width <= row.inner[1] + 0.5, `${where}: in the header`);
       const nav = await header.locator('nav a').evaluateAll(as => as.filter(a => a.getBoundingClientRect().width > 0).map(a => a.textContent.trim()));
       assert.deepEqual(nav, width >= 760 ? ['Tools', 'Datasets', 'Blog'] : [], where);
       await close();

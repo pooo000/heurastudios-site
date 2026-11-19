@@ -156,6 +156,6 @@ Arche’s size is what lets it run on your own machine, and it also sets the lim
 
 The tests tell you which side of that line a job is on. Write them first, from the questions your team actually gets. They show, version by version, whether the model is getting the job right. A ready-made set adds general practice, but only your team’s examples carry your rules.
 
-## Request access
+## Sign up
 
-Access to Heura Studios is by request. [Request access](/#request) and tell us the job you’d train first.
+Heura Studios is open to anyone. [Sign up](https://app.heurastudios.com/signup) and start with the job you’d train first.

@@ -62,13 +62,17 @@ js: [/form.js, /recording.js, /home.js]
     </div>
   </section>
 
-  <section class="ov-section hm-request" id="request" aria-labelledby="hm-request-title">
-    <div class="ov-wrap ov-split">
+  {%- comment -%}
+    Inquiries (Ryan, Nov 18, 2026: sign-up is open, so this form is for questions: "if you want to ask a question, you
+    don't have to email the founder itself ... you just inquire"). Until then it was Request access; links to /#request
+    still land here (the column's id).
+  {%- endcomment %}
+  <section class="ov-section hm-inquire" id="inquire" aria-labelledby="hm-inquire-title">
+    <div class="ov-wrap ov-split" id="request">
       <div class="ov-head">
-        <h2 id="hm-request-title" class="ov-h2">Request access</h2>
-        <p class="hm-login">Already have access? <a href="https://app.heurastudios.com/login">Log in</a></p>
+        <h2 id="hm-inquire-title" class="ov-h2">Inquiries</h2>
       </div>
-      <div class="hm-request-body">
+      <div class="hm-inquire-body">
         {%- comment -%} Posts to the Apps Script in _backend/ (form.js sends it with fetch; without JS it posts normally). {%- endcomment %}
         <form id="hm-form" class="hm-form" action="{{ site.form_endpoint }}" method="post" novalidate>
           <div class="hm-field">
@@ -76,37 +80,36 @@ js: [/form.js, /recording.js, /home.js]
             <input id="hm-name" name="name" autocomplete="name" maxlength="100" required>
           </div>
           <div class="hm-field">
-            <label for="hm-email">Work email</label>
+            <label for="hm-email">Email</label>
             <input id="hm-email" name="email" type="email" autocomplete="email" inputmode="email" maxlength="254" required>
           </div>
           <div class="hm-field">
             <label for="hm-company">Company</label>
-            <input id="hm-company" name="company" autocomplete="organization" maxlength="100" required>
+            <input id="hm-company" name="company" autocomplete="organization" maxlength="100">
           </div>
           <div class="hm-field">
             <label for="hm-role">Role</label>
             <input id="hm-role" name="role" autocomplete="organization-title" maxlength="100">
           </div>
           <div class="hm-field hm-field-wide">
-            <label for="hm-use">What will you specialize?</label>
-            <textarea id="hm-use" name="use" rows="4" maxlength="1000" aria-describedby="hm-use-hint"></textarea>
-            <p class="hm-hint" id="hm-use-hint">The model, and the work it should do.</p>
+            <label for="hm-message">Question</label>
+            <textarea id="hm-message" name="message" rows="5" maxlength="2000" required></textarea>
           </div>
           {%- comment -%} Honeypot: hidden from people; bots that fill it get "ok" and nothing is saved. {%- endcomment %}
           <div class="hm-trap" aria-hidden="true">
             <label for="hm-website">Website</label>
             <input id="hm-website" name="website" tabindex="-1" autocomplete="off">
           </div>
-          <input type="hidden" name="kind" value="request">
+          <input type="hidden" name="kind" value="inquiry">
           <input type="hidden" name="from" value="/">
           <p class="hm-error" id="hm-error" role="alert"></p>
           <div class="hm-submit-row">
-            <button class="ov-btn ov-btn-primary hm-submit" type="submit">Request access</button>
-            <p class="hm-fine">These details are used only to reply to you. See the <a href="/privacy/">Privacy Policy</a>.</p>
+            <button class="ov-btn ov-btn-primary hm-submit" type="submit">Send inquiry</button>
+            <p class="hm-fine">A founder replies by email. These details are used only to reply to you. See the <a href="/privacy/">Privacy Policy</a>.</p>
           </div>
         </form>
         <div class="hm-done" id="hm-done" tabindex="-1" hidden>
-          <h3 class="hm-done-title">Request sent</h3>
+          <h3 class="hm-done-title">Inquiry sent</h3>
           <p id="hm-done-text"></p>
         </div>
       </div>

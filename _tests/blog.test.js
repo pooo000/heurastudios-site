@@ -217,7 +217,7 @@ test('the teams post: eight jobs, each with its script, data, tests and where it
     '3. Operations: notes to action items', '4. Support teams: sorting requests', '5. Legal: a first pass on contracts',
     '6. Hardware: answers from standards', '7. IT: the first step from the runbook', '8. Product: one skill in your product'];
   assert.deepEqual(await page.locator('.bl-post h2').allTextContents(),
-    ['How every job is set up', ...JOBS, 'What fits, and what doesn’t', 'Request access']);
+    ['How every job is set up', ...JOBS, 'What fits, and what doesn’t', 'Sign up']);
   // the five steps every job takes, in the notebook's order
   assert.deepEqual(await page.locator('.bl-post ol > li > strong').allTextContents(),
     ['Write the script.', 'Add data.', 'Write tests.', 'Train.', 'Use it.']);
@@ -254,10 +254,13 @@ test('the teams post: eight jobs, each with its script, data, tests and where it
   assert.match(text, /The owner keeps the tests, the downloads and the choice of which version is live\./);
   assert.match(text, /The zip holds the adapter, the system prompt it was trained with, a model card with its test results/);
   assert.match(text, /It isn’t the right model for open-ended reasoning, long calculations/, 'the limits, said plainly');
-  // its one outside source, and the way in: the home page's form, as the header's and footer's buttons have it
+  // its one outside source, and the way in: the app's sign-up, as the header's and footer's Sign up have it (Nov 18:
+  // open to anyone; it said "Access to Heura Studios is by request" before)
   assert.equal(await post.getByRole('link', { name: 'January 6, 2027' }).getAttribute('href'),
     'https://developers.openai.com/api/docs/deprecations');
-  assert.equal(await post.getByRole('link', { name: 'Request access' }).getAttribute('href'), '/#request');
+  assert.equal(await post.getByRole('link', { name: 'Sign up' }).getAttribute('href'), 'https://app.heurastudios.com/signup');
+  assert.match(text, /Heura Studios is open to anyone\. Sign up and start with the job you’d train first\./);
+  assert.doesNotMatch(text, /by request|Request access/);
   // the site's voice (claude/heura-studios-positioning.md) and Ryan's standing rules: none of these, anywhere in it
   for (const never of [/no[- ]code/i, /\bsimple\b/i, /seamless/i, /\bunlock/i, /supercharge/i, /AI-powered/i,
     /cheaper than/i, /build your own AI/i, /the people who know the work/i, /\btry it\b/i, /!/, /customer service bot/i]) {
@@ -296,17 +299,18 @@ test('every page links to the blog from its header and its footer', async () => 
   }
 });
 
-// The blog's header and footer match every other page's: Request access (the home page's form), and no Log in (Ryan,
-// Oct 19: not on the public pages; it's beside the form now). A post can still have its own links, like the
+// The blog's header and footer match every other page's: Log in and Sign up in the header, Sign up in the footer
+// (Nov 18: sign-up is open to anyone; before, Request access). A post can still have its own links, like the
 // small-business post's Launch an agent.
 const APP = 'https://app.heurastudios.com';
-test('the blog has Request access and no Log in, like every other page', async () => {
+test('the blog has Log in and Sign up, like every other page', async () => {
   for (const p of ['/blog/', POST, SMB, SLEEP, TEAMS]) {
     const { page, errors, close } = await open(p);
-    const asks = page.locator('header, footer').getByRole('link', { name: 'Request access' });
-    assert.equal(await asks.count(), 2, `${p}: in the header and the footer`);
-    for (const href of await asks.evaluateAll(as => as.map(a => a.getAttribute('href')))) assert.equal(href, '/#request', p);
-    assert.equal(await page.locator(`a[href^="${APP}/login"]`).count(), 0, `${p}: no Log in`);
+    const signups = page.locator('header, footer').getByRole('link', { name: 'Sign up', exact: true });
+    assert.equal(await signups.count(), 2, `${p}: in the header and the footer`);
+    for (const href of await signups.evaluateAll(as => as.map(a => a.getAttribute('href')))) assert.equal(href, `${APP}/signup`, p);
+    assert.equal(await page.locator('header').locator(`a[href="${APP}/login"]`).count(), 1, `${p}: Log in, in the header`);
+    assert.equal(await page.locator('header, footer').getByRole('link', { name: 'Request access' }).count(), 0, `${p}: no Request access`);
     for (const old of ['Get started', 'Launch an agent', 'Sign in']) {
       assert.equal(await page.locator('header, footer').getByRole('link', { name: old }).count(), 0, `${p}: ${old}`);
     }

@@ -292,7 +292,7 @@ test('a card opens its preview: three of its rows with their credits, how they w
     assert.deepEqual(p.source, [[d.source.name, d.source.url], [d.source.license, d.source.license_url]]);
     assert.ok(p.fine.includes(d.source.attribution), `${slug}: its attribution`);
     if (d.note) assert.ok(p.fine.includes(d.note), `${slug}: what was changed`);
-    assert.deepEqual(p.ask, [['Request access', '/#request']]);
+    assert.deepEqual(p.ask, [['Sign up', 'https://app.heurastudios.com/signup']]);   // (open to anyone since Nov 18)
     await page.getByRole('dialog').getByRole('link', { name: 'Close' }).click();
     assert.equal(await page.locator(`dialog#${slug}`).evaluate(x => x.open), false, `${slug}: Close`);
     assert.equal(await page.evaluate(() => location.hash), '', `${slug}: the address goes back`);
@@ -437,11 +437,12 @@ test('light and dark: the cards and the preview in the page’s colors, the quie
   }
 });
 
-test('the end: a set that isn’t here can be asked for, and access asked for', async () => {
+test('the end: a set that isn’t here can be asked for, and Sign up', async () => {
   const { page, close } = await open();
   const ask = page.locator('#ask');
   assert.equal(await ask.getByRole('heading', { level: 2 }).innerText(), 'Don’t see the dataset you need?');
   assert.equal(await ask.getByRole('link', { name: 'Request a dataset' }).getAttribute('href'), `mailto:${FOUNDERS}?subject=Dataset%20request`);
-  assert.equal(await ask.getByRole('link', { name: 'Request access' }).getAttribute('href'), '/#request');
+  assert.equal(await ask.getByRole('link', { name: 'Sign up' }).getAttribute('href'), 'https://app.heurastudios.com/signup');
+  assert.equal(await ask.getByRole('link', { name: 'Request access' }).count(), 0);
   await close();
 });

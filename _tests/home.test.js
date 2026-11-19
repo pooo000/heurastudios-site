@@ -1,8 +1,9 @@
-// The home page (Oct 24, 2026: the post-training positioning). The hero (the headline and the lead; Request access is
-// the header's one button), a looping recording of one run in Heura Studios with a Pause button (on a phone, a recording
-// of the Studio at a phone's size), Tools, Specifications, and the Request access form, with Log in beside it for teams
-// that have access (Ryan, Oct 19: no Log in on the page itself, only where its call to action leads). Quiet on purpose: the recording is the one thing that
-// moves, and it stops with Pause, with Reduce Motion, and off screen. No text under 11px, no "we".
+// The home page (Oct 24, 2026: the post-training positioning). The hero (the headline and the lead; the header's Log in
+// and Sign up are the way in, since sign-up opened to anyone on Nov 18), a looping recording of one run in Heura Studios
+// with a Pause button (on a phone, a recording of the Studio at a phone's size), Specifications, and the inquiry form
+// (Ryan, Nov 18: "if you want to ask a question, you don't have to email the founder itself ... you just inquire"; until
+// then the form was Request access). Quiet on purpose: the recording is the one thing that moves, and it stops with
+// Pause, with Reduce Motion, and off screen. No text under 11px, no "we".
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const { startServer, launch } = require('./helpers');
@@ -47,8 +48,8 @@ async function fill(page, values) {
 }
 
 // The lead says what trains a checkpoint (demonstrations and corrections: documents ground answers, they don't train)
-// and the gate, in the words an ML lead would use. One Request access in view: the header's.
-test('the hero: the headline and the lead, and the header has the one Request access', async () => {
+// and the gate, in the words an ML lead would use. The ways in are the header's: Log in and Sign up.
+test('the hero: the headline and the lead, and the header has Log in and Sign up', async () => {
   const { page, errors, close } = await open('/');
   assert.equal(await page.title(), 'Post-training for AI-native companies – Heura Studios');
   // (Ryan, Nov 16: "can you change the heading into Training agents without Machine Learning specialists")
@@ -60,7 +61,8 @@ test('the hero: the headline and the lead, and the header has the one Request ac
   assert.equal(await page.locator('.hm-hero .ov-btn').count(), 0);
   const [h1, lead] = await Promise.all(['h1', '.hm-hero .ov-lead'].map(s => page.locator(s).boundingBox()));
   assert.ok(lead.y >= h1.y + h1.height && Math.abs(lead.x - h1.x) <= 4, 'the lead under the headline, on its left edge');
-  assert.equal(await page.locator('header').getByRole('link', { name: 'Request access' }).count(), 1);
+  assert.equal(await page.locator('header').getByRole('link', { name: 'Sign up', exact: true }).count(), 1);
+  assert.equal(await page.locator('header').getByRole('link', { name: 'Log in', exact: true }).count(), 1);
   const description = await page.locator('meta[name="description"]').getAttribute('content');
   assert.match(description, /^Post-training for AI-native companies\. Fine-tune the base on your team’s examples\. Test every version on your eval set\./);
   assert.doesNotMatch(description, /Grounding/);
@@ -71,27 +73,40 @@ test('the hero: the headline and the lead, and the header has the one Request ac
 test('the header and the footer go to sections that exist', async () => {
   const { page, close } = await open('/');
   const header = await page.locator('header a').evaluateAll(as => as.map(a => [a.textContent.trim(), a.getAttribute('href')]));
-  // (Oct 29: Tools is a page of its own, /tools/, each tool with its recording; the home page keeps Request access)
+  // (Oct 29: Tools is a page of its own, /tools/, each tool with its recording; Nov 18: Log in and Sign up, the app's)
   assert.deepEqual(header, [['Heura Studios', '/'], ['Tools', '/tools/'], ['Datasets', '/datasets/'], ['Blog', '/blog/'],
-    ['Request access', '#request']]);
+    ['Log in', 'https://app.heurastudios.com/login'], ['Sign up', 'https://app.heurastudios.com/signup']]);
   assert.deepEqual(await page.locator('footer nav').first().locator('a').allTextContents(),
-    ['Tools', 'Datasets', 'Request access', 'Blog']);
+    ['Tools', 'Datasets', 'Sign up', 'Blog']);
   assert.equal(await page.locator('footer nav').first().getByRole('link', { name: 'Tools' }).getAttribute('href'), '/tools/');
-  assert.equal(await page.locator('main #request').count(), 1);
+  assert.equal(await page.locator('footer nav').first().getByRole('link', { name: 'Sign up' }).getAttribute('href'),
+    'https://app.heurastudios.com/signup');
+  assert.equal(await page.locator('main #inquire').count(), 1);
   assert.equal(await page.locator('main #tools').count(), 0, 'the tools are on their own page now');
-  assert.equal(await page.getByRole('link', { name: 'Get started' }).count(), 0, 'access is requested now, not signed up for');
+  assert.equal(await page.getByRole('link', { name: 'Get started' }).count(), 0);
   await close();
 });
 
-test('Log in is where Request access leads, for teams that have access: not in the header, the hero or the footer', async () => {
+test('Log in is in the header, once: not in the hero, the inquiry form or the footer', async () => {
   const { page, close } = await open('/');
   const logins = page.locator('a[href^="https://app.heurastudios.com/login"]');
   assert.equal(await logins.count(), 1);
-  assert.equal(await page.locator('#request').getByRole('link', { name: 'Log in' }).count(), 1);
-  assert.equal(await page.locator('#request .hm-login').innerText(), 'Already have access? Log in');
-  for (const where of ['header', '.hm-hero', 'footer']) {
+  assert.equal(await page.locator('header').getByRole('link', { name: 'Log in', exact: true }).count(), 1);
+  for (const where of ['.hm-hero', '#inquire', 'footer']) {
     assert.equal(await page.locator(where).getByRole('link', { name: /log in|sign in/i }).count(), 0, where);
   }
+  await close();
+});
+
+// Links to the old Request access form (/#request: old emails, old posts) still land on the form that took its place.
+test('an old link to /#request lands on the inquiry form, under the header', async () => {
+  const { page, close } = await open('/#request');
+  // the page scrolls there smoothly, and stops with the heading 32px under the header, as for any section's link
+  await page.waitForFunction(() => Math.abs(document.getElementById('hm-inquire-title').getBoundingClientRect().top - (68 + 32)) <= 2,
+    null, { timeout: 5000 });
+  const [form, header] = await Promise.all(['#hm-inquire-title', '.ov-top'].map(sel => page.locator(sel).boundingBox()));
+  assert.ok(form.y >= header.y + header.height && form.y + form.height <= 860, `the heading in view (${form.y})`);
+  assert.equal(await page.locator('#request').evaluate(el => el.closest('section').id), 'inquire');
   await close();
 });
 
@@ -115,7 +130,7 @@ test('the recording plays muted and looping, without controls, and Pause stops i
 test('the recording rests off screen and plays again when it comes back', async () => {
   const { page, close } = await open('/');
   await page.waitForFunction(() => !document.querySelector('.hm-video').paused);
-  await page.locator('#request').scrollIntoViewIfNeeded();
+  await page.locator('#inquire').scrollIntoViewIfNeeded();
   await page.waitForFunction(() => document.querySelector('.hm-video').paused);
   await page.locator('.hm-video').scrollIntoViewIfNeeded();
   await page.waitForFunction(() => !document.querySelector('.hm-video').paused);
@@ -288,82 +303,88 @@ test('Specifications: one row per part, in place of what it does and doesn’t',
   const text = await page.evaluate(() => document.body.innerText);
   for (const gone of ['What it does', 'It doesn’t', 'doesn’t yet']) assert.ok(!text.includes(gone), gone);
   assert.ok(!text.includes('Operators bring the signal.'), 'said where the tools are: the Tools page (tools.test.js)');
-  // (Ryan, Oct 26: the line under Request access was "just yap": the heading, then Log in, then the form)
-  assert.equal(await page.locator('#request .ov-section-lead').count(), 0);
+  // (Ryan, Oct 26: the line under Request access was "just yap"; the inquiry form keeps it that way: the heading alone)
+  assert.equal(await page.locator('#inquire .ov-section-lead').count(), 0);
   for (const gone of ['contract with Ostravanne', 'A founder checks every request']) assert.ok(!text.includes(gone), gone);
   await close();
 });
 
-test('Request access asks for a name, a work email, a company, a role and what they will specialize', async () => {
+test('Inquiries asks for a name, an email and a question, and a company and a role if they like', async () => {
   const { page, close } = await open('/');
+  assert.equal(await page.locator('#inquire h2').innerText(), 'Inquiries');
   const form = page.locator('#hm-form');
   assert.equal(await form.getAttribute('action'), SCRIPT);
   assert.equal(await form.getAttribute('method'), 'post');
-  for (const [label, required] of [['Name', true], ['Work email', true], ['Company', true], ['Role', false],
-    ['What will you specialize?', false]]) {
+  for (const [label, required] of [['Name', true], ['Email', true], ['Company', false], ['Role', false], ['Question', true]]) {
     assert.equal(await form.getByLabel(label, { exact: true }).evaluate(i => i.required), required, label);
   }
-  // under the heading comes Log in, nothing else
-  assert.deepEqual(await page.locator('#request .ov-head > *').evaluateAll(es => es.map(e => e.className || e.tagName)),
-    ['ov-h2', 'hm-login']);
+  assert.equal(await form.getByLabel('Question', { exact: true }).evaluate(t => [t.tagName, t.maxLength].join(' ')), 'TEXTAREA 2000');
+  assert.equal(await form.locator('input[name="kind"]').inputValue(), 'inquiry');
+  assert.equal(await form.getByRole('button').innerText(), 'Send inquiry');
+  assert.match(await form.locator('.hm-fine').innerText(), /^A founder replies by email\. These details are used only to reply to you\./);
+  // under the heading, nothing (no Log in: it's in the header now)
+  assert.deepEqual(await page.locator('#inquire .ov-head > *').evaluateAll(es => es.map(e => e.className || e.tagName)),
+    ['ov-h2']);
   await close();
 });
 
-test('sending a request posts every field and says a founder will reply', async () => {
+test('sending an inquiry posts every field and says a founder will reply', async () => {
   const { page, errors, close } = await open('/');
   const sent = await standIn(page);
-  await fill(page, { 'Name': ' Ann Lee ', 'Work email': 'ann@acme.co', 'Company': 'Acme', 'Role': 'Head of ML',
-    'What will you specialize?': 'A support agent for billing questions' });
-  await page.getByRole('button', { name: 'Request access' }).last().click();
+  await fill(page, { 'Name': ' Ann Lee ', 'Email': 'ann@acme.co', 'Company': 'Acme', 'Role': 'Head of ML',
+    'Question': 'Can we train on our own support tickets?\nAnd export the result?' });
+  await page.getByRole('button', { name: 'Send inquiry' }).click();
   const done = page.locator('#hm-done');
   await done.waitFor();
-  assert.match(await done.innerText(), /Request sent\s+A founder will reply to ann@acme\.co\./);
+  assert.match(await done.innerText(), /Inquiry sent\s+A founder will reply to ann@acme\.co\./);
   assert.equal(await page.evaluate(() => document.activeElement.id), 'hm-done');
   assert.equal(await page.locator('#hm-form').isVisible(), false);
   const got = Object.fromEntries(sent[0]);
-  assert.deepEqual([got.name, got.email, got.company, got.role, got.use, got.kind, got.from, got.js, got.website],
-    ['Ann Lee', 'ann@acme.co', 'Acme', 'Head of ML', 'A support agent for billing questions', 'request', '/', '1', '']);
+  assert.deepEqual([got.name, got.email, got.company, got.role, got.message, got.kind, got.from, got.js, got.website],
+    ['Ann Lee', 'ann@acme.co', 'Acme', 'Head of ML', 'Can we train on our own support tickets?\nAnd export the result?',
+      'inquiry', '/', '1', '']);
+  assert.doesNotMatch(await done.innerText(), /\bwe\b/i, 'the page never says "we", and nor does what it says after sending');
   assert.deepEqual(errors, []);
   await close();
 });
 
-test('a request says where the person came from: the page’s utm tags, like the waitlist’s joins', async () => {
+test('an inquiry without a company or a role goes too', async () => {
+  const { page, close } = await open('/');
+  const sent = await standIn(page);
+  await fill(page, { 'Name': 'Bo', 'Email': 'bo@example.com', 'Question': 'What does the Studio plan include?' });
+  await page.getByRole('button', { name: 'Send inquiry' }).click();
+  await page.locator('#hm-done').waitFor();
+  const got = Object.fromEntries(sent[0]);
+  assert.deepEqual([got.company, got.role], ['', '']);
+  await close();
+});
+
+test('an inquiry says where the person came from: the page’s utm tags, like the waitlist’s joins', async () => {
   const { page, close } = await open('/?utm_source=launch&utm_medium=email');
   const sent = await standIn(page);
-  await fill(page, { 'Name': 'Ann', 'Work email': 'ann@acme.co', 'Company': 'Acme' });
-  await page.getByRole('button', { name: 'Request access' }).last().click();
+  await fill(page, { 'Name': 'Ann', 'Email': 'ann@acme.co', 'Question': 'Hi' });
+  await page.getByRole('button', { name: 'Send inquiry' }).click();
   await page.locator('#hm-done').waitFor();
   assert.equal(Object.fromEntries(sent[0]).from, '/?utm_source=launch&utm_medium=email');
   await close();
 });
 
-test('someone who already asked is told so', async () => {
-  const { page, close } = await open('/');
-  await standIn(page, { ok: true, already: true });
-  await fill(page, { 'Name': 'Ann', 'Work email': 'ann@acme.co', 'Company': 'Acme' });
-  await page.getByRole('button', { name: 'Request access' }).last().click();
-  await page.locator('#hm-done').waitFor();
-  const said = await page.locator('#hm-done').innerText();
-  assert.match(said, /There’s already a request from ann@acme\.co\. A founder will reply there\./);
-  assert.doesNotMatch(said, /\bwe\b/i, 'the page never says "we", and nor does what it says after sending');
-  await close();
-});
-
-test('a missing name, an email that does not look like one, or a missing company is caught before anything is sent', async () => {
+test('a missing name, an email that does not look like one, or a missing question is caught before anything is sent', async () => {
   const { page, close } = await open('/');
   const sent = await standIn(page);
-  const send = () => page.getByRole('button', { name: 'Request access' }).last().click();
+  const send = () => page.getByRole('button', { name: 'Send inquiry' }).click();
   const form = page.locator('#hm-form');
   await send();
   assert.equal(await page.locator('#hm-error').innerText(), 'Enter your name.');
   assert.equal(await form.getByLabel('Name', { exact: true }).getAttribute('aria-invalid'), 'true');
-  await fill(page, { 'Name': 'Ann', 'Work email': 'ann@acme' });
+  await fill(page, { 'Name': 'Ann', 'Email': 'ann@acme' });
   await send();
-  assert.equal(await page.locator('#hm-error').innerText(), 'Enter your work email, like you@company.com.');
+  assert.equal(await page.locator('#hm-error').innerText(), 'Enter your email, like you@company.com.');
   assert.equal(await page.evaluate(() => document.activeElement.id), 'hm-email');
-  await fill(page, { 'Work email': 'ann@acme.co' });
+  await fill(page, { 'Email': 'ann@acme.co', 'Question': '   ' });
   await send();
-  assert.equal(await page.locator('#hm-error').innerText(), 'Enter your company’s name.');
+  assert.equal(await page.locator('#hm-error').innerText(), 'Write your question.');
+  assert.equal(await page.evaluate(() => document.activeElement.id), 'hm-message');
   assert.equal(sent.length, 0);
   await close();
 });
@@ -375,48 +396,52 @@ test('an error is announced and tied to its field, which keeps its red edge whil
   // in the accessibility tree before there's anything to say, so the first message is announced like the rest
   assert.notEqual(await error.evaluate(e => getComputedStyle(e).display), 'none');
   assert.equal(await error.getAttribute('role'), 'alert');
-  await fill(page, { 'Name': 'Ann', 'Work email': 'ann@acme.co' });
-  const send = () => page.getByRole('button', { name: 'Request access' }).last().click();
+  await fill(page, { 'Name': 'Ann', 'Email': 'ann@acme.co' });
+  const send = () => page.getByRole('button', { name: 'Send inquiry' }).click();
   await send();
-  const company = page.locator('#hm-company');
-  assert.equal(await page.evaluate(() => document.activeElement.id), 'hm-company');
-  assert.equal(await company.getAttribute('aria-invalid'), 'true');
-  assert.equal(await company.getAttribute('aria-describedby'), 'hm-error');
+  const question = page.locator('#hm-message');
+  assert.equal(await page.evaluate(() => document.activeElement.id), 'hm-message');
+  assert.equal(await question.getAttribute('aria-invalid'), 'true');
+  assert.equal(await question.getAttribute('aria-describedby'), 'hm-error');
   await page.waitForFunction(() => getComputedStyle(document.activeElement).borderTopColor === 'rgb(180, 35, 24)',
     null, { timeout: 2000 });   // red while focused (after the border's short transition)
-  assert.equal(await page.locator('#hm-use').getAttribute('aria-describedby'), 'hm-use-hint');
-  await fill(page, { 'Company': 'Acme', 'Work email': 'ann' });   // now the email is the one to fix
+  await fill(page, { 'Question': 'Hi', 'Email': 'ann' });   // now the email is the one to fix
   await send();
-  assert.equal(await company.getAttribute('aria-describedby'), null);
+  assert.equal(await question.getAttribute('aria-describedby'), null);
+  assert.equal(await question.getAttribute('aria-invalid'), null);
   assert.equal(await page.locator('#hm-email').getAttribute('aria-describedby'), 'hm-error');
   assert.equal(sent.length, 0);
   await close();
 });
 
 for (const [what, reply, status] of [['the script is down', { ok: true }, 500], ['the script is busy', { ok: false, error: 'busy' }, 200]]) {
-  test(`when ${what}, the form stays and says to try again`, async () => {
+  test(`when ${what}, the form stays, keeps what was typed and says to try again`, async () => {
     const { page, close } = await open('/');
     await standIn(page, reply, status);
-    await fill(page, { 'Name': 'Ann', 'Work email': 'ann@acme.co', 'Company': 'Acme' });
-    const button = page.getByRole('button', { name: 'Request access' }).last();
+    await fill(page, { 'Name': 'Ann', 'Email': 'ann@acme.co', 'Question': 'What does it cost?' });
+    const button = page.getByRole('button', { name: 'Send inquiry' });
     await button.click();
-    await page.waitForFunction(() => document.getElementById('hm-error').textContent.includes('Try again') ||
-      document.getElementById('hm-error').textContent.includes('try again'));
+    await page.waitForFunction(() => /try again/i.test(document.getElementById('hm-error').textContent));
     assert.equal(await page.locator('#hm-form').isVisible(), true);
     assert.equal(await button.isEnabled(), true);
+    assert.equal(await page.locator('#hm-message').inputValue(), 'What does it cost?');
     await close();
   });
 }
 
-test('the script refusing the email or the company points at that field', async () => {
-  const { page, close } = await open('/');
-  await standIn(page, { ok: false, error: 'company' });
-  await fill(page, { 'Name': 'Ann', 'Work email': 'ann@acme.co', 'Company': 'Acme' });
-  await page.getByRole('button', { name: 'Request access' }).last().click();
-  await page.waitForFunction(() => document.getElementById('hm-error').textContent !== '');
-  assert.equal(await page.evaluate(() => document.activeElement.id), 'hm-company');
-  await close();
-});
+for (const [error, field, said] of [['company', 'hm-company', /company’s name/], ['message', 'hm-message', /up to 2,000 characters/],
+  ['email', 'hm-email', /email address/]]) {
+  test(`the script refusing the ${error} points at that field`, async () => {
+    const { page, close } = await open('/');
+    await standIn(page, { ok: false, error });
+    await fill(page, { 'Name': 'Ann', 'Email': 'ann@acme.co', 'Company': 'Acme', 'Question': 'Hi' });
+    await page.getByRole('button', { name: 'Send inquiry' }).click();
+    await page.waitForFunction(() => document.getElementById('hm-error').textContent !== '');
+    assert.equal(await page.evaluate(() => document.activeElement.id), field);
+    assert.match(await page.locator('#hm-error').innerText(), said);
+    await close();
+  });
+}
 
 for (const width of [320, 390, 1440]) {
   test(`at ${width}px nothing scrolls sideways and no text is smaller than 11px`, async () => {
@@ -456,7 +481,7 @@ for (const width of [1280, 834, 375]) {
 for (const scheme of ['light', 'dark']) {
   test(`secondary text reads at 4.5:1 or more (${scheme})`, async () => {
     const { page, close } = await open('/', { colorScheme: scheme });
-    const pairs = await page.evaluate(() => ['.hm-caption', '.hm-specs dd', '.hm-hint', '.hm-fine'].map(sel => {
+    const pairs = await page.evaluate(() => ['.hm-caption', '.hm-specs dd', '.hm-fine', '.ov-top-login'].map(sel => {
       const el = document.querySelector(sel);
       let bg = 'rgba(0, 0, 0, 0)';
       for (let e = el; e && /rgba\(.*, 0\)$/.test(bg); e = e.parentElement) bg = getComputedStyle(e).backgroundColor;

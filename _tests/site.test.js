@@ -35,28 +35,28 @@ async function fill(page, email, company) {
   await page.getByRole('button', { name: 'Join waitlist' }).click();
 }
 
-// Launch (Ryan, Oct 14, 2026): the app opened to anyone at app.heurastudios.com, and every call to action signed up
-// there. Oct 19 (Ryan: "remove the login on the main page and only have the option when i click Launch an Agent"): no
-// Log in on the public pages; it was behind the call to action. Oct 24 (the post-training positioning): access is for
-// teams under contract, so every call to action is Request access, the form on the home page, and Log in is beside
-// that form (the home page's test checks it), still not in a header or a footer. The waitlist page stays for anyone
-// who follows an old link.
+// Nov 18, 2026 (Ryan: "anybody could sign up now ... remove the request access button and replace it with login and a
+// sign up button at the top"): sign-up is open to anyone, so every call to action is Sign up (the app's sign-up page),
+// Log in is beside it in the header, and the home page's form is for inquiries (the home page's test checks it).
+// Before: Request access (Oct 24, for teams under contract), Launch an agent (Oct 19) and Get started (Oct 14). The
+// waitlist page stays for anyone who follows an old link, with the same header.
 const APP = 'https://app.heurastudios.com';
-test('every call to action is Request access, and no header or footer has Log in', async () => {
-  for (const path of ['/', '/tools/', '/datasets/', '/privacy/', '/terms/']) {
+test('every call to action is Sign up, Log in is beside it in the header, and nothing says Request access', async () => {
+  for (const path of ['/', '/tools/', '/datasets/', '/privacy/', '/terms/', '/waitlist/', '/blog/', '/blog/what-teams-train/']) {
     const { page, errors, close } = await open(path);
-    const asks = page.getByRole('link', { name: 'Request access' });
-    assert.ok(await asks.count() >= 2, `${path}: the header and the footer`);
-    for (const href of await asks.evaluateAll(as => as.map(a => a.getAttribute('href')))) {
-      assert.ok(href === '/#request' || (path === '/' && href === '#request'), `${path}: ${href}`);
-    }
-    assert.equal(await page.locator('header, footer').locator(`a[href^="${APP}/login"]`).count(), 0, `${path}: no Log in`);
-    assert.equal(await page.locator(`a[href^="${APP}/login"]`).count(), path === '/' ? 1 : 0, `${path}: Log in only beside the form`);
-    assert.equal(await page.locator(`a[href^="${APP}/signup"]`).count(), 0, `${path}: no open sign-up`);
-    for (const old of ['Get started', 'Launch an agent', 'Sign in', 'Join waitlist']) {
+    const signups = page.getByRole('link', { name: 'Sign up', exact: true });
+    assert.ok(await signups.count() >= 2, `${path}: the header and the footer`);
+    for (const href of await signups.evaluateAll(as => as.map(a => a.getAttribute('href')))) assert.equal(href, `${APP}/signup`, path);
+    const logins = page.getByRole('link', { name: 'Log in', exact: true });
+    assert.equal(await logins.count(), 1, `${path}: Log in, once`);
+    assert.equal(await page.locator('header').getByRole('link', { name: 'Log in', exact: true }).count(), 1, `${path}: in the header`);
+    assert.equal(await logins.getAttribute('href'), `${APP}/login`, path);
+    assert.equal(await page.locator('a[href*="#request"]').count(), 0, `${path}: nothing leads to the old Request access form`);
+    const text = await page.evaluate(() => document.body.innerText);
+    assert.doesNotMatch(text, /Request access|by request/i, `${path}: no Request access`);
+    for (const old of ['Get started', 'Launch an agent', 'Sign in', 'Request access']) {
       assert.equal(await page.getByRole('link', { name: old }).count(), 0, `${path}: no ${old}`);
     }
-    const text = await page.evaluate(() => document.body.innerText);
     if (path === '/') assert.doesNotMatch(text, /early access|store/i, path);   // the home page's copy; the legal text says both
     assert.deepEqual(errors, [], path);
     await close();
@@ -74,14 +74,6 @@ test('every page describes the share card it shows: the headline and a model’s
     assert.deepEqual(errors, [], path);
     await close();
   }
-});
-
-test('no Log in on the waitlist page either', async () => {
-  const { page, errors, close } = await open('/waitlist/');
-  assert.equal(await page.getByRole('link', { name: 'Log in' }).count(), 0);
-  assert.equal(await page.locator(`a[href^="${APP}/login"]`).count(), 0);
-  assert.deepEqual(errors, []);
-  await close();
 });
 
 test('"Email the founders" writes to Ryan, William, Tsun and Ethan at heurastudios.com, on both pages', async () => {

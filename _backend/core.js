@@ -1,12 +1,13 @@
 // The forms' backend logic, free of Google services so it runs both in Apps Script (as the "core" script file)
 // and in Node tests. Code.gs wires it to the sheet.
 
-// Sheet columns. Name, Role and What they will specialize come only from Request access (a waitlist join leaves
-// them blank). Add new columns at the end so existing rows keep their places.
+// Sheet columns. Name, Role and What they will specialize come only from the old Request access form (a waitlist join
+// leaves them blank). Add new columns at the end so existing rows keep their places.
 var WAITLIST_HEADER = ['Joined at', 'Email', 'Company', 'Came from', 'Name', 'Role', 'What they will specialize'];
 var LIMITS = { email: 254, company: 100, from: 200, name: 100, role: 100, use: 1000 };
 var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-// Every new request for access emails these four (Ryan, Nov 8, 2026), with the person who asked as the reply-to.
+// Every new request for access and every inquiry emails these four (Ryan, Nov 8, 2026), with the person who wrote as
+// the reply-to.
 var FOUNDERS = ['ryan@heurastudios.com', 'william@heurastudios.com', 'tsun@heurastudios.com', 'ethan@heurastudios.com'];
 
 // One line of plain text: control characters and runs of whitespace become single spaces.
@@ -19,6 +20,7 @@ function asText_(s) {
   return /^[=+\-@]/.test(s) ? "'" + s : s;
 }
 
+// The waitlist page's joins, and requests for access from the old home page form (kind=request: name, role and use).
 // p: the form's fields (email, company, from; name, role and use from Request access; website is the hidden field
 // only bots fill).
 // deps: rows(), append(row), fill(i, cells) (Name, Role and What they will specialize on row i below the header), now(),
@@ -87,6 +89,82 @@ function requestEmail(r, sheetUrl) {
   };
 }
 
+// ---- Inquiries (Ryan, Nov 18, 2026: sign-up is open, and the home page's form is for questions: "if you want to ask a
+// question, you don't have to email the founder itself ... you just inquire"). Every inquiry is kept, one row each on
+// the sheet's Inquiries tab, and emailed to the founders with the person who asked as the reply-to, however many times
+// the same email writes.
+var INQUIRY_HEADER = ['Sent at', 'Email', 'Name', 'Company', 'Role', 'Question', 'Came from'];
+var INQUIRY_LIMITS = { name: 100, email: 254, company: 100, role: 100, message: 2000, from: 200 };
+
+// Text of several lines (a question): its line breaks kept (an empty line at most between two), every other control
+// character and run of spaces one space, each line trimmed.
+function lines_(v) {
+  if (v == null) return '';
+  return String(v).replace(/\r\n?/g, '\n')
+    .replace(/[\u0000-\u0009\u000b-\u001f\u007f]+/g, ' ')
+    .split('\n').map(function (line) { return line.replace(/\s+/g, ' ').trim(); }).join('\n')
+    .replace(/\n{3,}/g, '\n\n').trim();
+}
+
+// p: the form's fields (name, email, company, role, message, from; website is the hidden field only bots fill).
+// deps: appendInquiry(row) (a row on the Inquiries tab), now(), withLock(fn), busy(); and notify(mail), sheetUrl() and
+// warn(error) as for handleJoin (an email that fails is only warned about: the inquiry is already saved).
+// -> {ok:true} | {ok:false, error:'name'|'email'|'company'|'message'|'busy'}
+function handleInquiry(p, deps) {
+  if (oneLine_(p.website) !== '') return { ok: true };
+  var name = oneLine_(p.name);
+  var email = oneLine_(p.email).toLowerCase();
+  var company = oneLine_(p.company);
+  var role = oneLine_(p.role).slice(0, INQUIRY_LIMITS.role);
+  var message = lines_(p.message);
+  var from = oneLine_(p.from).slice(0, INQUIRY_LIMITS.from);
+  if (!name || name.length > INQUIRY_LIMITS.name) return { ok: false, error: 'name' };
+  if (!email || email.length > INQUIRY_LIMITS.email || !EMAIL_RE.test(email)) return { ok: false, error: 'email' };
+  if (company.length > INQUIRY_LIMITS.company) return { ok: false, error: 'company' };
+  if (!message || message.length > INQUIRY_LIMITS.message) return { ok: false, error: 'message' };
+  var result = deps.withLock(function () {
+    if (deps.busy()) return { ok: false, error: 'busy' };
+    deps.appendInquiry([deps.now(), asText_(email), asText_(name), asText_(company), asText_(role), asText_(message),
+      asText_(from)]);
+    return { ok: true };
+  });
+  // outside the lock: sending takes a moment, and a failed email must not lose the saved inquiry
+  if (result.ok && deps.notify) {
+    try {
+      deps.notify(inquiryEmail({ name: name, email: email, company: company, role: role, message: message, from: from },
+        deps.sheetUrl ? deps.sheetUrl() : ''));
+    } catch (err) {
+      if (deps.warn) deps.warn(err);
+    }
+  }
+  return result;
+}
+
+// The founders' email about one inquiry: plain text, as they typed it, never the sheet's formula guard.
+// q: {name, email, company, role, message, from}.
+function inquiryEmail(q, sheetUrl) {
+  var none = '(not given)';
+  return {
+    to: FOUNDERS.join(','),
+    replyTo: q.email,
+    subject: 'Inquiry: ' + q.name + (q.company ? ', ' + q.company : ''),
+    body: [
+      q.name + ' sent an inquiry from heurastudios.com.',
+      '',
+      'Name: ' + q.name,
+      'Email: ' + q.email,
+      'Company: ' + (q.company || none),
+      'Role: ' + (q.role || none),
+      'Came from: ' + (q.from || none),
+      '',
+      q.message,
+      '',
+      'Reply to this email to answer them.' + (sheetUrl ? ' Every inquiry is in the sheet, on its Inquiries tab: ' + sheetUrl : ''),
+    ].join('\n'),
+  };
+}
+
 if (typeof module !== 'undefined') {
-  module.exports = { WAITLIST_HEADER: WAITLIST_HEADER, FOUNDERS: FOUNDERS, handleJoin: handleJoin, requestEmail: requestEmail };
+  module.exports = { WAITLIST_HEADER: WAITLIST_HEADER, FOUNDERS: FOUNDERS, handleJoin: handleJoin, requestEmail: requestEmail,
+    INQUIRY_HEADER: INQUIRY_HEADER, handleInquiry: handleInquiry, inquiryEmail: inquiryEmail };
 }

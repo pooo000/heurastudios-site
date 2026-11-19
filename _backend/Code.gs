@@ -1,29 +1,46 @@
 /** @OnlyCurrentDoc */
-// Google Apps Script entry points for the site's two forms (waitlist + Request access). Bound to the
-// "Heura waitlist" sheet; @OnlyCurrentDoc limits its sheet permissions to that one sheet. Each new request for access
-// is also emailed to the founders (MailApp, sent as the account the web app runs as). The logic is in core.js
-// (paste it in as a second script file named "core"); this file wires it to the sheet and to MailApp.
+// Google Apps Script entry points for the site's forms: the waitlist page's joins and the home page's inquiries
+// (kind=inquiry; until Nov 18, 2026 the home page sent requests for access, kind=request, which still work). Bound to
+// the "Heura waitlist" sheet; @OnlyCurrentDoc limits its sheet permissions to that one spreadsheet. Joins go on its first
+// tab, inquiries on its Inquiries tab (setup() makes it). Each new request for access and every inquiry is also emailed
+// to the founders (MailApp, sent as the account the web app runs as). The logic is in core.js (paste it in as a second
+// script file named "core"); this file wires it to the sheet and to MailApp.
 //
 // First deploy: run setup(), then Deploy > New deployment > Web app (Execute as: Me, Who has access: Anyone),
 //   and put the /exec URL in form_endpoint in _config.yml.
-// Ship a change: paste, run setup() (adds any missing header cell), then
+// Ship a change: paste, run setup() (adds any missing header cell, and the Inquiries tab), then
 //   Deploy > Manage deployments > Edit > Version: New version (keeps the same /exec URL).
 
 var JOINS_PER_MINUTE = 60;   // rate limit: more new rows than this in a minute are turned away (bot floods)
+var INQUIRIES = 'Inquiries';   // the tab inquiries go on
 
 function sheet_() {
   return SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
 }
 
+// The Inquiries tab, made (last, so the waitlist stays the first tab) with its header if it isn't there yet.
+function inquirySheet_() {
+  var book = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = book.getSheetByName(INQUIRIES);
+  if (sheet) return sheet;
+  sheet = book.insertSheet(INQUIRIES, book.getSheets().length);
+  header_(sheet, INQUIRY_HEADER);
+  return sheet;
+}
+
 // Fills in any missing header cell and freezes the header row. Rows below it are never touched.
-function setup() {
-  var sheet = sheet_();
-  var n = WAITLIST_HEADER.length;
-  var have = sheet.getRange(1, 1, 1, n).getValues()[0];
-  for (var c = 0; c < n; c++) {
-    if (!have[c]) sheet.getRange(1, c + 1).setValue(WAITLIST_HEADER[c]).setFontWeight('bold');
+function header_(sheet, names) {
+  var have = sheet.getRange(1, 1, 1, names.length).getValues()[0];
+  for (var c = 0; c < names.length; c++) {
+    if (!have[c]) sheet.getRange(1, c + 1).setValue(names[c]).setFontWeight('bold');
   }
   sheet.setFrozenRows(1);
+}
+
+// The waitlist's header, and the Inquiries tab with its own.
+function setup() {
+  header_(sheet_(), WAITLIST_HEADER);
+  header_(inquirySheet_(), INQUIRY_HEADER);
 }
 
 function deps_() {
@@ -35,6 +52,9 @@ function deps_() {
     },
     append: function (row) {
       sheet.appendRow(row);
+    },
+    appendInquiry: function (row) {   // one row per inquiry, on the Inquiries tab
+      inquirySheet_().appendRow(row);
     },
     fill: function (i, cells) {   // row i below the header: its Name, Role and What they will specialize
       sheet.getRange(i + 2, 5, 1, cells.length).setValues([cells]);
@@ -52,7 +72,7 @@ function deps_() {
         lock.releaseLock();
       }
     },
-    notify: function (mail) {   // the founders' email about one request (core.js requestEmail)
+    notify: function (mail) {   // the founders' email about one request or inquiry (core.js requestEmail, inquiryEmail)
       MailApp.sendEmail({ to: mail.to, replyTo: mail.replyTo, subject: mail.subject, body: mail.body, name: 'Heura Studios' });
     },
     sheetUrl: function () {
@@ -83,28 +103,36 @@ function page_(title, body) {
     .addMetaTag('viewport', 'width=device-width, initial-scale=1');
 }
 
-// Both forms post here. With js=1 (form.js) the answer is JSON; without JavaScript the browser posts the form
+// Every form posts here. With js=1 (form.js) the answer is JSON; without JavaScript the browser posts the form
 // itself, so the answer is a plain page.
 function doPost(e) {
   var p = (e && e.parameter) || {};
+  var inquiry = p.kind === 'inquiry';   // the home page's inquiry form
   var result;
   try {
-    result = handleJoin(p, deps_());
+    result = inquiry ? handleInquiry(p, deps_()) : handleJoin(p, deps_());
   } catch (err) {
     console.error(err);
     result = { ok: false, error: 'server' };
   }
   if (p.js === '1') return json_(result);
   if (!result.ok) {
-    return page_('Something went wrong', "<h1>That didn't go through.</h1><p>Go back, check your work email and company, and try again.</p>");
+    return page_('Something went wrong', inquiry
+      ? "<h1>That didn't go through.</h1><p>Go back, check your name, email and question, and try again.</p>"
+      : "<h1>That didn't go through.</h1><p>Go back, check your work email and company, and try again.</p>");
   }
-  return p.kind === 'request'   // the home page's Request access form
+  if (inquiry) {
+    return page_('Inquiry sent', '<h1>Inquiry sent.</h1><p>A founder will reply by email.</p>' +
+      '<p><a href="https://heurastudios.com">Back to heurastudios.com</a></p>');
+  }
+  return p.kind === 'request'   // the home page's Request access form, until Nov 18, 2026
     ? page_('Request sent', '<h1>Request sent.</h1><p>A founder will reply by email.</p>' +
       '<p><a href="https://heurastudios.com">Back to heurastudios.com</a></p>')
     : page_("You're on the waitlist", "<h1>You're on the waitlist.</h1><p>We'll email you when the Heura Studio beta opens.</p>" +
       '<p><a href="https://heurastudios.com">Back to heurastudios.com</a></p>');
 }
 
+// (inquiries: this version takes the home page's inquiries, so a look at the address says whether it's deployed)
 function doGet() {
-  return json_({ ok: true, service: 'Heura waitlist' });
+  return json_({ ok: true, service: 'Heura waitlist', inquiries: true });
 }

@@ -1,4 +1,4 @@
-/* The home page (/): hero, screen recording, specifications and the Request access form (Tools: tools.css). */
+/* The home page (/): hero, screen recording, specifications and the inquiry form (Tools: tools.css). */
 
 /* the hero (Ryan, Nov 14: "the one thats on the side", then "make the spacing a bit tighter"): the headline and,
    under it, the lead, on the left */
@@ -63,10 +63,8 @@
   .hm-specs > div:nth-last-child(2):nth-child(odd) { border-bottom: 1px solid var(--line); }
 }
 
-.hm-request { padding-bottom: clamp(88px, 10vw, 144px); }
-/* the way in for teams that have access: where Request access leads, not in the header (Ryan, Oct 19) */
-.hm-login { margin-top: 20px; font-size: 16px; line-height: 1.5; color: var(--ink-2); }
-.hm-login a { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+.hm-inquire { padding-bottom: clamp(88px, 10vw, 144px); }
+#request { scroll-margin-top: calc(var(--header) + 32px); }   /* (old links to /#request land on the inquiry form) */
 .hm-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
 .hm-field { display: grid; gap: 8px; align-content: start; }
 .hm-field-wide, .hm-error, .hm-submit-row { grid-column: 1 / -1; }

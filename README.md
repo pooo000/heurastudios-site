@@ -22,9 +22,9 @@ Pushing to `main` deploys (GitHub Pages, about a minute). CI runs `npm test` on 
 | --- | --- |
 | `_layouts/default.html` | The page shell every page uses: `<head>`, header, page content, footer |
 | `_includes/head.html` | Everything in `<head>`: meta and link-preview tags, the theme script, fonts, CSS and JS |
-| `_includes/header.html`, `footer.html`, `logo.html` | The shared header, footer and logo |
+| `_includes/header.html`, `footer.html`, `logo.html` | The shared header (the sections, then Log in and Sign up, the app's), footer and logo |
 | `_layouts/blog.html`, `post.html` | Blog wrapper and a single post |
-| `index.html` + `home.css` + `home.js` | Home page: hero, screen recording, specs, Request access form |
+| `index.html` + `home.css` + `home.js` | Home page: hero, screen recording, specs, the inquiry form |
 | `tools/index.html` + `tools.css` + `tools.js` | Tools page: every Studio tool, what it takes and gives, and its recording |
 | `_data/tools.yml` | The tools on the Tools page, in the Studio's groups and order (edit copy here, not in the HTML) |
 | `datasets/index.html` + `datasets.css` + `datasets.js` | Datasets page: the app's 100 ready-made datasets by topic, search and the topic filter, and each set's preview (three rows with their credits, its source and license) |
@@ -35,12 +35,12 @@ Pushing to `main` deploys (GitHub Pages, about a minute). CI runs `npm test` on 
 | `waitlist/` | The old waitlist page (kept for old links) |
 | `blog/index.html`, `_posts/`, `blog.css` | Blog list and posts (Markdown) |
 | `site.css`, `site.js` | Shared by every page: color tokens, base styles, header, footer, the Appearance switch, the canvas in the side margins and the sheet under the column (screens 1360px and wider) |
-| `form.js` | Shared form logic for both forms (validation, posting, error and success messages) |
+| `form.js` | Shared form logic for both forms, the inquiry form and the waitlist (validation, posting, error and success messages) |
 | `_backend/` | The Apps Script behind the forms: `core.js` (logic, tested in Node) and `Code.gs` (Google wiring) |
 | `_tests/` | Playwright page tests (run against the Jekyll build) |
 | `_tools/` | Python scripts that make the screen recordings, the logo/icon files and the Datasets page's data |
 | `img/`, `reports/` | Images, recordings, report PDFs |
-| `_config.yml` | Site config, including `form_endpoint` (the Apps Script URL) |
+| `_config.yml` | Site config, including `app_url` (the app, where Log in and Sign up go) and `form_endpoint` (the Apps Script URL) |
 
 Folders starting with `_` are never published.
 
@@ -63,26 +63,33 @@ Folders starting with `_` are never published.
 
 ## Forms and the sheet
 
-Both forms post to one Apps Script web app (`form_endpoint`). The home page sends `kind=request` and three extra
-fields. With JS, `form.js` posts with `js=1` and shows the JSON result in place. Without JS, the browser posts the
-form and the script answers with a plain page.
+Sign-up is open to anyone (since Nov 18, 2026): the header's Log in and Sign up go to the app (`app_url`), and the
+home page's form is for inquiries, questions sent to the founders without emailing them.
+
+Both forms post to one Apps Script web app (`form_endpoint`). The home page's inquiry form sends `kind=inquiry`
+(name, email, company, role, message); the waitlist page sends an email and a company. With JS, `form.js` posts with
+`js=1` and shows the JSON result in place. Without JS, the browser posts the form and the script answers with a plain
+page.
 
 The sheet ("Heura waitlist") and its bound Apps Script project of the same name are in ryan@heurastudios.com's
-Google Drive, since Nov 8, 2026; they run as that account. Each new request for access is also emailed to
-ryan@, william@, tsun@ and ethan@heurastudios.com (`FOUNDERS` in `_backend/core.js`), with the person who asked as
-the reply-to. A waitlist join, a repeat request, a bot and a refused request send no email.
+Google Drive, since Nov 8, 2026; they run as that account. Every inquiry is emailed to ryan@, william@, tsun@ and
+ethan@heurastudios.com (`FOUNDERS` in `_backend/core.js`), with the person who asked as the reply-to, however many
+times the same email writes; so is each new request for access from the old form (`kind=request`, still taken). A
+waitlist join, a bot and a refused or turned-away post send no email.
 
-The sheet keeps one row per email: Joined at, Email, Company, Came from, Name, Role, What they will specialize.
-Signing up again doesn't add a row. If someone on the waitlist later requests access, the request fills in Name,
-Role and What they will specialize on their existing row. "Came from" is the page's utm query, the page on this
-site that linked them, or the other website that did.
+Inquiries go on the sheet's **Inquiries** tab, one row each: Sent at, Email, Name, Company, Role, Question, Came from
+(`setup()` makes the tab; the first inquiry makes it too if setup hasn't run). The first tab keeps one row per email
+for the waitlist and the old requests for access: Joined at, Email, Company, Came from, Name, Role, What they will
+specialize. Signing up again doesn't add a row. "Came from" is the page's utm query, the page on this site that linked
+them, or the other website that did. A visit to the `/exec` address answers `{"ok":true,"service":"Heura waitlist",
+"inquiries":true}` once the version that takes inquiries is deployed.
 
 Spam protection: a hidden honeypot field, a limit of 60 new rows a minute, and a leading `'` on any cell that would
 start a spreadsheet formula.
 
 **Deploying a backend change:** paste `core.js` (as a script file named `core`) and `Code.gs` into the Apps Script
-project. Run `setup()` once (it adds any missing header cell), then Deploy > Manage deployments > Edit > Version:
-New version. The `/exec` URL stays the same.
+project. Run `setup()` once (it adds any missing header cell, and the Inquiries tab), then Deploy > Manage deployments >
+Edit > Version: New version. The `/exec` URL stays the same.
 
 ## Writing a blog post
 
