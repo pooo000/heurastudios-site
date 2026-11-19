@@ -1,5 +1,6 @@
 /* The Privacy Policy (/privacy/) and the Terms of Service (/terms/): one column of reading text, and the pipeline's
-   wires beside each title.
+   wires beside each title. Their October 15, 2026 versions keep their own pages (/privacy/2026-10-15/,
+   /terms/2026-10-15/), each with a note under the title (.lg-note) saying which version it is.
    Builds on site.css: the tokens (light and dark), the header and the footer. The words are the same as the Heura
    Studio app's /privacy and /terms pages. */
 
@@ -20,6 +21,10 @@
 .lg-main li::marker { color: var(--ink-2); }
 .lg-main strong { font-weight: 700; }
 .lg-main a { text-decoration: underline; text-underline-offset: 3px; }
+.lg-main .lg-note {   /* an earlier version's page: which version it is, and a link to the current one */
+  max-width: 68ch; margin: 8px 0 0; padding: 12px 16px; border: 1px solid var(--line); border-radius: 8px;
+  color: var(--ink-2);
+}
 
 /* Each page's title as a node on a pipeline (decoration, _includes/wires.html): wires run in from the canvas to
    ports left of the column and out from one right of it, on past the screen's edges, level with the title's middle.
