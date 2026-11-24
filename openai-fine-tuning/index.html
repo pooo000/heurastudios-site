@@ -1,0 +1,132 @@
+---
+layout: default
+title: "Moving off OpenAI fine-tuning"
+description: "OpenAI stops new fine-tuning jobs on January 6, 2027. Convert your OpenAI training file to a Heura Studios CSV in your browser and train your own agent, without a machine learning specialist."
+og_title: "Moving off OpenAI fine-tuning"
+og_description: "Convert your OpenAI fine-tuning file in your browser and train your own agent in Heura Studios."
+css: [/openai-fine-tuning/migrate.css]
+js: [/openai-fine-tuning/migrate.js]
+---
+{%- comment -%}
+  The OpenAI migration page (Ryan, Nov 24, 2026: "do the migration page"). OpenAI stops new fine-tuning jobs on Jan 6,
+  2027 (developers.openai.com/api/docs/deprecations); this page is for the people who trained models there: what
+  happens and when, a converter that turns their OpenAI training file (JSONL: chat, preference or the old
+  prompt/completion format) into the Studio's question,answer CSV, in the browser (migrate.js: the file is never
+  uploaded), and the three steps to train it in Heura Studios. The Studio's limits are the app's (studio/projects.py):
+  1,000 rows an import, 5,000 an AI, questions up to 2,000 characters, answers up to 4,000.
+{%- endcomment -%}
+<main id="main" class="mg-main">
+  <section class="mg-hero" aria-labelledby="mg-title">
+    <div class="ov-wrap">
+      <p class="mg-kicker">For teams who fine-tuned on OpenAI</p>
+      <h1 id="mg-title" class="ov-display">Moving off OpenAI fine-tuning</h1>
+      <p class="ov-lead mg-lead">OpenAI stops new fine-tuning jobs on January 6, 2027. Bring your training data to Heura Studios and keep training your own agent, without a machine learning specialist.</p>
+      <div class="mg-acts">
+        <a class="ov-btn ov-btn-primary" href="#convert">Convert your file</a>
+        <a class="ov-btn ov-btn-quiet" href="{{ site.app_url }}/signup">Sign up</a>
+      </div>
+      <dl class="mg-dates">
+        <div>
+          <dt>January 6, 2027</dt>
+          <dd>No new fine-tuning jobs on OpenAI, for anyone. <span class="mg-left" data-until="2027-01-06" hidden></span></dd>
+        </div>
+        <div>
+          <dt>After that</dt>
+          <dd>Models you already fine-tuned keep answering until OpenAI retires the model they’re built on.</dd>
+        </div>
+        <div>
+          <dt>Your data</dt>
+          <dd>The training files you uploaded are still yours. Download them from OpenAI before you need them.</dd>
+        </div>
+      </dl>
+      <p class="mg-source">Source: <a href="https://developers.openai.com/api/docs/deprecations" rel="noopener">OpenAI’s deprecations page</a>.</p>
+    </div>
+  </section>
+
+  <section class="mg-convert" id="convert" aria-labelledby="mg-convert-title">
+    <div class="ov-wrap">
+      <h2 id="mg-convert-title" class="ov-h2">Convert your training file</h2>
+      <p class="ov-section-lead">Drop in the .jsonl file you fine-tuned with. You get a question,answer CSV the Studio imports, and your system message to use as the agent’s script. The file never leaves your browser.</p>
+
+      <noscript><p class="mg-noscript">The converter needs JavaScript. The steps below say how the formats map, if you’d rather convert the file yourself.</p></noscript>
+      <div class="mg-tool" data-tool hidden>
+        <div class="mg-drop" data-drop>
+          <input id="mg-file" class="mg-file" type="file" accept=".jsonl,.json,.txt,application/jsonl,application/json">
+          <label for="mg-file" class="mg-drop-label">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="square" aria-hidden="true" focusable="false"><path d="M12 15V4M7.5 8.5 12 4l4.5 4.5M4 14v6h16v-6"/></svg>
+            <span><strong>Choose a .jsonl file</strong> or drop it here</span>
+            <span class="mg-drop-hint">Chat, preference (DPO) and the older prompt/completion format</span>
+          </label>
+          <button class="mg-sample" type="button" data-sample>Load a sample file</button>
+        </div>
+        <p class="mg-error" role="alert" data-error></p>
+
+        <div class="mg-result" data-result tabindex="-1" hidden>
+          <h3 class="mg-result-title" data-result-title></h3>
+          <dl class="mg-counts" data-counts></dl>
+          <ul class="mg-notes" data-notes></ul>
+          <div class="mg-downloads" data-downloads></div>
+
+          <div class="mg-script" data-script hidden>
+            <div class="mg-script-head">
+              <h4>Your script</h4>
+              <button class="ov-btn ov-btn-quiet ov-btn-small" type="button" data-copy>Copy</button>
+            </div>
+            <p class="mg-script-note" data-script-note></p>
+            <textarea class="mg-script-text" data-script-text readonly rows="5" aria-label="Your system message, for the agent’s script.md"></textarea>
+          </div>
+
+          <div class="mg-preview" data-preview hidden>
+            <h4>The first rows</h4>
+            <div class="mg-table-wrap">
+              <table class="mg-table">
+                <thead><tr><th scope="col">question</th><th scope="col">answer</th></tr></thead>
+                <tbody data-rows></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="mg-steps" aria-labelledby="mg-steps-title">
+    <div class="ov-wrap">
+      <h2 id="mg-steps-title" class="ov-h2">Then train it in Heura Studios</h2>
+      <ol class="mg-step-list">
+        <li>
+          <span class="mg-step-n" aria-hidden="true">1</span>
+          <h3>Make a notebook</h3>
+          <p><a href="{{ site.app_url }}/signup">Sign up</a>, choose New notebook and paste your system message into script.md. That’s where you say, in plain words, how the agent should behave.</p>
+        </li>
+        <li>
+          <span class="mg-step-n" aria-hidden="true">2</span>
+          <h3>Import the CSV</h3>
+          <p>Open the examples tab and choose Import CSV. Up to 1,000 rows go in at a time, and an agent holds up to 5,000, so a bigger file comes out of the converter in parts.</p>
+        </li>
+        <li>
+          <span class="mg-step-n" aria-hidden="true">3</span>
+          <h3>Test and train</h3>
+          <p>Add a few test questions with the answers you expect, then train. When the tests pass, run it by API or export it and run it on your own machine.</p>
+        </li>
+      </ol>
+
+      <h3 class="mg-map-title">How the formats map</h3>
+      <div class="mg-table-wrap">
+        <table class="mg-table mg-map">
+          <thead><tr><th scope="col">In your OpenAI file</th><th scope="col">In Heura Studios</th></tr></thead>
+          <tbody>
+            <tr><td>The <code>system</code> message</td><td>The agent’s script (script.md)</td></tr>
+            <tr><td>A <code>user</code> message</td><td>The question</td></tr>
+            <tr><td>The <code>assistant</code> reply after it</td><td>The answer</td></tr>
+            <tr><td><code>prompt</code> and <code>completion</code></td><td>The question and the answer</td></tr>
+            <tr><td><code>preferred_output</code> (DPO)</td><td>The answer (the other one is left out)</td></tr>
+            <tr><td>A reply with <code>"weight": 0</code></td><td>Left out, as OpenAI left it out of training</td></tr>
+            <tr><td>Tool calls and images</td><td>Left out: the Studio trains on text</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="mg-fine">A conversation with several turns becomes one row per reply, each with the question just before it. If a GPT model wrote your answers, check OpenAI’s terms before training another model on them: they limit using its output to build other models. The answers your own team wrote are yours to train on.</p>
+    </div>
+  </section>
+</main>

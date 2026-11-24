@@ -28,6 +28,8 @@ Pushing to `main` deploys (GitHub Pages, about a minute). CI runs `npm test` on 
 | `tools/index.html` + `tools.css` + `tools.js` | Tools page: every Studio tool, what it takes and gives, and its recording |
 | `_data/tools.yml` | The tools on the Tools page, in the Studio's groups and order (edit copy here, not in the HTML) |
 | `datasets/index.html` + `datasets.css` + `datasets.js` | Datasets page: the app's 100 ready-made datasets by topic, search and the topic filter, and each set's preview (three rows with their credits, its source and license) |
+| `openai-fine-tuning/` (`index.html`, `migrate.css`, `migrate.js`) | The OpenAI migration page: OpenAI's fine-tuning dates, a converter that turns an OpenAI fine-tuning file (JSONL) into the Studio's question,answer CSV in the browser (nothing is uploaded), and the steps to train it. The Studio's limits in `migrate.js` are the app's (`studio/projects.py`) |
+| `sitemap.xml`, `robots.txt` | Every page and post for search engines (Jekyll lists them; the old waitlist page and the legal pages' dated versions are left out) |
 | `_data/datasets.json` | The sets on the Datasets page, made from the app's library by `_tools/make-datasets.py` (don't edit by hand) |
 | `_data/datasets_page.yml` | The Datasets page's featured row and each topic's icon |
 | `recording.js` | Plays a screen recording while it's on screen, in the files for the current appearance (home and Tools) |

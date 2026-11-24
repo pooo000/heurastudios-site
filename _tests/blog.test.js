@@ -347,7 +347,8 @@ function published(dir, rel = '') {
 test('building the site copies every asset as it is (the pages are built from the layout)', () => {
   const files = published(site);
   assert.ok(files.includes('index.html') && files.includes(path.join('privacy', 'index.html')));
-  for (const f of files.filter(f => !f.endsWith('.html'))) {
+  // (sitemap.xml is the one file besides the pages that the build writes: the pages and posts, listed by Jekyll)
+  for (const f of files.filter(f => !f.endsWith('.html') && f !== 'sitemap.xml')) {
     assert.ok(fs.readFileSync(path.join(site, f)).equals(fs.readFileSync(path.join(ROOT, f))), `${f} changed in the build`);
   }
 });
