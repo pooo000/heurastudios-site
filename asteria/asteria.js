@@ -1,9 +1,30 @@
-// Heura Asteria's page (/asteria/): the form for joining the waitlist without an account (the shared form logic is in
+// Heura Asteria's page (/asteria/): the report's Read more, and the form for joining the waitlist without an account (the shared form logic is in
 // form.js; it posts to the Apps Script like the old waitlist). The Apps Script keeps a join's "use" (the sheet's What
 // they will specialize column), so the GPU answer and what they'd train go there, after "Asteria waitlist": the
 // founders find these rows by it, and by Came from /asteria/.
 (function () {
   'use strict';
+
+  // ---- the report: folded to a short look that fades out, Read more opens the rest (without JS it all shows)
+  var more = document.getElementById('as-more');
+  var toggle = document.querySelector('.as-more-btn');
+  if (more && toggle) {
+    var fold = function (folded) {
+      more.classList.toggle('is-folded', folded);
+      toggle.setAttribute('aria-expanded', folded ? 'false' : 'true');
+      toggle.textContent = folded ? 'Read more' : 'Show less';
+      more.inert = folded;   // (the hidden part's links aren't tabbed to while it's folded)
+    };
+    fold(true);
+    toggle.hidden = false;
+    toggle.addEventListener('click', function () {
+      var opening = more.classList.contains('is-folded');
+      fold(!opening);
+      if (!opening) toggle.scrollIntoView({ block: 'nearest' });
+    });
+  }
+
+  // ---- the form
   var form = document.getElementById('as-form');
   if (!form || !window.ovForm) return;
 

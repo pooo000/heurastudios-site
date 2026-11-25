@@ -1,9 +1,9 @@
 ---
 layout: default
 title: "Heura Asteria waitlist"
-description: "Heura Asteria: four times as powerful as Arche, on a GPU. Join the waitlist. People with a Heura Studios account get it first."
+description: "Heura Asteria: Heura’s GPU models in three sizes, 2B, 10B and 50B. The report, and the waitlist. People with a Heura Studios account get it first."
 og_title: "Heura Asteria: join the waitlist"
-og_description: "Four times as powerful as Arche, on a GPU. People with a Heura Studios account get it first."
+og_description: "Heura’s GPU models in three sizes: 2B, 10B and 50B. People with a Heura Studios account get it first."
 current: asteria
 css: [/asteria/asteria.css]
 js: [/form.js, /asteria/asteria.js]
@@ -19,28 +19,94 @@ js: [/form.js, /asteria/asteria.js]
     answer and what they'd train (asteria.js). No new backend: the Apps Script takes it as a waitlist join.
 {%- endcomment -%}
 <main id="main" class="as-main">
-  <section class="as-hero" aria-labelledby="as-title">
+  {%- comment -%}
+    The report (Ryan, Nov 24: "have that thing as a floating island at the top ... the summary at the top and then it
+    fades and you can click on it and theres read more"): the public part of the doc "Heura Asteria: specs and how it
+    compares to Arche" (its costs and open questions stay internal). The summary shows; the rest fades out under it
+    until Read more (asteria.js; without JavaScript it all shows).
+  {%- endcomment %}
+  <section class="as-hero as-report" aria-labelledby="as-title">
     <div class="ov-wrap">
-      <p class="as-kicker">Coming soon to Heura Studios</p>
+      <p class="as-kicker">Coming soon to Heura Studios · Report, November 24, 2026</p>
       <h1 id="as-title" class="ov-display">Heura Asteria</h1>
-      <p class="ov-lead as-lead">Four times as powerful as Arche, on a GPU. Join the waitlist to get it first.</p>
+      <p class="ov-lead as-lead">Heura’s GPU models, in three sizes: 2B, 10B and 50B. Training moves off the CPU and onto data-center GPUs, and you pick the size each agent needs.</p>
+      <ul class="as-summary">
+        <li><strong>Why:</strong> Heura Arche trains and answers on our server’s CPU in 32-bit, so a small 3-round training takes about 6 hours and an answer about 90 seconds. A data-center GPU does the same math roughly 260 to 4,000 times faster at peak.</li>
+        <li><strong>The sizes:</strong> 2B for fast, simple agents that can run on a laptop; 10B for most business agents; 50B for the hardest work, on data-center GPUs.</li>
+        <li><strong>Same Studio:</strong> write the script, add examples and tests, train. Only the model under it changes.</li>
+      </ul>
+
+      <div class="as-more" id="as-more">
+        <h2>Heura Arche today</h2>
+        <p>Arche is a 2B model that trains and answers on a CPU. It runs anywhere, and it is slow.</p>
+        <div class="as-table-wrap">
+          <table class="as-table">
+            <tbody>
+              <tr><th scope="row">Base model</th><td>Qwen3-VL-2B-Instruct (open weights, reads text and images)</td></tr>
+              <tr><th scope="row">Size</th><td>About 2 billion parameters</td></tr>
+              <tr><th scope="row">What a training changes</td><td>A LoRA adapter: rank 32, on every linear layer</td></tr>
+              <tr><th scope="row">Where it trains in the Studio</th><td>Our server’s CPU, in 32-bit float</td></tr>
+              <tr><th scope="row">A 97-row, 3-round training</th><td>About 6 hours (measured)</td></tr>
+              <tr><th scope="row">A 200-token answer</th><td>About 90 seconds on our server; 2 to 5 seconds on an M1 Pro laptop (measured)</td></tr>
+              <tr><th scope="row">What you take away</th><td>Your trained adapter, to run by API or on your own machine</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2>Why a GPU is faster</h2>
+        <p>Training and answering are almost all matrix math. A GPU runs the same code; it just does each step’s math far faster:</p>
+        <ul>
+          <li><strong>Thousands of cores at once.</strong> A model step is millions of multiply-adds that don’t depend on each other, and a GPU runs thousands of them in parallel.</li>
+          <li><strong>16-bit math.</strong> GPUs train in bfloat16, half the memory of 32-bit and far faster on their tensor cores.</li>
+          <li><strong>Faster memory.</strong> Every word an answer writes reads the whole model from memory, and an H100 reads 3.35 TB a second.</li>
+        </ul>
+        <div class="as-table-wrap">
+          <table class="as-table">
+            <thead><tr><th scope="col">Machine</th><th scope="col">Peak math speed</th><th scope="col">Memory</th><th scope="col">Times our server (peak)</th></tr></thead>
+            <tbody>
+              <tr><td>Our server’s CPU (32-bit)</td><td>0.25 TFLOPS (measured)</td><td>16 GB, shared</td><td>1×</td></tr>
+              <tr><td>NVIDIA T4</td><td>65 TFLOPS, 16-bit</td><td>16 GB at 320 GB/s</td><td>about 260×</td></tr>
+              <tr><td>NVIDIA H100</td><td>989 TFLOPS, bfloat16</td><td>80 GB at 3.35 TB/s</td><td>about 4,000×</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="as-note">Peak numbers overstate real speedups. Our own runs still show the gap: a T4 wrote about 16 tokens a second with a 4B model, against 2.85 on our server with the smaller 2B.</p>
+
+        <h2>Asteria’s three sizes</h2>
+        <div class="as-table-wrap">
+          <table class="as-table">
+            <thead><tr><th scope="col"></th><th scope="col">Asteria 2B</th><th scope="col">Asteria 10B</th><th scope="col">Asteria 50B</th></tr></thead>
+            <tbody>
+              <tr><th scope="row">Best for</th><td>Fast, simple agents: FAQs, routing, short replies</td><td>Most business agents: policies, data questions, multi-step tasks</td><td>The hardest work: long documents, many rules, analyst-grade answers</td></tr>
+              <tr><th scope="row">Trains on</th><td>One small GPU</td><td>One 80 GB GPU</td><td>One or two 80 GB GPUs</td></tr>
+              <tr><th scope="row">Runs after export on</th><td>A laptop or any GPU</td><td>A 24 GB GPU, or a 32 GB Mac</td><td>A data-center GPU</td></tr>
+              <tr><th scope="row">Speed and cost</th><td>Fastest, cheapest</td><td>Middle</td><td>Slowest, priciest per answer</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>The 2B is Arche’s size on a GPU: faster, not smarter. Bigger sizes understand more. When we trained a 4B with Arche’s recipe, it beat every 2B version on our understanding, new-business-task and learn-from-one-answer tests.</p>
+
+        <h2>Arche and Asteria side by side</h2>
+        <div class="as-table-wrap">
+          <table class="as-table">
+            <thead><tr><th scope="col"></th><th scope="col">Heura Arche</th><th scope="col">Heura Asteria</th></tr></thead>
+            <tbody>
+              <tr><th scope="row">Sizes</th><td>2B</td><td>2B, 10B, 50B, picked per agent</td></tr>
+              <tr><th scope="row">Trains on</th><td>Our server’s CPU</td><td>Data-center GPUs</td></tr>
+              <tr><th scope="row">Math</th><td>32-bit</td><td>16-bit (bfloat16)</td></tr>
+              <tr><th scope="row">A 97-row, 3-round training</th><td>About 6 hours (measured)</td><td>Minutes for the 2B (our estimate)</td></tr>
+              <tr><th scope="row">A 200-token answer</th><td>About 90 seconds (measured)</td><td>A few seconds (our estimate)</td></tr>
+              <tr><th scope="row">Runs after export on</th><td>A laptop</td><td>A laptop (2B) up to a data-center GPU (50B)</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="as-note">Sources: <a href="https://nvidia.com/content/dam/en-zz/Solutions/Data-Center/tesla-t4/t4-tensor-core-datasheet-951643.pdf" rel="noopener">NVIDIA T4 datasheet</a>, <a href="https://www.nvidia.com/en-us/data-center/h100.html" rel="noopener">NVIDIA H100</a>, <a href="https://inferencex.semianalysis.com/chips/h100" rel="noopener">SemiAnalysis H100 specs</a> (989 TFLOPS is the dense bfloat16 figure), <a href="https://arxiv.org/abs/2511.21631v1" rel="noopener">Qwen3-VL technical report</a>. Our own figures come from the Studio’s server and our training runs, November 2026.</p>
+      </div>
+      <button class="as-more-btn" type="button" aria-controls="as-more" aria-expanded="true" hidden>Show less</button>
+
       <div class="as-acts">
         <a class="ov-btn ov-btn-primary" href="#join">Join the waitlist</a>
       </div>
-      <ul class="as-facts">
-        <li>
-          <h2>4× Arche’s power</h2>
-          <p>The next model up from Heura Arche, the 2B model every agent in the Studio trains on today.</p>
-        </li>
-        <li>
-          <h2>Runs on a GPU</h2>
-          <p>Your own, or one of ours. Tell us which when you join, so we know what to have ready.</p>
-        </li>
-        <li>
-          <h2>Trains the same way</h2>
-          <p>Write the script, add examples and tests, train. Same Studio, a bigger model under it.</p>
-        </li>
-      </ul>
     </div>
   </section>
 

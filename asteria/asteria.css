@@ -1,21 +1,44 @@
 /* Heura Asteria's page (/asteria/): the overview (three facts) and the waitlist's two ways in, with an account (first
    in line) or without one (the form). Each section an island on a computer, like every page; black and white only. */
 
-/* ---- the overview */
+/* ---- the report (the top island): the summary, then the rest fading out under it until Read more */
 .as-hero { padding-top: clamp(32px, 4vw, 64px); }   /* (on a computer the island's padding is its top) */
 .as-kicker { margin: 0 0 14px; font-size: 13px; font-weight: 700; line-height: 1.3; color: var(--ink-2); }
 .as-lead { margin-top: clamp(14px, 1.2vw, 18px); }
 .as-acts { display: flex; flex-wrap: wrap; gap: 10px; margin-top: clamp(22px, 2.4vw, 32px); }
-.as-facts {
-  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(12px, 1.4vw, 20px);
-  margin: clamp(32px, 3.6vw, 52px) 0 0; padding: 0; list-style: none;
+.as-summary { margin: clamp(22px, 2.4vw, 30px) 0 0; padding-left: 20px; max-width: 62em; font-size: 14.5px; line-height: 1.6; }
+.as-summary li + li { margin-top: 8px; }
+.as-more { margin-top: clamp(28px, 3vw, 40px); }
+.as-more h2 { margin: clamp(28px, 3vw, 40px) 0 10px; font-size: clamp(19px, .6vw + 14px, 23px); font-weight: 700; line-height: 1.25; letter-spacing: -.025em; }
+.as-more h2:first-child { margin-top: 0; }
+.as-more p, .as-more ul { max-width: 62em; font-size: 14.5px; line-height: 1.6; text-wrap: pretty; }
+.as-more p { margin: 0 0 12px; }
+.as-more ul { margin: 0 0 16px; padding-left: 20px; }
+.as-more li + li { margin-top: 6px; }
+.as-more .as-note { margin-top: 12px; font-size: 12.5px; color: var(--ink-2); }
+.as-more a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+/* folded (asteria.js adds .is-folded): a short look, fading out into the island, and Read more under it */
+.as-more.is-folded {
+  max-height: 260px; overflow: hidden;
+  -webkit-mask-image: linear-gradient(to bottom, #000 35%, transparent);
+  mask-image: linear-gradient(to bottom, #000 35%, transparent);
 }
-.as-facts li, .as-way {
-  padding: clamp(18px, 1.8vw, 26px); border: 1px solid var(--edge); border-radius: clamp(14px, 1.4vw, 18px);
-  background: var(--panel);
+.as-more-btn {
+  display: inline-flex; align-items: center; gap: 8px; min-height: 44px; margin-top: 6px; padding: 0 18px;
+  border: 1px solid var(--rule); border-radius: 999px; background: var(--page); color: var(--ink);
+  font: inherit; font-size: 13.5px; cursor: pointer;
 }
-.as-facts h2 { margin: 0; font-size: 15.5px; font-weight: 700; line-height: 1.3; letter-spacing: -.015em; }
-.as-facts p { margin: 8px 0 0; font-size: 13.5px; line-height: 1.5; color: var(--ink-2); text-wrap: pretty; }
+.as-more-btn::after { content: ""; width: 7px; height: 7px; border: solid currentColor; border-width: 0 1.5px 1.5px 0; transform: translateY(-2px) rotate(45deg); }
+.as-more-btn[aria-expanded="true"]::after { transform: translateY(2px) rotate(-135deg); }
+@media (hover: hover) { .as-more-btn:hover { border-color: var(--ink); } }
+.as-more-btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.as-table-wrap { overflow-x: auto; margin: 0 0 12px; border: 1px solid var(--line); border-radius: 12px; }
+.as-table { width: 100%; border-collapse: collapse; font-size: 13.5px; line-height: 1.5; }
+.as-table th, .as-table td { padding: 10px 14px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }
+.as-table tr:last-child th, .as-table tr:last-child td { border-bottom: 0; }
+.as-table thead th, .as-table tbody th { font-weight: 700; background: var(--panel); }
+.as-table td { min-width: 11em; }
+.as-table tbody th { width: 13em; min-width: 9em; }
 
 /* ---- the two ways in */
 .as-join { scroll-margin-top: calc(var(--header) + 16px); }
@@ -24,7 +47,11 @@
   display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: clamp(12px, 1.4vw, 20px);
   margin-top: clamp(24px, 2.6vw, 36px); align-items: start;
 }
-@media (max-width: 899px) { .as-facts, .as-ways { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 899px) { .as-ways { grid-template-columns: minmax(0, 1fr); } }
+.as-way {
+  padding: clamp(18px, 1.8vw, 26px); border: 1px solid var(--edge); border-radius: clamp(14px, 1.4vw, 18px);
+  background: var(--panel);
+}
 .as-way h3 { margin: 0; font-size: 19px; font-weight: 700; line-height: 1.3; letter-spacing: -.02em; }
 .as-way > p { margin: 10px 0 0; font-size: 14px; line-height: 1.55; color: var(--ink-2); text-wrap: pretty; }
 .as-way-account { background: var(--ink); color: var(--page); border-color: var(--ink); }

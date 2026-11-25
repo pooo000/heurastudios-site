@@ -33,14 +33,40 @@ async function standIn(page, reply = { ok: true }) {
   return sent;
 }
 
-test('the overview: what Asteria is, and Join the waitlist goes to the two ways in', async () => {
+test('the report: the summary shows, the rest fades out under it until Read more, and Show less folds it again', async () => {
   const { page, errors, close } = await open();
   assert.equal(await page.title(), 'Heura Asteria waitlist – Heura Studios');
   assert.equal(await page.getByRole('heading', { level: 1 }).innerText(), 'Heura Asteria');
-  assert.equal(await page.locator('.as-lead').innerText(), 'Four times as powerful as Arche, on a GPU. Join the waitlist to get it first.');
-  assert.deepEqual(await page.locator('.as-facts h2').allInnerTexts(), ['4× Arche’s power', 'Runs on a GPU', 'Trains the same way']);
+  assert.match(await page.locator('.as-lead').innerText(), /^Heura’s GPU models, in three sizes: 2B, 10B and 50B\./);
+  assert.deepEqual(await page.locator('.as-summary strong').allInnerTexts(), ['Why:', 'The sizes:', 'Same Studio:']);
+  assert.doesNotMatch(await page.locator('main').innerText(), /4×|[Ff]our times/, 'no "4x Arche" line: a 2B Asteria is Arche\'s size');
+  const more = page.locator('#as-more');
+  const toggle = page.getByRole('button', { name: 'Read more' });
+  assert.equal(await toggle.getAttribute('aria-expanded'), 'false');
+  assert.equal(await toggle.getAttribute('aria-controls'), 'as-more');
+  const folded = await more.boundingBox();
+  assert.ok(folded.height <= 261, `folded to a short look (${folded.height}px)`);
+  assert.match(await more.evaluate(el => getComputedStyle(el).maskImage || getComputedStyle(el).webkitMaskImage), /linear-gradient/, 'it fades out');
+  assert.equal(await more.evaluate(el => el.inert), true, 'the folded part is out of the tab order');
+  await toggle.click();
+  const less = page.getByRole('button', { name: 'Show less' });
+  assert.equal(await less.getAttribute('aria-expanded'), 'true');
+  assert.ok((await more.boundingBox()).height > 1000, 'the whole report');
+  assert.equal(await more.evaluate(el => el.inert), false);
+  assert.deepEqual(await more.locator('h2').allInnerTexts(),
+    ['Heura Arche today', 'Why a GPU is faster', 'Asteria’s three sizes', 'Arche and Asteria side by side']);
+  assert.equal(await more.getByRole('link', { name: 'NVIDIA H100' }).getAttribute('href'), 'https://www.nvidia.com/en-us/data-center/h100.html');
+  await less.click();
+  assert.equal(await page.getByRole('button', { name: 'Read more' }).getAttribute('aria-expanded'), 'false');
   assert.equal(await page.locator('main').getByRole('link', { name: 'Join the waitlist' }).getAttribute('href'), '#join');
   assert.deepEqual(errors, []);
+  await close();
+});
+
+test('the report keeps our costs and open questions out: it is the public part of the doc', async () => {
+  const { page, close } = await open();
+  const text = await page.locator('#as-more').textContent();
+  for (const internal of [/\$\d/, /GPU-hour/, /Open questions/, /iMac/, /Ari\b/]) assert.doesNotMatch(text, internal);
   await close();
 });
 
@@ -127,13 +153,15 @@ test('already on the list, no "would train", the server’s errors and a dropped
   assert.deepEqual(errors, []);
 });
 
-test('without JavaScript the form still posts to the Apps Script, from /asteria/, marked as an Asteria join', async () => {
+test('without JavaScript the whole report shows, and the form still posts to the Apps Script, from /asteria/', async () => {
   const { page, close } = await open('/asteria/', { javaScriptEnabled: false });
   const form = page.locator('#as-form');
   assert.match(await form.getAttribute('action'), /^https:\/\/script\.google\.com\/macros\/s\/.+\/exec$/);
   assert.equal(await form.getAttribute('method'), 'post');
   assert.equal(await form.locator('input[name=from]').inputValue(), '/asteria/');
   assert.equal(await form.locator('input[name=use]').inputValue(), 'Asteria waitlist');
+  assert.equal(await page.locator('#as-more').evaluate(el => el.classList.contains('is-folded')), false, 'the whole report shows');
+  assert.equal(await page.locator('.as-more-btn').isVisible(), false);
   await close();
 });
 
