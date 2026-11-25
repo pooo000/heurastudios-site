@@ -1,0 +1,107 @@
+---
+layout: default
+title: "Heura Asteria waitlist"
+description: "Heura Asteria: four times as powerful as Arche, on a GPU. Join the waitlist. People with a Heura Studios account get it first."
+og_title: "Heura Asteria: join the waitlist"
+og_description: "Four times as powerful as Arche, on a GPU. People with a Heura Studios account get it first."
+current: asteria
+css: [/asteria/asteria.css]
+js: [/form.js, /asteria/asteria.js]
+---
+{%- comment -%}
+  Heura Asteria's page (Ryan, Nov 24, 2026: "put an asteria overview and waitlist on the heura studios site ... on the
+  top bar saying Asteria Waitlist ... either waitlist without login or signup ... the waitlist with an account already
+  are higher in priority"). Two ways in:
+  - with an account: the app's Asteria waitlist (app.heurastudios.com/studio#/asteria; studio/waitlist.py in the app),
+    first in line; sign up and log in come back to it (?next=/studio, the #/asteria riding along);
+  - without one: this form, posted to the site's Apps Script (_backend/, form.js) like the old waitlist: a row on the
+    "Heura waitlist" sheet with Came from /asteria/ and, in "What they will specialize", "Asteria waitlist", the GPU
+    answer and what they'd train (asteria.js). No new backend: the Apps Script takes it as a waitlist join.
+{%- endcomment -%}
+<main id="main" class="as-main">
+  <section class="as-hero" aria-labelledby="as-title">
+    <div class="ov-wrap">
+      <p class="as-kicker">Coming soon to Heura Studios</p>
+      <h1 id="as-title" class="ov-display">Heura Asteria</h1>
+      <p class="ov-lead as-lead">Four times as powerful as Arche, on a GPU. Join the waitlist to get it first.</p>
+      <div class="as-acts">
+        <a class="ov-btn ov-btn-primary" href="#join">Join the waitlist</a>
+      </div>
+      <ul class="as-facts">
+        <li>
+          <h2>4× Arche’s power</h2>
+          <p>The next model up from Heura Arche, the 2B model every agent in the Studio trains on today.</p>
+        </li>
+        <li>
+          <h2>Runs on a GPU</h2>
+          <p>Your own, or one of ours. Tell us which when you join, so we know what to have ready.</p>
+        </li>
+        <li>
+          <h2>Trains the same way</h2>
+          <p>Write the script, add examples and tests, train. Same Studio, a bigger model under it.</p>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="as-join" id="join" aria-labelledby="as-join-title">
+    <div class="ov-wrap">
+      <h2 id="as-join-title" class="ov-h2">Join the waitlist</h2>
+      <p class="ov-section-lead">Two ways in. People with a Heura Studios account get Asteria first, in the order they joined.</p>
+
+      <div class="as-ways">
+        <div class="as-way as-way-account">
+          <p class="as-badge">First in line</p>
+          <h3>With an account</h3>
+          <p>Join from inside the Studio. Account holders get Asteria before everyone else, and you see your number in line.</p>
+          <div class="as-way-acts">
+            <a class="ov-btn ov-btn-primary" href="{{ site.app_url }}/signup?next=/studio#/asteria">Sign up and join</a>
+            <a class="ov-btn ov-btn-quiet" href="{{ site.app_url }}/login?next=/studio#/asteria">Log in and join</a>
+          </div>
+          <p class="as-fine">Free to sign up. You land on the Asteria waitlist in the Studio.</p>
+        </div>
+
+        <div class="as-way as-way-email">
+          <h3>Without an account</h3>
+          <p>Leave your email. You get in after account holders, and you can make an account any time to move up.</p>
+          {%- comment -%} Posts to the Apps Script in _backend/ (form.js sends it with fetch; without JS it posts normally). {%- endcomment %}
+          <form id="as-form" class="as-form" action="{{ site.form_endpoint }}" method="post" novalidate>
+            <div class="as-field">
+              <label for="as-email">Email</label>
+              <input id="as-email" name="email" type="email" autocomplete="email" inputmode="email" maxlength="254" placeholder="you@company.com" required>
+            </div>
+            <div class="as-field">
+              <label for="as-company">Company or project</label>
+              <input id="as-company" name="company" autocomplete="organization" maxlength="100" placeholder="Acme, or your own project" required>
+            </div>
+            <fieldset class="as-gpu">
+              <legend>Do you have a GPU?</legend>
+              <label><input type="radio" name="gpu" value="have"> I have a GPU</label>
+              <label><input type="radio" name="gpu" value="need"> I need one from y’all</label>
+              <label><input type="radio" name="gpu" value="unsure"> Not sure yet</label>
+            </fieldset>
+            <div class="as-field">
+              <label for="as-train">What would you train on it? <span class="as-optional">(optional)</span></label>
+              <textarea id="as-train" name="train" rows="3" maxlength="500" placeholder="A support agent for our help desk"></textarea>
+            </div>
+            {%- comment -%} Honeypot: hidden from people; bots that fill it get "ok" and nothing is saved. {%- endcomment %}
+            <div class="as-trap" aria-hidden="true">
+              <label for="as-website">Website</label>
+              <input id="as-website" name="website" tabindex="-1" autocomplete="off">
+            </div>
+            <input type="hidden" name="from" value="/asteria/">
+            <input type="hidden" name="use" value="Asteria waitlist">
+            <p class="as-error" id="as-error" role="alert"></p>
+            <button class="ov-btn ov-btn-primary as-submit" type="submit">Join without an account</button>
+            <p class="as-fine">Your email is only used to tell you when Asteria opens. See the <a href="/privacy/">Privacy Policy</a>.</p>
+          </form>
+          <div class="as-done" id="as-done" tabindex="-1" hidden>
+            <h3>You’re on the Asteria waitlist</h3>
+            <p id="as-done-text"></p>
+            <a class="ov-btn ov-btn-primary" href="{{ site.app_url }}/signup?next=/studio#/asteria">Make an account to move up</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>

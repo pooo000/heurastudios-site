@@ -67,7 +67,8 @@ for (const path of ['/', '/tools/', '/datasets/', '/blog/', '/privacy/', '/terms
       assert.ok(l.height >= 44 && (await signup.evaluate(a => a.className)).includes('ov-btn-primary'), `${where}: Log in is a tap target; Sign up the button`);
       for (const b of [l, u]) assert.ok(b.x >= row.inner[0] - 0.5 && b.x + b.width <= row.inner[1] + 0.5, `${where}: in the header`);
       const nav = await header.locator('nav a').evaluateAll(as => as.filter(a => a.getBoundingClientRect().width > 0).map(a => a.textContent.trim()));
-      assert.deepEqual(nav, width >= 760 ? ['Tools', 'Datasets', 'Blog'] : [], where);
+      // (Nov 24: Asteria waitlist, the fourth; under 840px it's alone, and a phone has no room for it)
+      assert.deepEqual(nav, width >= 840 ? ['Tools', 'Datasets', 'Blog', 'Asteria waitlist'] : width >= 520 ? ['Asteria waitlist'] : [], where);
       await close();
     }
   });

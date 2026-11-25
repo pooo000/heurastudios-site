@@ -244,3 +244,18 @@ test('inquiries and joins share the minute\'s limit', () => {
   for (let i = 0; i < 60; i++) ctx.doPost({ parameter: { js: '1', email: `p${i}@b.co`, company: 'Acme' } });
   assert.deepEqual(JSON.parse(ctx.doPost({ parameter: INQUIRY }).text), { ok: false, error: 'busy' });
 });
+
+// Heura Asteria's page (/asteria/, Nov 24, 2026) joins without an account through the same doPost: what they said
+// about a GPU and what they'd train rides in "use", which a join keeps (the sheet's What they will specialize), and
+// with no name it is a join, not a request: no email to the founders.
+test('an Asteria join keeps its note in What they will specialize and emails no one', () => {
+  const { ctx, cells, mails } = loadWithMail();
+  ctx.setup();
+  const out = ctx.doPost({ parameter: { email: 'Dana@Acme.com', company: 'Acme', from: '/asteria/', gpu: 'need', train: 'x',
+    use: 'Asteria waitlist. GPU: needs one from us. Would train: a help desk agent', js: '1' } });
+  assert.deepEqual(JSON.parse(out.text), { ok: true });
+  const row = cells[1];
+  assert.deepEqual(Array.from(row.slice(1)), ['dana@acme.com', 'Acme', '/asteria/', '', '', 'Asteria waitlist. GPU: needs one from us. Would train: a help desk agent']);
+  assert.equal(mails.length, 0);
+  assert.equal(row.length, 7, 'the extra fields (gpu, train) add no columns');
+});

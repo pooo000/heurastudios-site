@@ -1,7 +1,8 @@
 {%- comment -%}
   The sticky header. Tools, Datasets and Blog are pages of their own; Log in and Sign up go to the app (Ryan, Nov 18,
   2026: sign-up is open to anyone, so "remove the request access button and replace it with login and a sign up button
-  at the top"). Front matter: current (tools | datasets | blog | privacy | terms) marks the current link.
+  at the top"; Nov 24: "get it on the top bar saying Asteria Waitlist": Heura Asteria's page and waitlist). Front matter:
+  current (tools | datasets | blog | asteria | privacy | terms) marks the current link.
 {%- endcomment -%}
 {%- if page.url == '/' %}
 <a class="ov-skip" href="#main">Skip to content</a>
@@ -13,6 +14,7 @@
       <a href="/tools/"{% if page.current == 'tools' %} aria-current="page"{% endif %}>Tools</a>
       <a href="/datasets/"{% if page.current == 'datasets' %} aria-current="page"{% endif %}>Datasets</a>
       <a href="/blog/"{% if page.current == 'blog' %} aria-current="page"{% endif %}>Blog</a>
+      <a href="/asteria/"{% if page.current == 'asteria' %} aria-current="page"{% endif %} aria-label="Asteria waitlist"><span>Asteria<span class="ov-nav-more"> waitlist</span></span></a>
     </nav>
     <div class="ov-top-acts">
       <a class="ov-top-login" href="{{ site.app_url }}/login">Log in</a>

@@ -1,0 +1,76 @@
+/* Heura Asteria's page (/asteria/): the overview (three facts) and the waitlist's two ways in, with an account (first
+   in line) or without one (the form). Each section an island on a computer, like every page; black and white only. */
+
+/* ---- the overview */
+.as-hero { padding-top: clamp(32px, 4vw, 64px); }   /* (on a computer the island's padding is its top) */
+.as-kicker { margin: 0 0 14px; font-size: 13px; font-weight: 700; line-height: 1.3; color: var(--ink-2); }
+.as-lead { margin-top: clamp(14px, 1.2vw, 18px); }
+.as-acts { display: flex; flex-wrap: wrap; gap: 10px; margin-top: clamp(22px, 2.4vw, 32px); }
+.as-facts {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(12px, 1.4vw, 20px);
+  margin: clamp(32px, 3.6vw, 52px) 0 0; padding: 0; list-style: none;
+}
+.as-facts li, .as-way {
+  padding: clamp(18px, 1.8vw, 26px); border: 1px solid var(--edge); border-radius: clamp(14px, 1.4vw, 18px);
+  background: var(--panel);
+}
+.as-facts h2 { margin: 0; font-size: 15.5px; font-weight: 700; line-height: 1.3; letter-spacing: -.015em; }
+.as-facts p { margin: 8px 0 0; font-size: 13.5px; line-height: 1.5; color: var(--ink-2); text-wrap: pretty; }
+
+/* ---- the two ways in */
+.as-join { scroll-margin-top: calc(var(--header) + 16px); }
+.as-join .ov-h2 { margin: 0; }
+.as-ways {
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: clamp(12px, 1.4vw, 20px);
+  margin-top: clamp(24px, 2.6vw, 36px); align-items: start;
+}
+@media (max-width: 899px) { .as-facts, .as-ways { grid-template-columns: minmax(0, 1fr); } }
+.as-way h3 { margin: 0; font-size: 19px; font-weight: 700; line-height: 1.3; letter-spacing: -.02em; }
+.as-way > p { margin: 10px 0 0; font-size: 14px; line-height: 1.55; color: var(--ink-2); text-wrap: pretty; }
+.as-way-account { background: var(--ink); color: var(--page); border-color: var(--ink); }
+.as-way-account > p, .as-way-account .as-fine { color: color-mix(in srgb, var(--page) 72%, var(--ink)); }
+.as-way-account .ov-btn-primary { background: var(--page); color: var(--ink); }
+.as-way-account .ov-btn-quiet { background: transparent; color: var(--page); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--page) 45%, var(--ink)); }
+.as-way-account p.as-badge {
+  display: inline-block; margin: 0 0 14px; padding: 5px 10px; border-radius: 999px;
+  background: var(--page); color: var(--ink); font-size: 12px; font-weight: 700; line-height: 1.2;
+}
+.as-way-acts { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
+.as-fine { margin: 14px 0 0; font-size: 12.5px; line-height: 1.5; color: var(--ink-2); }
+.as-fine a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+
+/* ---- the form (without an account) */
+.as-form { display: grid; gap: 18px; margin-top: 22px; }
+.as-field { display: grid; gap: 8px; }
+.as-field label, .as-gpu legend { font-size: 14px; font-weight: 700; line-height: 1.3; }
+.as-optional { font-weight: 400; color: var(--ink-2); }
+.as-field input, .as-field textarea {
+  display: block; width: 100%; margin: 0; padding: 0 14px; border: 1px solid var(--field); border-radius: 12px;
+  background: var(--page); color: var(--ink); font: inherit; font-size: 15px; line-height: 1.4;
+  -webkit-appearance: none; appearance: none; transition: border-color .15s ease;
+}
+.as-field input { height: 48px; }
+.as-field textarea { padding: 12px 14px; min-height: 96px; resize: vertical; }
+.as-field input::placeholder, .as-field textarea::placeholder { color: var(--ink-2); opacity: 1; }
+@media (hover: hover) { .as-field input:hover, .as-field textarea:hover { border-color: var(--ink-2); } }
+.as-field input:focus, .as-field textarea:focus { outline: 2px solid var(--ink); outline-offset: 2px; border-color: var(--ink-2); }
+.as-field input[aria-invalid="true"] { border-color: var(--bad); }
+.as-gpu { display: grid; gap: 4px; margin: 0; padding: 0; border: 0; min-width: 0; }
+.as-gpu legend { margin-bottom: 6px; padding: 0; }
+.as-gpu label { display: flex; align-items: center; gap: 10px; min-height: 40px; font-size: 14.5px; cursor: pointer; }
+.as-gpu input { width: 18px; height: 18px; margin: 0; accent-color: var(--ink); }
+.as-trap { position: absolute; left: -10000px; top: auto; width: 1px; height: 1px; overflow: hidden; }
+.as-error { margin: 0; font-size: 14px; font-weight: 700; line-height: 1.45; color: var(--bad); }
+.as-error:empty { display: none; }
+.as-submit { width: 100%; }
+.as-submit[disabled] { opacity: .6; cursor: progress; }
+.as-form .as-fine { margin-top: -4px; }
+.as-done { margin-top: 22px; outline: none; }
+.as-done h3 { margin: 0; font-size: 17px; font-weight: 700; }
+.as-done p { margin: 8px 0 18px; font-size: 14px; line-height: 1.55; color: var(--ink-2); }
+
+/* phones and tablets: the site's own padding (no islands under 1024px) */
+@media (max-width: 1023px) {
+  .as-main > section { padding: clamp(36px, 8vw, 56px) 0 0; }
+  .as-main > section:last-child { padding-bottom: clamp(48px, 10vw, 72px); }
+}

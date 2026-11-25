@@ -289,7 +289,7 @@ test('every page links to the blog from its header and its footer', async () => 
   for (const p of ['/', '/privacy/', '/terms/', '/waitlist/', '/blog/', POST, SMB, SLEEP, TEAMS]) {
     const { page, close } = await open(p);
     const header = await page.locator('header nav a').evaluateAll(as => as.map(a => [a.textContent.trim(), a.getAttribute('href')]));
-    assert.deepEqual(header[header.length - 1], ['Blog', '/blog/'], `${p} header`);
+    assert.ok(header.some(([t, h]) => t === 'Blog' && h === '/blog/'), `${p} header`);   // (Nov 24: Asteria waitlist comes after it)
     const footer = await page.locator('footer nav').first().locator('a')
       .evaluateAll(as => as.map(a => [a.textContent.trim(), a.getAttribute('href')]));
     assert.deepEqual(footer[footer.length - 1], ['Blog', '/blog/'], `${p} footer`);

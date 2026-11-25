@@ -202,7 +202,7 @@ button, input { font: inherit; color: inherit; }
 .ov-mark { flex: none; display: block; width: 24px; height: 21.95px; }
 .ov-nav { display: flex; align-items: center; gap: 4px; margin-left: auto; }
 .ov-nav a {
-  display: inline-flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 8px;
+  display: inline-flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 8px; white-space: nowrap;
   font-size: 13.5px; color: var(--ink-2); transition: color .15s ease;
 }
 .ov-nav a[aria-current="page"] { color: var(--ink); }   /* the section you're on */
@@ -214,7 +214,13 @@ button, input { font: inherit; color: inherit; }
   font-size: 13.5px; color: var(--ink);
 }
 @media (hover: hover) { .ov-top-login:hover { text-decoration: underline; text-underline-offset: 3px; } }
-@media (max-width: 759px) {   /* the sections need this much room beside Log in and Sign up */
+@media (max-width: 839px) {   /* the four sections need this much room beside Log in and Sign up: under it, Asteria's alone */
+  .ov-nav a:not([href="/asteria/"]) { display: none; }
+}
+@media (max-width: 579px) {   /* narrower still, Asteria's link is just "Asteria" (its name is still Asteria waitlist) */
+  .ov-nav-more { display: none; }
+}
+@media (max-width: 519px) {   /* a phone: no room beside Log in and Sign up */
   .ov-nav { display: none; }
   .ov-top-acts { margin-left: auto; }
 }

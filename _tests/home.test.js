@@ -75,7 +75,7 @@ test('the header and the footer go to sections that exist', async () => {
   const header = await page.locator('header a').evaluateAll(as => as.map(a => [a.textContent.trim(), a.getAttribute('href')]));
   // (Oct 29: Tools is a page of its own, /tools/, each tool with its recording; Nov 18: Log in and Sign up, the app's)
   assert.deepEqual(header, [['Heura Studios', '/'], ['Tools', '/tools/'], ['Datasets', '/datasets/'], ['Blog', '/blog/'],
-    ['Log in', 'https://app.heurastudios.com/login'], ['Sign up', 'https://app.heurastudios.com/signup']]);
+    ['Asteria waitlist', '/asteria/'], ['Log in', 'https://app.heurastudios.com/login'], ['Sign up', 'https://app.heurastudios.com/signup']]);
   assert.deepEqual(await page.locator('footer nav').first().locator('a').allTextContents(),
     ['Tools', 'Datasets', 'Sign up', 'Blog']);
   assert.equal(await page.locator('footer nav').first().getByRole('link', { name: 'Tools' }).getAttribute('href'), '/tools/');
