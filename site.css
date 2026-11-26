@@ -367,7 +367,7 @@ button, input { font: inherit; color: inherit; }
 }
 
 .ov-foot-bottom {
-  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px 32px;
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 16px 32px;
   margin-top: clamp(48px, 6vw, 80px); padding-top: 24px; border-top: 1px solid var(--line);
   font-size: 14px; color: var(--ink-2);
 }

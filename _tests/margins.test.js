@@ -477,9 +477,9 @@ test('the footer’s nodes are wired across too: a port feeds several, and a wir
       assert.ok(f.gaps[i].some(w => near(w.from.y, l.y) && near(w.from.x, n.x + n.w)), `${at}: and one on its right`);
     }));
     assert.equal(f.lanes.flat().length, 4, `${at}: two under Product, one under Legal and one over it`);
-    // the long loop clears the copyright row
+    // the long loop clears the bottom row
     const bottom = await page.locator('.ov-foot-bottom').boundingBox();
-    assert.ok(Math.max(...f.lanes.flat().map(l => l.y)) < bottom.y - 16, `${at}: above the copyright row`);
+    assert.ok(Math.max(...f.lanes.flat().map(l => l.y)) < bottom.y - 16, `${at}: above the bottom row`);
     await ctx.close();
   }
 });
