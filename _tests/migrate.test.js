@@ -48,7 +48,7 @@ function parseCsv(text) {
   return rows;
 }
 
-test('the top: OpenAI’s date, from its deprecations page, the days left, Convert your file and Sign up', async () => {
+test('the top: OpenAI’s date, from its deprecations page, the days left, Convert your file and Start training', async () => {
   const { page, errors, close } = await open();
   assert.equal(await page.getByRole('heading', { level: 1 }).innerText(), 'Moving off OpenAI fine-tuning');
   assert.match(await page.locator('.mg-lead').innerText(), /OpenAI stops new fine-tuning jobs on January 6, 2027\./);
@@ -59,7 +59,7 @@ test('the top: OpenAI’s date, from its deprecations page, the days left, Conve
   if (days > 0) assert.match(await left.innerText(), new RegExp(`^${days.toLocaleString('en-US')} days? left\\.$`));
   else assert.equal(await left.isVisible(), false);
   assert.equal(await page.getByRole('link', { name: 'Convert your file' }).getAttribute('href'), '#convert');
-  assert.equal(await page.locator('main').getByRole('link', { name: 'Sign up', exact: true }).first().getAttribute('href'),
+  assert.equal(await page.locator('.mg-acts').getByRole('link', { name: 'Start training', exact: true }).getAttribute('href'),
     'https://app.heurastudios.com/signup');
   assert.deepEqual(errors, []);
   await close();

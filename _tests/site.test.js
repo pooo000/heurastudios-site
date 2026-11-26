@@ -36,17 +36,23 @@ async function fill(page, email, company) {
 }
 
 // Nov 18, 2026 (Ryan: "anybody could sign up now ... remove the request access button and replace it with login and a
-// sign up button at the top"): sign-up is open to anyone, so every call to action is Sign up (the app's sign-up page),
-// Log in is beside it in the header, and the home page's form is for inquiries (the home page's test checks it).
+// sign up button at the top"): sign-up is open to anyone, Log in is in the header, and the home page's form is for
+// inquiries (the home page's test checks it). Nov 26 ("remove sign up and like have book a demo and like start training
+// for the sign up thing"): the header's button is Book a demo (the booking page), the footer's way in Start training;
+// every link to the app's sign-up page (Start training, or Sign up in a post's or a page's own words) goes there.
 // Before: Request access (Oct 24, for teams under contract), Launch an agent (Oct 19) and Get started (Oct 14). The
 // waitlist page stays for anyone who follows an old link, with the same header.
 const APP = 'https://app.heurastudios.com';
-test('every call to action is Sign up, Log in is beside it in the header, and nothing says Request access', async () => {
+const DEMO = 'https://calendar.app.google/PqGzaF3hks8YYsnN7';
+test('Book a demo in the header, Start training in the footer, Log in beside Book a demo, and nothing says Request access', async () => {
   for (const path of ['/', '/tools/', '/datasets/', '/openai-fine-tuning/', '/asteria/', '/privacy/', '/terms/', '/waitlist/', '/blog/', '/blog/what-teams-train/']) {
     const { page, errors, close } = await open(path);
-    const signups = page.getByRole('link', { name: 'Sign up', exact: true });
-    assert.ok(await signups.count() >= 2, `${path}: the header and the footer`);
-    for (const href of await signups.evaluateAll(as => as.map(a => a.getAttribute('href')))) assert.equal(href, `${APP}/signup`, path);
+    assert.equal(await page.locator('header').getByRole('link', { name: 'Book a demo', exact: true }).getAttribute('href'), DEMO, `${path}: Book a demo`);
+    assert.equal(await page.locator('footer').getByRole('link', { name: 'Start training', exact: true }).getAttribute('href'), `${APP}/signup`, `${path}: Start training`);
+    assert.equal(await page.locator('header, footer').getByRole('link', { name: 'Sign up', exact: true }).count(), 0, `${path}: no Sign up in the header or footer`);
+    const ways = page.getByRole('link', { name: /^(Sign up|Start training)$/ });
+    for (const href of await ways.evaluateAll(as => as.map(a => a.getAttribute('href')))) assert.equal(href, `${APP}/signup`, path);
+    for (const href of await page.getByRole('link', { name: 'Book a demo', exact: true }).evaluateAll(as => as.map(a => a.getAttribute('href')))) assert.equal(href, DEMO, path);
     const logins = page.getByRole('link', { name: 'Log in', exact: true });
     assert.equal(await logins.count(), 1, `${path}: Log in, once`);
     assert.equal(await page.locator('header').getByRole('link', { name: 'Log in', exact: true }).count(), 1, `${path}: in the header`);

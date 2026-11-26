@@ -17,8 +17,12 @@ defaults:
 # Not published (folders starting with _ never are)
 exclude: [docs, README.md, package.json, package-lock.json, Gemfile, Gemfile.lock, node_modules, vendor]
 
-# The app: the header's Log in and Sign up, and every Sign up (sign-up is open to anyone since Nov 18, 2026).
+# The app: the header's Log in, and every Start training (the app's sign-up; open to anyone since Nov 18, 2026).
 app_url: https://app.heurastudios.com
+
+# Book a demo (Ryan, Nov 26, 2026): the "Heura Studios demo" booking page in ryan@heurastudios.com's Google Calendar
+# (30 minutes on Google Meet, weekdays 4:30-9pm Pacific). Editing the page in Calendar keeps this link.
+demo_url: https://calendar.app.google/PqGzaF3hks8YYsnN7
 
 # Google Apps Script web app behind the forms (see _backend/), in ryan@heurastudios.com's Google since Nov 8, 2026.
 # Redeploying as a "New version" keeps this URL.

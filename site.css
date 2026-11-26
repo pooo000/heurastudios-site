@@ -179,10 +179,10 @@ button, input { font: inherit; color: inherit; }
 .ov-btn-small::before { content: ""; position: absolute; inset: -4px 0; } /* 44px to tap */
 
 /* ---- header (Ryan, Nov 14: a redesign of the top; he chose "the one thats on the side"): a capsule floating at the
-   top of the page, outlined in the page's line, holding the logo, the sections, and Log in and Sign up (Nov 18: in
-   place of Request access, now that anyone can sign up). On a phone or a tablet the strip it floats in is the page's
-   color, so the page scrolls away under it; on a computer there's no strip: it floats over the picture, the islands
-   passing under it (see the islands, above). */
+   top of the page, outlined in the page's line, holding the logo, the sections, Log in and Book a demo (Nov 18: Log in
+   and Sign up, in place of Request access; Nov 26: Book a demo in place of Sign up, which is the hero's Start
+   training). On a phone or a tablet the strip it floats in is the page's color, so the page scrolls away under it; on
+   a computer there's no strip: it floats over the picture, the islands passing under it (see the islands, above). */
 .ov-top { position: sticky; top: 0; z-index: 10; padding-top: 12px; background: var(--page); }
 @media (min-width: 1024px) {
   .ov-top { background: none; }
@@ -207,36 +207,39 @@ button, input { font: inherit; color: inherit; }
 }
 .ov-nav a[aria-current="page"] { color: var(--ink); }   /* the section you're on */
 @media (hover: hover) { .ov-nav a:hover { color: var(--ink); } }
-/* Log in, a word like the sections' (in the ink: it's a way in, not a page of this site), then Sign up, the button */
+/* Log in, a word like the sections' (in the ink: it's a way in, not a page of this site), then Book a demo, the button */
 .ov-top-acts { flex: none; display: flex; align-items: center; gap: 4px; }
 .ov-top-login {
   display: inline-flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 8px; white-space: nowrap;
   font-size: 13.5px; color: var(--ink);
 }
 @media (hover: hover) { .ov-top-login:hover { text-decoration: underline; text-underline-offset: 3px; } }
-@media (max-width: 839px) {   /* the four sections need this much room beside Log in and Sign up: under it, Asteria's alone */
+@media (max-width: 869px) {   /* the four sections need this much room beside Log in and Book a demo: under it, Asteria's
+                                 alone (839px until Nov 26: Book a demo is 28px longer than Sign up was) */
   .ov-nav a:not([href="/asteria/"]) { display: none; }
 }
-@media (max-width: 579px) {   /* narrower still, Asteria's link is just "Asteria" (its name is still Asteria waitlist) */
+@media (max-width: 619px) {   /* narrower still, Asteria's link is just "Asteria" (its name is still Asteria waitlist) */
   .ov-nav-more { display: none; }
 }
-@media (max-width: 519px) {   /* a phone: no room beside Log in and Sign up */
+@media (max-width: 549px) {   /* a phone: no room beside Log in and Book a demo */
   .ov-nav { display: none; }
   .ov-top-acts { margin-left: auto; }
 }
-@media (max-width: 419px) {   /* a phone: the logo, Log in and Sign up share the capsule */
+@media (max-width: 439px) {   /* a phone: the logo, Log in and Book a demo share the capsule (to 439px: Book a demo is
+                                 longer than Sign up was) */
   .ov-top-row { gap: 8px; padding-left: 14px; padding-right: 6px; }
   .ov-top-row > .ov-logo { gap: 8px; font-size: 13px; }
   .ov-top-acts { gap: 0; }
   .ov-top-login { padding: 0 10px; font-size: 12px; }
   .ov-top-acts > .ov-btn { padding: 0 12px; font-size: 12px; }
 }
-@media (max-width: 359px) {   /* the narrowest phones (320 px): smaller still, the words whole */
-  .ov-top-row { padding-left: 12px; }
+@media (max-width: 359px) {   /* the narrowest phones (320 px): smaller still, the words whole (Book a demo is longer
+                                 than Sign up was, so the capsule's own padding and the words' are a little tighter) */
+  .ov-top-row { padding-left: 10px; padding-right: 4px; }
   .ov-top-row > .ov-logo { gap: 6px; font-size: 12px; }
   .ov-top-row > .ov-logo .ov-mark { width: 20px; height: 19.03px; }
-  .ov-top-login { padding: 0 8px; font-size: 11.5px; }
-  .ov-top-acts > .ov-btn { padding: 0 10px; font-size: 11.5px; }
+  .ov-top-login { padding: 0 6px; font-size: 11.5px; }
+  .ov-top-acts > .ov-btn { padding: 0 8px; font-size: 11.5px; }
 }
 
 /* ---- panels: the grey behind a picture (the waitlist's sample chat) */

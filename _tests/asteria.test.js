@@ -174,7 +174,7 @@ test('the header: Asteria waitlist on every page, the ink on its own; just "Aste
     assert.equal(await link.getAttribute('aria-current'), path === '/asteria/' ? 'page' : null, path);
     await close();
   }
-  for (const [width, shown] of [[390, null], [519, null], [520, 'Asteria'], [579, 'Asteria'], [580, 'Asteria waitlist'], [839, 'Asteria waitlist']]) {
+  for (const [width, shown] of [[390, null], [549, null], [550, 'Asteria'], [619, 'Asteria'], [620, 'Asteria waitlist'], [869, 'Asteria waitlist']]) {
     const { page, close } = await open('/asteria/', { viewport: { width, height: 800 } });
     const link = page.locator('header nav a[href="/asteria/"]');
     if (shown === null) assert.equal(await link.isVisible(), false, `${width}`);

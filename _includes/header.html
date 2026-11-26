@@ -1,8 +1,9 @@
 {%- comment -%}
-  The sticky header. Tools, Datasets and Blog are pages of their own; Log in and Sign up go to the app (Ryan, Nov 18,
-  2026: sign-up is open to anyone, so "remove the request access button and replace it with login and a sign up button
-  at the top"; Nov 24: "get it on the top bar saying Asteria Waitlist": Heura Asteria's page and waitlist). Front matter:
-  current (tools | datasets | blog | asteria | privacy | terms) marks the current link.
+  The sticky header. Tools, Datasets and Blog are pages of their own; Log in goes to the app (Ryan, Nov 18, 2026: "remove
+  the request access button and replace it with login and a sign up button at the top"; Nov 24: "get it on the top bar
+  saying Asteria Waitlist": Heura Asteria's page and waitlist). Book a demo is the button since Nov 26 ("remove sign up
+  and like have book a demo"): the demo booking page (site.demo_url); signing up is the hero's Start training. Front
+  matter: current (tools | datasets | blog | asteria | privacy | terms) marks the current link.
 {%- endcomment -%}
 {%- if page.url == '/' %}
 <a class="ov-skip" href="#main">Skip to content</a>
@@ -18,7 +19,7 @@
     </nav>
     <div class="ov-top-acts">
       <a class="ov-top-login" href="{{ site.app_url }}/login">Log in</a>
-      <a class="ov-btn ov-btn-primary ov-btn-small" href="{{ site.app_url }}/signup">Sign up</a>
+      <a class="ov-btn ov-btn-primary ov-btn-small" href="{{ site.demo_url }}">Book a demo</a>
     </div>
   </div>
 </header>

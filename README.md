@@ -22,9 +22,9 @@ Pushing to `main` deploys (GitHub Pages, about a minute). CI runs `npm test` on 
 | --- | --- |
 | `_layouts/default.html` | The page shell every page uses: `<head>`, header, page content, footer |
 | `_includes/head.html` | Everything in `<head>`: meta and link-preview tags, the theme script, fonts, CSS and JS |
-| `_includes/header.html`, `footer.html`, `logo.html` | The shared header (the sections, then Log in and Sign up, the app's), footer and logo |
+| `_includes/header.html`, `footer.html`, `logo.html` | The shared header (the sections, then Log in, the app's, and Book a demo, the booking page), footer and logo |
 | `_layouts/blog.html`, `post.html` | Blog wrapper and a single post |
-| `index.html` + `home.css` + `home.js` | Home page: hero, screen recording, specs, the inquiry form |
+| `index.html` + `home.css` + `home.js` | Home page: hero (with Book a demo and Start training), screen recording, specs, the inquiry form |
 | `tools/index.html` + `tools.css` + `tools.js` | Tools page: every Studio tool, what it takes and gives, and its recording |
 | `_data/tools.yml` | The tools on the Tools page, in the Studio's groups and order (edit copy here, not in the HTML) |
 | `datasets/index.html` + `datasets.css` + `datasets.js` | Datasets page: the app's 100 ready-made datasets by topic, search and the topic filter, and each set's preview (three rows with their credits, its source and license) |
@@ -43,7 +43,7 @@ Pushing to `main` deploys (GitHub Pages, about a minute). CI runs `npm test` on 
 | `_tests/` | Playwright page tests (run against the Jekyll build) |
 | `_tools/` | Python scripts that make the screen recordings, the logo/icon files and the Datasets page's data |
 | `img/`, `reports/` | Images, recordings, report PDFs |
-| `_config.yml` | Site config, including `app_url` (the app, where Log in and Sign up go) and `form_endpoint` (the Apps Script URL) |
+| `_config.yml` | Site config, including `app_url` (the app, where Log in and Start training go), `demo_url` (the Google Calendar booking page behind every Book a demo) and `form_endpoint` (the Apps Script URL) |
 
 Folders starting with `_` are never published.
 
@@ -66,8 +66,10 @@ Folders starting with `_` are never published.
 
 ## Forms and the sheet
 
-Sign-up is open to anyone (since Nov 18, 2026): the header's Log in and Sign up go to the app (`app_url`), and the
-home page's form is for inquiries, questions sent to the founders without emailing them.
+Sign-up is open to anyone (since Nov 18, 2026): Log in (the header) and Start training (the hero and the footer; it was
+Sign up until Nov 26) go to the app (`app_url`). Book a demo (the header and the hero, since Nov 26) opens the "Heura
+Studios demo" booking page in ryan@heurastudios.com's Google Calendar (`demo_url`): 30 minutes on Google Meet. The home
+page's form is for inquiries, questions sent to the founders without emailing them.
 
 Both forms post to one Apps Script web app (`form_endpoint`). The home page's inquiry form sends `kind=inquiry`
 (name, email, company, role, message); the waitlist page sends an email and a company. With JS, `form.js` posts with

@@ -4,7 +4,20 @@
    under it, the lead, on the left */
 .hm-hero { padding-top: clamp(32px, 4vw, 64px); }
 .hm-title { max-width: 16em; }   /* (two lines on a computer: "Training agents without / Machine Learning specialists") */
-.hm-hero-side { max-width: 40em; margin-top: clamp(14px, 1.2vw, 18px); }
+.hm-hero-side { margin-top: clamp(14px, 1.2vw, 18px); }
+.hm-hero-side .ov-lead { max-width: 40em; }
+/* Book a demo and Start training (Nov 26, after Arga Labs' hero): under the lead; on a computer, at the right, level
+   with the lead's last line */
+.hm-hero-acts { display: flex; flex-wrap: wrap; gap: 12px; margin-top: clamp(20px, 2vw, 28px); }
+@media (min-width: 900px) {
+  .hm-hero-side { display: flex; align-items: flex-end; justify-content: space-between; gap: 32px; }
+  .hm-hero-acts { flex: none; margin-top: 0; }
+}
+/* a phone: the two share the row, each as wide as it needs and then growing to fill it */
+@media (max-width: 599px) {
+  .hm-hero-acts { flex-wrap: nowrap; gap: 10px; }
+  .hm-hero-acts > .ov-btn { flex: 1 1 auto; padding: 0 12px; }
+}
 /* on a computer the hero and the recording share the first island (Ryan, Nov 16: fewer boxes up top), its own
    padding the hero's top (site.css, the islands) */
 @media (min-width: 1024px) { .hm-top > .hm-hero { padding-top: 0; } }

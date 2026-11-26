@@ -299,16 +299,18 @@ test('every page links to the blog from its header and its footer', async () => 
   }
 });
 
-// The blog's header and footer match every other page's: Log in and Sign up in the header, Sign up in the footer
-// (Nov 18: sign-up is open to anyone; before, Request access). A post can still have its own links, like the
-// small-business post's Launch an agent.
+// The blog's header and footer match every other page's: Log in and Book a demo in the header, Start training in the
+// footer (Nov 18: sign-up is open to anyone; before, Request access; Nov 26: Book a demo in the header, sign-up is Start
+// training). A post can still have its own links, like the small-business post's Launch an agent.
 const APP = 'https://app.heurastudios.com';
-test('the blog has Log in and Sign up, like every other page', async () => {
+test('the blog has Log in, Book a demo and Start training, like every other page', async () => {
   for (const p of ['/blog/', POST, SMB, SLEEP, TEAMS]) {
     const { page, errors, close } = await open(p);
-    const signups = page.locator('header, footer').getByRole('link', { name: 'Sign up', exact: true });
-    assert.equal(await signups.count(), 2, `${p}: in the header and the footer`);
-    for (const href of await signups.evaluateAll(as => as.map(a => a.getAttribute('href')))) assert.equal(href, `${APP}/signup`, p);
+    assert.equal(await page.locator('header').getByRole('link', { name: 'Book a demo', exact: true }).getAttribute('href'),
+      'https://calendar.app.google/PqGzaF3hks8YYsnN7', `${p}: Book a demo, in the header`);
+    assert.equal(await page.locator('footer').getByRole('link', { name: 'Start training', exact: true }).getAttribute('href'),
+      `${APP}/signup`, `${p}: Start training, in the footer`);
+    assert.equal(await page.locator('header, footer').getByRole('link', { name: 'Sign up', exact: true }).count(), 0, `${p}: no Sign up`);
     assert.equal(await page.locator('header').locator(`a[href="${APP}/login"]`).count(), 1, `${p}: Log in, in the header`);
     assert.equal(await page.locator('header, footer').getByRole('link', { name: 'Request access' }).count(), 0, `${p}: no Request access`);
     for (const old of ['Get started', 'Launch an agent', 'Sign in']) {

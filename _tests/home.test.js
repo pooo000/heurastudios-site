@@ -1,5 +1,5 @@
-// The home page (Oct 24, 2026: the post-training positioning). The hero (the headline and the lead; the header's Log in
-// and Sign up are the way in, since sign-up opened to anyone on Nov 18), a looping recording of one run in Heura Studios
+// The home page (Oct 24, 2026: the post-training positioning). The hero (the headline, the lead, and since Nov 26 Book a
+// demo and Start training, after Arga Labs' hero), a looping recording of one run in Heura Studios
 // with a Pause button (on a phone, a recording of the Studio at a phone's size), Specifications, and the inquiry form
 // (Ryan, Nov 18: "if you want to ask a question, you don't have to email the founder itself ... you just inquire"; until
 // then the form was Request access). Quiet on purpose: the recording is the one thing that moves, and it stops with
@@ -48,8 +48,11 @@ async function fill(page, values) {
 }
 
 // The lead says what trains a checkpoint (demonstrations and corrections: documents ground answers, they don't train)
-// and the gate, in the words an ML lead would use. The ways in are the header's: Log in and Sign up.
-test('the hero: the headline and the lead, and the header has Log in and Sign up', async () => {
+// and the gate, in the words an ML lead would use. The ways in (Ryan, Nov 26: "have book a demo and like start training
+// for the sign up thing but have them in the top text thing"): the hero's Book a demo (the booking page) and Start
+// training (the app's sign-up); the header has Log in and Book a demo.
+const DEMO = 'https://calendar.app.google/PqGzaF3hks8YYsnN7';
+test('the hero: the headline, the lead, Book a demo and Start training; the header has Log in and Book a demo', async () => {
   const { page, errors, close } = await open('/');
   assert.equal(await page.title(), 'Post-training for AI-native companies – Heura Studios');
   // (Ryan, Nov 16: "can you change the heading into Training agents without Machine Learning specialists")
@@ -58,10 +61,12 @@ test('the hero: the headline and the lead, and the header has Log in and Sign up
   assert.equal((await page.locator('.hm-hero .ov-lead').innerText()).replace(/\s+/g, ' '),
     'Fine-tune the base on your team’s examples. Test every version on your eval set. Ship only the ones that don’t get worse.');
   assert.equal(await page.locator('.hm-hero .ov-lead br').count(), 2);
-  assert.equal(await page.locator('.hm-hero .ov-btn').count(), 0);
+  assert.deepEqual(await page.locator('.hm-hero .ov-btn').evaluateAll(as => as.map(a => [a.textContent.trim(), a.getAttribute('href'), a.classList.contains('ov-btn-primary')])),
+    [['Book a demo', DEMO, true], ['Start training', 'https://app.heurastudios.com/signup', false]]);
   const [h1, lead] = await Promise.all(['h1', '.hm-hero .ov-lead'].map(s => page.locator(s).boundingBox()));
   assert.ok(lead.y >= h1.y + h1.height && Math.abs(lead.x - h1.x) <= 4, 'the lead under the headline, on its left edge');
-  assert.equal(await page.locator('header').getByRole('link', { name: 'Sign up', exact: true }).count(), 1);
+  assert.equal(await page.locator('header').getByRole('link', { name: 'Book a demo', exact: true }).count(), 1);
+  assert.equal(await page.getByRole('link', { name: 'Sign up', exact: true }).count(), 0, 'no Sign up on the home page');
   assert.equal(await page.locator('header').getByRole('link', { name: 'Log in', exact: true }).count(), 1);
   const description = await page.locator('meta[name="description"]').getAttribute('content');
   assert.match(description, /^Post-training for AI-native companies\. Fine-tune the base on your team’s examples\. Test every version on your eval set\./);
@@ -70,16 +75,47 @@ test('the hero: the headline and the lead, and the header has Log in and Sign up
   await close();
 });
 
+// Where they sit (Nov 26, after Arga Labs' hero): on a computer, at the right of the hero, level with the lead's last
+// line; narrower, under the lead on its left edge. Either way inside the page's margins, side by side, 44px to tap.
+test('the hero’s Book a demo and Start training: at the right on a computer, under the lead on a phone', async () => {
+  for (const width of [320, 375, 390, 600, 834, 900, 1024, 1280, 1600]) {
+    const { page, close } = await open('/', { viewport: { width, height: 860 }, reducedMotion: 'reduce' });
+    const where = `${width}px`;
+    const [h1, lead, demo, start] = await Promise.all(['h1', '.hm-hero .ov-lead', '.hm-hero-acts .ov-btn-primary', '.hm-hero-acts .ov-btn-quiet']
+      .map(s => page.locator(s).boundingBox()));
+    const wrap = await page.locator('.hm-hero-row').evaluate(e => {
+      const r = e.getBoundingClientRect(), cs = getComputedStyle(e);
+      return [r.left + parseFloat(cs.paddingLeft), r.right - parseFloat(cs.paddingRight)];
+    });
+    for (const [name, b] of [['Book a demo', demo], ['Start training', start]]) {
+      assert.ok(b.x >= wrap[0] - 0.5 && b.x + b.width <= wrap[1] + 0.5, `${where}: ${name} inside the margins`);
+      assert.ok(b.height >= 44, `${where}: ${name} is a tap target`);
+      assert.ok(b.y >= h1.y + h1.height, `${where}: ${name} under the headline`);
+    }
+    assert.ok(demo.x + demo.width <= start.x + 0.5 && Math.abs(demo.y - start.y) <= 1, `${where}: Book a demo, then Start training, side by side`);
+    if (width >= 900) {
+      assert.ok(Math.abs(start.x + start.width - wrap[1]) <= 1, `${where}: at the right`);
+      assert.ok(demo.x >= lead.x + lead.width, `${where}: beside the lead`);
+      assert.ok(Math.abs((demo.y + demo.height) - (lead.y + lead.height)) <= 12, `${where}: level with the lead's last line`);
+    } else {
+      assert.ok(demo.y >= lead.y + lead.height, `${where}: under the lead`);
+      assert.ok(Math.abs(demo.x - lead.x) <= 1, `${where}: on the lead's left edge`);
+    }
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, `${where}: nothing scrolls sideways`);
+    await close();
+  }
+});
+
 test('the header and the footer go to sections that exist', async () => {
   const { page, close } = await open('/');
   const header = await page.locator('header a').evaluateAll(as => as.map(a => [a.textContent.trim(), a.getAttribute('href')]));
   // (Oct 29: Tools is a page of its own, /tools/, each tool with its recording; Nov 18: Log in and Sign up, the app's)
   assert.deepEqual(header, [['Heura Studios', '/'], ['Tools', '/tools/'], ['Datasets', '/datasets/'], ['Blog', '/blog/'],
-    ['Asteria waitlist', '/asteria/'], ['Log in', 'https://app.heurastudios.com/login'], ['Sign up', 'https://app.heurastudios.com/signup']]);
+    ['Asteria waitlist', '/asteria/'], ['Log in', 'https://app.heurastudios.com/login'], ['Book a demo', DEMO]]);
   assert.deepEqual(await page.locator('footer nav').first().locator('a').allTextContents(),
-    ['Tools', 'Datasets', 'Sign up', 'Blog']);
+    ['Tools', 'Datasets', 'Start training', 'Blog']);
   assert.equal(await page.locator('footer nav').first().getByRole('link', { name: 'Tools' }).getAttribute('href'), '/tools/');
-  assert.equal(await page.locator('footer nav').first().getByRole('link', { name: 'Sign up' }).getAttribute('href'),
+  assert.equal(await page.locator('footer nav').first().getByRole('link', { name: 'Start training' }).getAttribute('href'),
     'https://app.heurastudios.com/signup');
   assert.equal(await page.locator('main #inquire').count(), 1);
   assert.equal(await page.locator('main #tools').count(), 0, 'the tools are on their own page now');

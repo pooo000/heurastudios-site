@@ -14,6 +14,15 @@ js: [/form.js, /recording.js, /home.js]
         <h1 id="hm-title" class="ov-display hm-title">Training agents without Machine Learning specialists</h1>
         <div class="hm-hero-side">
           <p class="ov-lead">Fine-tune the base on your team’s examples.<br> Test every version on your eval set.<br> Ship only the ones that don’t get worse.</p>
+          {%- comment -%}
+            The two ways in (Ryan, Nov 26, 2026, from Arga Labs' hero: "have book a demo and like start training for the
+            sign up thing but have them in the top text thing"): Book a demo, the booking page; Start training, the app's
+            sign-up. On a computer they sit at the right, level with the lead's last line; narrower, under it.
+          {%- endcomment %}
+          <div class="hm-hero-acts">
+            <a class="ov-btn ov-btn-primary" href="{{ site.demo_url }}">Book a demo</a>
+            <a class="ov-btn ov-btn-quiet" href="{{ site.app_url }}/signup">Start training</a>
+          </div>
         </div>
       </div>
     </section>
