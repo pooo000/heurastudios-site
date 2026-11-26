@@ -1,5 +1,6 @@
 // The name is Heura Studios (Ryan, Oct 13, 2026: every logo, tab title, page text and both legal documents), and the
-// footer no longer says "Made by Ostravanne." (and, since Nov 25, no copyright line either).
+// footer no longer says "Made by Ostravanne." Its copyright line is Heura Studios's since Nov 26 (Ryan: "switch it to
+// copyright of heurastudios"); the footer doesn't name Ostravanne at all.
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -40,14 +41,16 @@ test('every page: the logo reads Heura Studios in the header and the footer, and
   }
 });
 
-test('the footer no longer says Made by Ostravanne; no copyright line either', async () => {
+test('the footer no longer says Made by Ostravanne; its copyright is Heura Studios', async () => {
   for (const p of PAGES) {
     const ctx = await browser.newContext();
     const page = await ctx.newPage();
     await page.goto(server.url + p);
     const foot = await page.locator('footer').innerText();
     assert.doesNotMatch(foot, /Made by Ostravanne/, p);
-    assert.doesNotMatch(foot, /©|Ostravanne/, p);
+    assert.doesNotMatch(foot, /Ostravanne/, p);
+    assert.deepEqual(await page.locator('.ov-foot-bottom > p').allInnerTexts(), ['© 2026 Heura Studios'], p);
+    assert.equal(foot.match(/©/g).length, 1, `${p}: one copyright line`);
     assert.equal(await page.locator('.ov-foot-by').count(), 0, p);
     await ctx.close();
   }
