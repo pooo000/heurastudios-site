@@ -80,7 +80,10 @@ test('the legal pages fit a phone, in light and dark', async () => {
 // packs of credits that never expire, Ryan's call): section 6 says how credits work, the Privacy Policy what the
 // credits record holds. No price, plan card or number of credits is on either page (prices are only in the app).
 // Accounts made under an earlier version keep it until December 11, 2026 (the Terms promise 14 days' notice of
-// material changes), and each earlier version keeps its own page.
+// material changes), and each earlier version keeps its own page. Nov 26, 2026 (night): the company is Heura Studios,
+// not Ostravanne (Ryan: "we are completely ditching ostravanne ... change the pp and the terms on the behalf of heura
+// studios"). The current pages name only Heura Studios; the earlier versions keep their words, and their notes say
+// Ostravanne is now Heura Studios.
 const VERSIONS = [
   ['/terms/', '/terms/2026-10-15/', 'The current Terms of Service', '/privacy/2026-10-15/', 'October 15, 2026'],
   ['/privacy/', '/privacy/2026-10-15/', 'The current Privacy Policy', '/terms/2026-10-15/', 'October 15, 2026'],
@@ -153,7 +156,7 @@ test('the earlier versions keep their own pages, each pointing to the current on
     const heading = (await page.getByRole('heading', { level: 1 }).textContent());
     assert.match(heading, current === '/terms/' ? /^Heura Studios Terms of Service$/ : /^Heura Studios Privacy Policy$/);
     const note = page.locator('.lg-note');
-    assert.equal(await note.innerText(), `This is the ${date} version. It applies to accounts made under it until December 11, 2026. ${back} took effect on November 26, 2026.`, old);
+    assert.equal(await note.innerText(), `This is the ${date} version. It applies to accounts made under it until December 11, 2026. Ostravanne, named in it, is now Heura Studios. ${back} took effect on November 26, 2026.`, old);
     assert.equal(await note.getByRole('link', { name: back }).getAttribute('href'), current);
     assert.match(await page.locator('main').innerText(), new RegExp(`Effective date: ${date}\\.`));
     const inside = await page.locator('main section a[href^="/"]').evaluateAll(as => as.map(a => a.getAttribute('href')));
@@ -168,13 +171,42 @@ test('the earlier versions keep their own pages, each pointing to the current on
   }
 });
 
+test('the Terms and the Privacy Policy are Heura Studios’, and name Ostravanne nowhere', async () => {
+  for (const [path] of PAGES) {
+    const res = await fetch(server.url + path);
+    assert.doesNotMatch(await res.text(), /ostr[ae]vanne|ostervanne/i, `${path}: the page's source, its meta tags included`);
+  }
+  let { page, close } = await open('/terms/');
+  let all = (await page.locator('main').innerText()).replace(/\s+/g, ' ');
+  for (const said of ['These Terms are between you and Heura Studios (“Heura”, “we”, “us”), based in Vancouver, British Columbia, Canada.',
+    'and our fine-tuning of its models (including Arche, Asteria and Aniketos) belong to Heura Studios.',
+    'and fine-tuned by Heura Studios;', 'Heura Studios, Vancouver, British Columbia, Canada. Email:']) {
+    assert.ok(all.includes(said), said);
+  }
+  assert.equal(await page.locator('meta[name="description"]').getAttribute('content'),
+    'The terms between you and Heura Studios for heurastudios.com, the Heura Studios app, its models and the API.');
+  await close();
+  ({ page, close } = await open('/privacy/'));
+  all = (await page.locator('main').innerText()).replace(/\s+/g, ' ');
+  for (const said of ['Heura Studios (“Heura”, “we”, “us”) is based in Vancouver, British Columbia, Canada.',
+    'and only our founders can access it.', 'if Heura Studios is involved in a merger or acquisition',
+    'on hardware Heura Studios operates in Canada', 'Heura Studios, Vancouver, British Columbia, Canada. Privacy officer:']) {
+    assert.ok(all.includes(said), said);
+  }
+  assert.equal(await page.locator('meta[name="description"]').getAttribute('content'),
+    'What personal information Heura Studios collects, how we use it, and the choices you have.');
+  await close();
+});
+
 test('the November 18 versions say what they said, and the dated pages stay out of the sitemap', async () => {
   let { page, close } = await open('/terms/2026-11-18/');
   const fees = (await page.locator('section[aria-labelledby="fees"]').innerText()).replace(/\s+/g, ' ');
   assert.ok(fees.includes('Heura Studios has two plans. Free costs nothing and has limits.'));
+  assert.match(await page.locator('section[aria-labelledby="agreement"]').innerText(), /These Terms are between you and Ostravanne/);
   await close();
   ({ page, close } = await open('/privacy/2026-11-18/'));
   assert.match(await page.locator('main').innerText(), /Billing information \(Studio\)/);
+  assert.match(await page.locator('main').innerText(), /is a product of Ostravanne/);
   await close();
   const res = await fetch(server.url + '/sitemap.xml');
   const map = await res.text();
