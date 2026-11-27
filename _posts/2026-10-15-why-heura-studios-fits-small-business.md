@@ -1,7 +1,7 @@
 ---
 title: "Your business, your computer, your assistant: why Heura Studios fits small business"
 description: "Most AI assistants ask you to hand your documents and customer conversations to someone else’s servers. Heura Studios can run on your own computer, learns your business, and lets you check it before customers see it."
-author: the Ostravanne team
+author: the Heura Studios team
 ---
 
 If you run a small business, you already know the problem. The same questions arrive every day: *What's your return policy? Do you ship to my area? How do I reset my password?* The answers are written down somewhere. They just take a person's time to find and send.

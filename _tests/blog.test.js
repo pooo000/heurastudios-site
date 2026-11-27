@@ -115,7 +115,9 @@ test('the small-business post: its title, byline, sections, the jobs, the footno
   assert.equal(status, 200);
   assert.equal(await page.title(), `${SMB_TITLE} – Heura Studios`);
   assert.equal(await page.getByRole('heading', { level: 1 }).textContent(), SMB_TITLE);
-  assert.equal(await page.locator('.bl-byline').innerText(), 'October 15, 2026, by the Ostravanne team');
+  // Nov 27, 2026: Heura Studios, not Ostravanne (Ryan, Nov 26: "we are completely ditching ostravanne")
+  assert.equal(await page.locator('.bl-byline').innerText(), 'October 15, 2026, by the Heura Studios team');
+  assert.doesNotMatch(await page.content(), /ostr[ae]vanne|ostervanne/i, 'the post names Ostravanne nowhere, meta tags included');
   assert.equal(await page.locator('.bl-download').count(), 0, 'no report to download');
   assert.deepEqual(await page.locator('.bl-post h2').allTextContents(), [
     '1. It can run on your own computer', '2. It learns your business, not the internet’s',
