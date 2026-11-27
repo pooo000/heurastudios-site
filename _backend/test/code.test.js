@@ -52,19 +52,37 @@ function load() {
   };
   vm.createContext(ctx);
   for (const f of ['core.js', 'Code.gs']) vm.runInContext(fs.readFileSync(path.join(__dirname, '..', f), 'utf8'), ctx, { filename: f });
-  return { ctx, cells, tabs, inquiries: () => (book.getSheetByName('Inquiries') || { cells: null }).cells };
+  return { ctx, cells, tabs, inquiries: () => (book.getSheetByName('Inquiries') || { cells: null }).cells,
+    suggestions: () => (book.getSheetByName('Suggestions') || { cells: null }).cells };
 }
 
-test('setup writes the header row once, and makes the Inquiries tab, last, with its header', () => {
-  const { ctx, cells, tabs, inquiries } = load();
+test('setup writes the header row once, and makes the Inquiries and Suggestions tabs, last, with their headers', () => {
+  const { ctx, cells, tabs, inquiries, suggestions } = load();
   ctx.setup();
   ctx.setup();
   assert.deepEqual(cells[0], ['Joined at', 'Email', 'Company', 'Came from', 'Name', 'Role', 'What they will specialize']);
   assert.equal(cells.length, 1);
-  assert.deepEqual(tabs.map(t => t.name), ['Waitlist', 'Inquiries'], 'the waitlist stays the first tab');
+  assert.deepEqual(tabs.map(t => t.name), ['Waitlist', 'Inquiries', 'Suggestions'], 'the waitlist stays the first tab');
   assert.deepEqual(Array.from(inquiries()[0]), ['Sent at', 'Email', 'Name', 'Company', 'Role', 'Question', 'Came from']);
   assert.equal(inquiries().length, 1);
+  assert.deepEqual(Array.from(suggestions()[0]), ['Sent at', 'Suggestion', 'Email', 'Page']);
+  assert.equal(suggestions().length, 1);
   assert.equal(tabs[1].frozen, 1);
+  assert.equal(tabs[2].frozen, 1);
+});
+
+// The live sheet already has its Inquiries tab (Nov 18): setup leaves it and its rows as they are, and adds Suggestions
+// after it.
+test('setup on a sheet that already has its Inquiries tab keeps it, rows and all, and adds Suggestions last', () => {
+  const { ctx, tabs, inquiries, suggestions } = load();
+  ctx.setup();
+  ctx.doPost({ parameter: { js: '1', kind: 'inquiry', name: 'Ann', email: 'a@b.co', message: 'Hi', from: '/' } });
+  tabs.splice(2, 1);   // (as the live sheet was before this version: no Suggestions tab yet)
+  assert.equal(suggestions(), null);
+  ctx.setup();
+  assert.deepEqual(tabs.map(t => t.name), ['Waitlist', 'Inquiries', 'Suggestions']);
+  assert.equal(inquiries().length, 2, 'the inquiry is still there');
+  assert.deepEqual(Array.from(suggestions()[0]), ['Sent at', 'Suggestion', 'Email', 'Page']);
 });
 
 test('a join from the page (js=1) answers JSON and adds a row', () => {
@@ -129,9 +147,9 @@ test('a failure inside answers a plain error, never a stack trace', () => {
   }
 });
 
-test('a visit to the web app address says what it is, and that it takes inquiries', () => {
+test('a visit to the web app address says what it is, and that it takes inquiries and suggestions', () => {
   const { ctx } = load();
-  assert.deepEqual(JSON.parse(ctx.doGet().text), { ok: true, service: 'Heura waitlist', inquiries: true });
+  assert.deepEqual(JSON.parse(ctx.doGet().text), { ok: true, service: 'Heura waitlist', inquiries: true, suggestions: true });
 });
 
 // The emails to the founders go through MailApp, from "Heura Studios", with a link to the sheet.
@@ -180,7 +198,7 @@ test('when MailApp fails, the request is still saved and the page still says sen
   }
   assert.equal(cells.length, 3, 'both requests saved');
   assert.equal(mails.length, 0);
-  assert.ok(logged.some(l => /email to the founders failed/.test(l)), logged.join('\n'));
+  assert.ok(logged.some(l => /email about it failed \(its row is saved\)/.test(l)), logged.join('\n'));
 });
 
 // ---- Inquiries (Nov 18, 2026): the home page's form posts kind=inquiry.
@@ -258,4 +276,99 @@ test('an Asteria join keeps its note in What they will specialize and emails no 
   assert.deepEqual(Array.from(row.slice(1)), ['dana@acme.com', 'Acme', '/asteria/', '', '', 'Asteria waitlist. GPU: needs one from us. Would train: a help desk agent']);
   assert.equal(mails.length, 0);
   assert.equal(row.length, 7, 'the extra fields (gpu, train) add no columns');
+});
+
+// ---- QOL suggestions (Nov 27, 2026): the footer's box posts kind=suggestion. Each goes on the Suggestions tab and is
+// emailed to contact@heurastudios.com; the email address is optional, and without one there's no reply-to at all.
+const SUGGESTION = { js: '1', kind: 'suggestion', suggestion: 'Let me rename a notebook from its card', email: 'Ann@Acme.co',
+  from: '/tools/' };
+
+test('a suggestion (js=1) answers JSON, goes on the Suggestions tab and emails contact@, never the waitlist or inquiries', () => {
+  const { ctx, cells, inquiries, suggestions, mails } = loadWithMail();
+  ctx.setup();
+  const out = ctx.doPost({ parameter: SUGGESTION });
+  assert.equal(out.mime, 'json');
+  assert.deepEqual(JSON.parse(out.text), { ok: true });
+  assert.equal(cells.length, 1, 'nothing on the waitlist tab');
+  assert.equal(inquiries().length, 1, 'nothing on the Inquiries tab');
+  assert.equal(suggestions().length, 2);
+  assert.deepEqual(Array.from(suggestions()[1]).slice(1), ['Let me rename a notebook from its card', 'ann@acme.co', '/tools/']);
+  assert.equal(mails.length, 1);
+  const m = mails[0];
+  assert.equal(m.to, 'contact@heurastudios.com');
+  assert.equal(m.replyTo, 'ann@acme.co');
+  assert.equal(m.name, 'Heura Studios');
+  assert.equal(m.subject, 'QOL suggestion: Let me rename a notebook from its card');
+  assert.match(m.body, /on its Suggestions tab: https:\/\/docs\.google\.com\/spreadsheets\/d\/x\/edit/);
+});
+
+test('a suggestion without an email address goes too, and its email has no reply-to at all', () => {
+  const { ctx, suggestions, mails } = loadWithMail();
+  ctx.setup();
+  assert.deepEqual(JSON.parse(ctx.doPost({ parameter: { ...SUGGESTION, email: '' } }).text), { ok: true });
+  assert.equal(suggestions()[1][2], '');
+  assert.equal(mails.length, 1);
+  assert.equal('replyTo' in mails[0], false, 'MailApp is never handed an empty reply-to');
+  assert.match(mails[0].body, /They left no email, so there is no one to reply to\./);
+});
+
+test('the request and inquiry emails still carry their reply-to', () => {
+  const { ctx, mails } = loadWithMail();
+  ctx.setup();
+  ctx.doPost({ parameter: { js: '1', kind: 'inquiry', name: 'Ann', email: 'Ann@Acme.co', message: 'Hi', from: '/' } });
+  ctx.doPost({ parameter: { js: '1', kind: 'request', email: 'bo@b.co', company: 'B', name: 'Bo' } });
+  assert.deepEqual(mails.map(m => m.replyTo), ['ann@acme.co', 'bo@b.co']);
+});
+
+test('the first suggestion makes the Suggestions tab if setup has not run since', () => {
+  const { ctx, tabs, suggestions } = loadWithMail();
+  ctx.doPost({ parameter: SUGGESTION });
+  assert.deepEqual(tabs.map(t => t.name), ['Waitlist', 'Suggestions']);
+  assert.equal(suggestions()[0][0], 'Sent at');
+  assert.equal(suggestions().length, 2);
+});
+
+test('a plain post of a suggestion (no JavaScript) gets a page that says it was sent, or what to check', () => {
+  const { ctx, suggestions } = loadWithMail();
+  ctx.setup();
+  const { js, ...plain } = SUGGESTION;
+  const ok = ctx.doPost({ parameter: plain });
+  assert.match(ok.html, /Suggestion sent/);
+  assert.match(ok.html, /The team reads every one/);
+  assert.doesNotMatch(ok.html, /waitlist|founder/i);
+  const bad = ctx.doPost({ parameter: { ...plain, suggestion: ' ' } });
+  assert.match(bad.html, /didn.t go through/i);
+  assert.match(bad.html, /check your suggestion/);
+  assert.equal(suggestions().length, 2);
+});
+
+test('a suggestion missing its text, or with an email that is not one, answers which field (js=1)', () => {
+  const { ctx, mails } = loadWithMail();
+  ctx.setup();
+  assert.deepEqual(JSON.parse(ctx.doPost({ parameter: { ...SUGGESTION, suggestion: '' } }).text), { ok: false, error: 'suggestion' });
+  assert.deepEqual(JSON.parse(ctx.doPost({ parameter: { ...SUGGESTION, email: 'ann@' } }).text), { ok: false, error: 'email' });
+  assert.equal(mails.length, 0);
+});
+
+test('suggestions share the minute\'s limit with joins and inquiries', () => {
+  const { ctx } = loadWithMail();
+  ctx.setup();
+  for (let i = 0; i < 60; i++) ctx.doPost({ parameter: { js: '1', email: `p${i}@b.co`, company: 'Acme' } });
+  assert.deepEqual(JSON.parse(ctx.doPost({ parameter: SUGGESTION }).text), { ok: false, error: 'busy' });
+});
+
+test('when MailApp fails, the suggestion is still saved and the answer is still ok', () => {
+  const { ctx, suggestions, mails } = loadWithMail({ fails: true });
+  ctx.setup();
+  const quiet = console.error;
+  const logged = [];
+  console.error = (...a) => logged.push(a.join(' '));
+  try {
+    assert.deepEqual(JSON.parse(ctx.doPost({ parameter: SUGGESTION }).text), { ok: true });
+  } finally {
+    console.error = quiet;
+  }
+  assert.equal(suggestions().length, 2);
+  assert.equal(mails.length, 0);
+  assert.ok(logged.some(l => /email about it failed/.test(l)), logged.join('\n'));
 });

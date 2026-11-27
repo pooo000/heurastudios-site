@@ -3,7 +3,7 @@
     title, description     required
     og_title               link-preview title (default: title)
     og_description         link-preview text (default: description)
-    css, js                extra stylesheets / scripts after site.css / site.js
+    css, js                extra stylesheets / scripts after site.css / site.js (and form.js and qol.js, on every page)
     reveal                 true if the page uses [data-reveal] scroll animations (sets html.ov-motion)
 {%- endcomment -%}
 <meta charset="utf-8">
@@ -74,6 +74,9 @@
 <link rel="stylesheet" href="{{ href }}">
 {%- endfor %}
 <script src="/site.js" defer></script>
+{%- comment -%} Every page's footer has the QOL suggestions box (qol.js), which uses the shared form logic (form.js). {%- endcomment %}
+<script src="/form.js" defer></script>
+<script src="/qol.js" defer></script>
 {%- for src in page.js %}
 <script src="{{ src }}" defer></script>
 {%- endfor %}

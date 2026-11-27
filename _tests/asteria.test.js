@@ -82,6 +82,7 @@ test('with an account is first in line: sign up or log in, and come back to the 
   await close();
 });
 
+// (Its Email is the form's own: since Nov 27 every page's footer has the QOL suggestions box, with an Email (optional).)
 test('without an account: the form checks the email, the company and the GPU answer before sending anything', async () => {
   const { page, errors, close } = await open();
   const sent = await standIn(page);
@@ -89,7 +90,7 @@ test('without an account: the form checks the email, the company and the GPU ans
   await join.click();
   assert.equal(await page.locator('#as-error').innerText(), 'Enter your email, like you@company.com.');
   assert.equal(await page.locator('#as-email').getAttribute('aria-invalid'), 'true');
-  await page.getByLabel('Email').fill('dana@acme.com');
+  await page.locator('#as-form').getByLabel('Email').fill('dana@acme.com');
   await join.click();
   assert.equal(await page.locator('#as-error').innerText(), 'Enter your company, or the project you’d use Asteria for.');
   await page.getByLabel('Company or project').fill('Acme');
@@ -104,7 +105,7 @@ test('without an account: the form checks the email, the company and the GPU ans
 test('a join sends the email, the company, /asteria/, and its GPU answer and what they’d train as the row’s note', async () => {
   const { page, errors, close } = await open();
   const sent = await standIn(page);
-  await page.getByLabel('Email').fill(' dana@acme.com ');
+  await page.locator('#as-form').getByLabel('Email').fill(' dana@acme.com ');
   await page.getByLabel('Company or project').fill('Acme');
   await page.getByLabel('I need one from y’all').check();
   await page.getByLabel(/What would you train on it/).fill('A help desk agent,\n  trained on our tickets');
@@ -127,7 +128,7 @@ test('a join sends the email, the company, /asteria/, and its GPU answer and wha
 test('already on the list, no "would train", the server’s errors and a dropped connection each say so', async () => {
   const { page, errors, close } = await open();
   let sent = await standIn(page, { ok: true, already: true });
-  await page.getByLabel('Email').fill('dana@acme.com');
+  await page.locator('#as-form').getByLabel('Email').fill('dana@acme.com');
   await page.getByLabel('Company or project').fill('Acme');
   await page.getByLabel('Not sure yet').check();
   await page.getByRole('button', { name: 'Join without an account' }).click();
@@ -141,7 +142,7 @@ test('already on the list, no "would train", the server’s errors and a dropped
     ['network', 'That didn’t go through. Check your connection and try again.']]) {
     const o = await open();
     sent = await standIn(o.page, reply);
-    await o.page.getByLabel('Email').fill('dana@acme.com');
+    await o.page.locator('#as-form').getByLabel('Email').fill('dana@acme.com');
     await o.page.getByLabel('Company or project').fill('Acme');
     await o.page.getByLabel('I have a GPU').check();
     await o.page.getByRole('button', { name: 'Join without an account' }).click();

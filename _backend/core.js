@@ -164,7 +164,69 @@ function inquiryEmail(q, sheetUrl) {
   };
 }
 
+// ---- QOL suggestions (Ryan, Nov 27, 2026: "make a new thing at the bottom make a QOL suggestions and send them to
+// contact@heurastudios.com"): the box at the bottom of every page's footer. Every suggestion is kept, one row each on
+// the sheet's Suggestions tab, and emailed to contact@heurastudios.com. An email address is optional; with one, it's
+// the reply-to.
+var CONTACT = 'contact@heurastudios.com';
+var SUGGESTION_HEADER = ['Sent at', 'Suggestion', 'Email', 'Page'];
+var SUGGESTION_LIMITS = { suggestion: 2000, email: 254, from: 200, subject: 60 };
+
+// p: the form's fields (suggestion; email, if they gave one; from, the page it was sent from; website is the hidden
+// field only bots fill).
+// deps: appendSuggestion(row) (a row on the Suggestions tab), now(), withLock(fn), busy(); and notify(mail), sheetUrl()
+// and warn(error) as for handleInquiry (an email that fails is only warned about: the suggestion is already saved).
+// -> {ok:true} | {ok:false, error:'suggestion'|'email'|'busy'}
+function handleSuggestion(p, deps) {
+  if (oneLine_(p.website) !== '') return { ok: true };
+  var suggestion = lines_(p.suggestion);
+  var email = oneLine_(p.email).toLowerCase();
+  var from = oneLine_(p.from).slice(0, SUGGESTION_LIMITS.from);
+  if (!suggestion || suggestion.length > SUGGESTION_LIMITS.suggestion) return { ok: false, error: 'suggestion' };
+  if (email && (email.length > SUGGESTION_LIMITS.email || !EMAIL_RE.test(email))) return { ok: false, error: 'email' };
+  var result = deps.withLock(function () {
+    if (deps.busy()) return { ok: false, error: 'busy' };
+    deps.appendSuggestion([deps.now(), asText_(suggestion), asText_(email), asText_(from)]);
+    return { ok: true };
+  });
+  // outside the lock: sending takes a moment, and a failed email must not lose the saved suggestion
+  if (result.ok && deps.notify) {
+    try {
+      deps.notify(suggestionEmail({ suggestion: suggestion, email: email, from: from }, deps.sheetUrl ? deps.sheetUrl() : ''));
+    } catch (err) {
+      if (deps.warn) deps.warn(err);
+    }
+  }
+  return result;
+}
+
+// The email to contact@heurastudios.com about one suggestion: plain text, as they typed it, never the sheet's formula
+// guard. Its subject starts with the suggestion's first line, so an inbox of them reads at a glance; the reply-to is
+// the person's email, when they gave one. s: {suggestion, email, from}.
+function suggestionEmail(s, sheetUrl) {
+  var first = s.suggestion.split('\n')[0];
+  var cap = SUGGESTION_LIMITS.subject;
+  var mail = {
+    to: CONTACT,
+    subject: 'QOL suggestion: ' + (first.length > cap ? first.slice(0, cap - 1).trim() + '…' : first),
+    body: [
+      'A QOL suggestion from heurastudios.com.',
+      '',
+      s.suggestion,
+      '',
+      'Email: ' + (s.email || '(not given)'),
+      'Page: ' + (s.from || '(not given)'),
+      '',
+      (s.email ? 'Reply to this email to answer them.' : 'They left no email, so there is no one to reply to.') +
+        (sheetUrl ? ' Every suggestion is in the sheet, on its Suggestions tab: ' + sheetUrl : ''),
+    ].join('\n'),
+  };
+  if (s.email) mail.replyTo = s.email;
+  return mail;
+}
+
 if (typeof module !== 'undefined') {
   module.exports = { WAITLIST_HEADER: WAITLIST_HEADER, FOUNDERS: FOUNDERS, handleJoin: handleJoin, requestEmail: requestEmail,
-    INQUIRY_HEADER: INQUIRY_HEADER, handleInquiry: handleInquiry, inquiryEmail: inquiryEmail };
+    INQUIRY_HEADER: INQUIRY_HEADER, handleInquiry: handleInquiry, inquiryEmail: inquiryEmail,
+    CONTACT: CONTACT, SUGGESTION_HEADER: SUGGESTION_HEADER, handleSuggestion: handleSuggestion, suggestionEmail: suggestionEmail };
 }

@@ -1,5 +1,5 @@
-// Shared by the two forms that post to the Google Apps Script in _backend/:
-// the home page's inquiry form (home.js) and the waitlist form (waitlist/waitlist.js).
+// Shared by the forms that post to the Google Apps Script in _backend/: the home page's inquiry form (home.js), the
+// waitlist forms (waitlist/waitlist.js, asteria/asteria.js) and the footer's QOL suggestions (qol.js, every page).
 //
 // With JS: check the fields, POST them with js=1 (so the script answers JSON) and show the result in place.
 // Without JS: the browser posts the form itself and the script answers with a plain page.
@@ -35,6 +35,8 @@
   //   validate(v)     v: the trimmed values by name -> [message, fieldName] for the first problem, or nothing
   //   serverErrors    the script's error codes -> [message, fieldName]
   //   doneMessage(email, already) -> the success text ("already": this email had already signed up; only the waitlist)
+  //   from()          what goes in the form's "from" field (default: whereFrom, the page or site that sent them here)
+  //   again           a button in the done panel that brings the form back, empty, for another one (optional)
   function setupForm(opts) {
     var form = opts.form;
     var submit = form.querySelector('[type="submit"]');
@@ -42,8 +44,9 @@
     var inputs = opts.fields.map(function (name) { return form.elements[name]; });
     var hints = inputs.map(function (x) { return x.getAttribute('aria-describedby'); });   // e.g. a textarea's hint
     var busy = false;
+    var cameFrom = opts.from || whereFrom;
 
-    form.elements.from.value = whereFrom();
+    form.elements.from.value = cameFrom();
 
     // Show a message. The field it's about is marked invalid and described by the message (so a screen reader on
     // it hears why); every other field goes back to how it was.
@@ -106,6 +109,19 @@
           say('That didn’t go through. Check your connection and try again.', null);
         });
     });
+
+    // Another one: the form back, empty and ready, the first field focused
+    if (opts.again) {
+      opts.again.addEventListener('click', function () {
+        form.reset();
+        form.elements.from.value = cameFrom();
+        say('', null);
+        ready();
+        opts.done.hidden = true;
+        form.hidden = false;
+        inputs[0].focus();
+      });
+    }
   }
 
   // Old browsers fall back to the plain, no-JS post.

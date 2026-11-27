@@ -22,7 +22,7 @@ Pushing to `main` deploys (GitHub Pages, about a minute). CI runs `npm test` on 
 | --- | --- |
 | `_layouts/default.html` | The page shell every page uses: `<head>`, header, page content, footer |
 | `_includes/head.html` | Everything in `<head>`: meta and link-preview tags, the theme script, fonts, CSS and JS |
-| `_includes/header.html`, `footer.html`, `logo.html` | The shared header (the sections, then Log in, the app's, and Book a demo, the booking page), footer and logo |
+| `_includes/header.html`, `footer.html`, `logo.html` | The shared header (the sections, then Log in, the app's, and Book a demo, the booking page), footer (with the QOL suggestions box at its bottom) and logo |
 | `_layouts/blog.html`, `post.html` | Blog wrapper and a single post |
 | `index.html` + `home.css` + `home.js` | Home page: hero (with Book a demo and Start training), screen recording, specs, the inquiry form |
 | `tools/index.html` + `tools.css` + `tools.js` | Tools page: every Studio tool, what it takes and gives, and its recording |
@@ -38,7 +38,8 @@ Pushing to `main` deploys (GitHub Pages, about a minute). CI runs `npm test` on 
 | `waitlist/` | The old waitlist page (kept for old links) |
 | `blog/index.html`, `_posts/`, `blog.css` | Blog list and posts (Markdown) |
 | `site.css`, `site.js` | Shared by every page: color tokens, base styles, header, footer, the Appearance switch, the canvas in the side margins and the sheet under the column (screens 1360px and wider) |
-| `form.js` | Shared form logic for both forms, the inquiry form and the waitlist (validation, posting, error and success messages) |
+| `form.js` | Shared form logic for every form: the inquiry form, the waitlists and the footer's QOL suggestions (validation, posting, error and success messages). Loaded on every page, from `_includes/head.html` |
+| `qol.js` | The footer's QOL suggestions box, on every page: its form (through `form.js`) and the suggestion growing as it's typed |
 | `_backend/` | The Apps Script behind the forms: `core.js` (logic, tested in Node) and `Code.gs` (Google wiring) |
 | `_tests/` | Playwright page tests (run against the Jekyll build) |
 | `_tools/` | Python scripts that make the screen recordings, the logo/icon files and the Datasets page's data |
@@ -69,32 +70,37 @@ Folders starting with `_` are never published.
 Sign-up is open to anyone (since Nov 18, 2026): Log in (the header) and Start training (the hero and the footer; it was
 Sign up until Nov 26) go to the app (`app_url`). Book a demo (the header and the hero, since Nov 26) opens the "Heura
 Studios demo" event on Ryan's Cal.com (`demo_url`; a Google Calendar booking page until Nov 27): 30 minutes on Google
-Meet. The home page's form is for inquiries, questions sent to the founders without emailing them.
+Meet. The home page's form is for inquiries, questions sent to the founders without emailing them. Every page's footer
+ends with **QOL suggestions** (Nov 27): a suggestion and, if they like, an email, sent to contact@heurastudios.com.
 
-Both forms post to one Apps Script web app (`form_endpoint`). The home page's inquiry form sends `kind=inquiry`
-(name, email, company, role, message); the waitlist page sends an email and a company. With JS, `form.js` posts with
+Every form posts to one Apps Script web app (`form_endpoint`). The home page's inquiry form sends `kind=inquiry`
+(name, email, company, role, message); the footer's QOL suggestions box sends `kind=suggestion` (suggestion, email if
+given, and the page it was sent from); the waitlist page sends an email and a company. With JS, `form.js` posts with
 `js=1` and shows the JSON result in place. Without JS, the browser posts the form and the script answers with a plain
 page.
 
 The sheet ("Heura waitlist") and its bound Apps Script project of the same name are in ryan@heurastudios.com's
 Google Drive, since Nov 8, 2026; they run as that account. Every inquiry is emailed to ryan@, william@, tsun@ and
 ethan@heurastudios.com (`FOUNDERS` in `_backend/core.js`), with the person who asked as the reply-to, however many
-times the same email writes; so is each new request for access from the old form (`kind=request`, still taken). A
-waitlist join, a bot and a refused or turned-away post send no email.
+times the same email writes; so is each new request for access from the old form (`kind=request`, still taken). Every
+QOL suggestion is emailed to contact@heurastudios.com (`CONTACT` in `_backend/core.js`), its subject the suggestion's
+first line, with the person's email as the reply-to when they gave one. A waitlist join, a bot and a refused or
+turned-away post send no email.
 
 Inquiries go on the sheet's **Inquiries** tab, one row each: Sent at, Email, Name, Company, Role, Question, Came from
-(`setup()` makes the tab; the first inquiry makes it too if setup hasn't run). The first tab keeps one row per email
+(`setup()` makes the tab; the first inquiry makes it too if setup hasn't run). Suggestions go on its **Suggestions**
+tab, the same way: Sent at, Suggestion, Email, Page. The first tab keeps one row per email
 for the waitlist and the old requests for access: Joined at, Email, Company, Came from, Name, Role, What they will
 specialize. Signing up again doesn't add a row. "Came from" is the page's utm query, the page on this site that linked
 them, or the other website that did. A visit to the `/exec` address answers `{"ok":true,"service":"Heura waitlist",
-"inquiries":true}` once the version that takes inquiries is deployed.
+"inquiries":true,"suggestions":true}` once the version that takes suggestions is deployed.
 
 Spam protection: a hidden honeypot field, a limit of 60 new rows a minute, and a leading `'` on any cell that would
 start a spreadsheet formula.
 
 **Deploying a backend change:** paste `core.js` (as a script file named `core`) and `Code.gs` into the Apps Script
-project. Run `setup()` once (it adds any missing header cell, and the Inquiries tab), then Deploy > Manage deployments >
-Edit > Version: New version. The `/exec` URL stays the same.
+project. Run `setup()` once (it adds any missing header cell, and the Inquiries and Suggestions tabs), then Deploy >
+Manage deployments > Edit > Version: New version. The `/exec` URL stays the same.
 
 ## Writing a blog post
 

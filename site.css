@@ -356,11 +356,65 @@ button, input { font: inherit; color: inherit; }
 .ov-edge .is-faint { opacity: .5; }
 .ov-edge .is-context { stroke-dasharray: 4px 4px; }
 
-/* a phone or a tablet: the nodes stack, the wire running down from each one's bottom port to the next one's top */
+/* QOL suggestions (Ryan, Nov 27: "make a new thing at the bottom make a QOL suggestions and send them to
+   contact@heurastudios.com"): a node under the row, the whole row's width to start from but only as wide as its form
+   needs, its wires running in from the screen's left edge and out past its right, level with its name (.ov-edge, as
+   the row's ends). Its form: the suggestion, which grows as it's typed (qol.js), the email, optional, and Send, in a
+   row; the footer is always dark, so its error red is dark's */
+.ov-foot { --bad: #ff8a80; --field-edge: #6e6e76; }   /* (field edges: 3.3:1 on a node, 3.8:1 on a field) */
+.ov-node.is-qol { --at: 28px; grid-column: 1 / -1; justify-self: start; width: min(100%, 760px); padding-bottom: 16px; }
+.ov-qol-lead { margin-top: 6px; font-size: 14px; line-height: 1.5; color: var(--ink-2); }
+.ov-qol-form {
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 220px) auto; gap: 6px 10px; margin-top: 14px;
+  grid-template-areas: "text-label email-label ." "text email send" "error error error" "fine fine fine";
+}
+.ov-qol-form > label { font-size: 13px; line-height: 1.4; color: var(--ink-2); }
+.ov-qol-form > label.is-text { grid-area: text-label; }
+.ov-qol-form > label.is-email { grid-area: email-label; }
+.ov-qol-form > textarea, .ov-qol-form > input.is-email {
+  display: block; width: 100%; margin: 0; padding: 11px 13px; border: 1px solid var(--field-edge); border-radius: 10px;
+  background: var(--page); color: var(--ink); font: inherit; font-size: 16px; line-height: 20px;   /* (16px: no zoom on an iPhone) */
+  transition: border-color .15s ease; -webkit-appearance: none; appearance: none;
+}
+.ov-qol-form > textarea { grid-area: text; height: 44px; min-height: 44px; max-height: 220px; resize: none; overflow-y: auto; }
+.ov-qol-form > input.is-email { grid-area: email; height: 44px; padding-top: 0; padding-bottom: 0; }
+@media (hover: hover) { .ov-qol-form > :is(textarea, input.is-email):hover { border-color: var(--ink-2); } }
+.ov-qol-form > :is(textarea, input.is-email):focus { outline: 2px solid var(--ink); outline-offset: 2px; border-color: var(--ink-2); }
+/* (after :focus, with the same weight, so a field that needs fixing keeps its red edge while it's being fixed) */
+.ov-qol-form > :is(textarea, input.is-email)[aria-invalid="true"] { border-color: var(--bad); }
+.ov-qol-form > input.is-email:-webkit-autofill {
+  -webkit-text-fill-color: var(--ink); -webkit-box-shadow: 0 0 0 1000px var(--page) inset; caret-color: var(--ink);
+}
+.ov-qol-send { grid-area: send; align-self: start; min-height: 44px; padding: 0 22px; }
+.ov-qol-send[disabled] { opacity: .6; cursor: progress; }
+.ov-qol-trap { position: absolute; left: -10000px; top: auto; width: 1px; height: 1px; overflow: hidden; }
+.ov-qol-error { grid-area: error; margin-top: 2px; font-size: 14px; font-weight: 700; line-height: 1.45; color: var(--bad); }
+/* empty, it stays in the accessibility tree (so its first message is announced like the rest), out of the grid's flow */
+.ov-qol-error:empty { position: absolute; }
+.ov-qol-fine { grid-area: fine; font-size: 13px; line-height: 1.45; color: var(--ink-2); }
+.ov-qol-done { margin-top: 14px; }
+.ov-qol-done:focus { outline: none; }
+.ov-qol-done-title { font-size: 14px; font-weight: 700; line-height: 1.5; }
+.ov-qol-done-title + p { margin-top: 2px; font-size: 14px; line-height: 1.5; color: var(--ink-2); }
+.ov-qol-again {
+  display: inline-flex; align-items: center; min-height: 44px; margin-top: 4px; padding: 0; border: 0; background: none;
+  color: var(--ink); font: inherit; font-size: 14px; text-decoration: underline; text-underline-offset: 3px; cursor: pointer;
+}
+.ov-qol-again:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+/* a phone or a tablet: the nodes stack, the wire running down from each one's bottom port to the next one's top (QOL
+   suggestions last, so Contact's out port feeds it and its own has nothing to feed); a form's fields stack too */
 @media (max-width: 899px) {
   .ov-pipe { grid-template-columns: minmax(0, 420px); row-gap: 28px; }
   .ov-node { margin-top: 0 !important; }
-  .ov-wire, .ov-edge, .ov-lane, .ov-node.is-brand .ov-port.is-in, .ov-node.is-contact .ov-port.is-out { display: none; }
+  .ov-wire, .ov-edge, .ov-lane, .ov-node.is-brand .ov-port.is-in, .ov-node.is-qol .ov-port.is-out { display: none; }
+  .ov-node.is-qol { width: 100%; }
+  .ov-qol-form {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "text-label" "text" "email-label" "email" "send" "error" "fine";
+  }
+  .ov-qol-form > label.is-email { margin-top: 6px; }
+  .ov-qol-send { justify-self: start; margin-top: 6px; }
   .ov-port.is-in { left: 21px; top: -6px; }
   .ov-port.is-out { left: 21px; right: auto; top: auto; bottom: -6px; }
   .ov-node:not(.is-brand)::before {

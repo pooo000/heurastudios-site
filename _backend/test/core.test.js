@@ -359,3 +359,144 @@ test('inquiryEmail on its own: a sheet link only when there is one', () => {
   assert.ok(m.body.endsWith('Reply to this email to answer them.'));
   assert.ok(m.body.includes('Came from: (not given)'));
 });
+
+// ---- QOL suggestions (Ryan, Nov 27, 2026: "make a new thing at the bottom make a QOL suggestions and send them to
+// contact@heurastudios.com"). Every one is kept, a row each on the Suggestions tab, and emailed to contact@; the email
+// address is optional, and with one it's the reply-to.
+const { handleSuggestion, suggestionEmail, SUGGESTION_HEADER, CONTACT } = require('../core.js');
+function suggestionDeps(opts = {}) {
+  const rows = [];
+  const sent = [];
+  return {
+    rows,
+    sent,
+    deps: {
+      appendSuggestion: row => rows.push(row),
+      now: () => new Date('2026-11-27T22:30:00Z'),
+      withLock: fn => fn(),
+      busy: () => !!opts.busy,
+      notify: m => { if (opts.mailFails) throw new Error('quota'); sent.push(m); },
+      sheetUrl: () => 'https://docs.google.com/spreadsheets/d/x/edit',
+    },
+  };
+}
+const IDEA = { suggestion: '  Keep my last notebook open\nwhen I log back in ', email: ' Ann@Acme.CO ', from: '/blog/' };
+
+test('the Suggestions tab has the columns the team reads, and suggestions go to contact@heurastudios.com', () => {
+  assert.deepEqual(SUGGESTION_HEADER, ['Sent at', 'Suggestion', 'Email', 'Page']);
+  assert.equal(CONTACT, 'contact@heurastudios.com');
+});
+
+test('a suggestion is saved with the time, the suggestion (its lines kept), the email in lowercase and the page', () => {
+  const { deps, rows } = suggestionDeps();
+  assert.deepEqual(handleSuggestion(IDEA, deps), { ok: true });
+  assert.deepEqual(rows, [[new Date('2026-11-27T22:30:00Z'), 'Keep my last notebook open\nwhen I log back in', 'ann@acme.co', '/blog/']]);
+});
+
+test('the email address is optional', () => {
+  const { deps, rows, sent } = suggestionDeps();
+  assert.deepEqual(handleSuggestion({ suggestion: 'Dark mode for exports', from: '/' }, deps), { ok: true });
+  assert.deepEqual(handleSuggestion({ suggestion: 'Bigger run log', email: '   ', from: '/' }, deps), { ok: true });
+  assert.deepEqual(rows.map(r => r[2]), ['', '']);
+  assert.equal(sent.length, 2);
+});
+
+test('a suggestion is needed, at most 2,000 characters; an email, if given, has to look like one', () => {
+  const { deps, rows, sent } = suggestionDeps();
+  const refused = [
+    [{ ...IDEA, suggestion: '' }, 'suggestion'],
+    [{ ...IDEA, suggestion: ' \n\r\n ' }, 'suggestion'],
+    [{ ...IDEA, suggestion: 's'.repeat(2001) }, 'suggestion'],
+    [{ ...IDEA, email: 'ann' }, 'email'],
+    [{ ...IDEA, email: 'ann@acme' }, 'email'],
+    [{ ...IDEA, email: 'a'.repeat(250) + '@b.co' }, 'email'],
+  ];
+  for (const [p, error] of refused) assert.deepEqual(handleSuggestion(p, deps), { ok: false, error }, JSON.stringify(p).slice(0, 80));
+  assert.equal(rows.length + sent.length, 0);
+  assert.deepEqual(handleSuggestion({ ...IDEA, suggestion: 's'.repeat(2000) }, deps), { ok: true });
+  // a browser posting the form without JavaScript sends its line breaks as CRLF: they count once
+  assert.deepEqual(handleSuggestion({ ...IDEA, suggestion: ('s'.repeat(99) + '\r\n').repeat(20).trim() }, deps), { ok: true });
+});
+
+test('where it came from is capped', () => {
+  const { deps, rows } = suggestionDeps();
+  handleSuggestion({ ...IDEA, from: '/' + 'p'.repeat(400) }, deps);
+  assert.equal(rows[0][3].length, 200);
+});
+
+test('a bot that fills the hidden field is told ok, and nothing is saved or sent', () => {
+  const { deps, rows, sent } = suggestionDeps();
+  assert.deepEqual(handleSuggestion({ ...IDEA, website: 'http://spam' }, deps), { ok: true });
+  assert.equal(rows.length + sent.length, 0);
+});
+
+test('in a flood, suggestions are turned away for the minute, and nothing is emailed', () => {
+  const { deps, rows, sent } = suggestionDeps({ busy: true });
+  assert.deepEqual(handleSuggestion(IDEA, deps), { ok: false, error: 'busy' });
+  assert.equal(rows.length + sent.length, 0);
+});
+
+test('in the sheet, text Sheets would run as a formula is plain text; the email has it as typed', () => {
+  const { deps, rows, sent } = suggestionDeps();
+  handleSuggestion({ suggestion: '=HYPERLINK("x")', email: 'a@b.co', from: '+x' }, deps);
+  assert.deepEqual(rows[0].slice(1), ["'=HYPERLINK(\"x\")", 'a@b.co', "'+x"]);
+  assert.equal(sent[0].subject, 'QOL suggestion: =HYPERLINK("x")');
+  assert.ok(sent[0].body.split('\n').includes('=HYPERLINK("x")'));
+});
+
+test('the row is saved under the lock, and the email goes out after it, outside the lock', () => {
+  const f = suggestionDeps();
+  let inside = false;
+  const seen = [];
+  f.deps.withLock = fn => { inside = true; try { return fn(); } finally { inside = false; } };
+  const append = f.deps.appendSuggestion, notify = f.deps.notify;
+  f.deps.appendSuggestion = row => { seen.push(['append', inside]); append(row); };
+  f.deps.notify = m => { seen.push(['notify', inside]); notify(m); };
+  handleSuggestion(IDEA, f.deps);
+  assert.deepEqual(seen, [['append', true], ['notify', false]]);
+});
+
+test('if the email fails, the suggestion is still saved and the answer is still ok', () => {
+  const { deps, rows, sent } = suggestionDeps({ mailFails: true });
+  const warned = [];
+  deps.warn = e => warned.push(String(e));
+  assert.deepEqual(handleSuggestion(IDEA, deps), { ok: true });
+  assert.equal(rows.length, 1);
+  assert.equal(sent.length, 0);
+  assert.deepEqual(warned, ['Error: quota']);
+});
+
+test('the email goes to contact@, its subject the first line, the person as the reply-to, the suggestion as they wrote it', () => {
+  const { deps, sent } = suggestionDeps();
+  handleSuggestion({ ...IDEA, suggestion: 'Two things:\r\n\r\n\r\n1. A shortcut to run\n2.   Undo  ' }, deps);
+  assert.equal(sent.length, 1);
+  const m = sent[0];
+  assert.equal(m.to, 'contact@heurastudios.com');
+  assert.equal(m.replyTo, 'ann@acme.co');
+  assert.equal(m.subject, 'QOL suggestion: Two things:');
+  for (const line of ['A QOL suggestion from heurastudios.com.', 'Email: ann@acme.co', 'Page: /blog/']) {
+    assert.ok(m.body.split('\n').includes(line), line);
+  }
+  assert.ok(m.body.includes('Two things:\n\n1. A shortcut to run\n2. Undo'), 'line breaks kept, one empty line at most');
+  assert.match(m.body, /Reply to this email to answer them\. Every suggestion is in the sheet, on its Suggestions tab: https:\/\/docs\.google\.com/);
+});
+
+test('a long first line is cut short in the subject, at 60 characters with an ellipsis; the body keeps it whole', () => {
+  const long = 'When a run fails, show the line of the script that failed and why, right in the console';
+  const m = suggestionEmail({ suggestion: long, email: '', from: '/' }, '');
+  const shown = m.subject.slice('QOL suggestion: '.length);
+  assert.equal(shown.length, 60);
+  assert.ok(shown.endsWith('…'));
+  assert.ok(long.startsWith(shown.slice(0, -1)));
+  assert.ok(m.body.split('\n').includes(long));
+  const short = suggestionEmail({ suggestion: 'x'.repeat(60), email: '', from: '/' }, '');
+  assert.equal(short.subject, 'QOL suggestion: ' + 'x'.repeat(60), 'exactly 60 fits');
+});
+
+test('suggestionEmail on its own: no reply-to without an email, and a sheet link only when there is one', () => {
+  const m = suggestionEmail({ suggestion: 'Hi', email: '', from: '' }, '');
+  assert.equal('replyTo' in m, false);
+  assert.ok(m.body.includes('Email: (not given)'));
+  assert.ok(m.body.includes('Page: (not given)'));
+  assert.ok(m.body.endsWith('They left no email, so there is no one to reply to.'));
+});

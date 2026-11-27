@@ -424,10 +424,14 @@ test('the footer is a pipeline: its sections are nodes, wired in order, with wir
       await page.evaluate(() => scrollTo(0, document.documentElement.scrollHeight));
       const f = await footerPipe(page);
       const at = `${path} at ${width}px`;
-      assert.deepEqual(f.nodes.map(n => n.name), ['Heura Studios', 'Product', 'Legal', 'Contact'], at);
-      for (let i = 1; i < f.nodes.length; i++) {
+      // the row, then QOL suggestions under it (Nov 27; qol.test.js has its wires and its form)
+      assert.deepEqual(f.nodes.map(n => n.name), ['Heura Studios', 'Product', 'Legal', 'Contact', 'QOL suggestions'], at);
+      for (let i = 1; i < 4; i++) {
         assert.ok(f.nodes[i].x > f.nodes[i - 1].x + f.nodes[i - 1].w, `${at}: ${f.nodes[i].name} right of the one before`);
       }
+      const qol = f.nodes[4];
+      assert.ok(f.nodes.slice(0, 4).every(n => qol.y > n.y + n.h), `${at}: QOL suggestions under the row`);
+      assert.ok(near(qol.x, f.nodes[0].x), `${at}: on the row's left edge (${qol.x} vs ${f.nodes[0].x})`);
       // each wire runs from one node's out port to the next one's in port
       assert.equal(f.wires.length, 3, at);
       f.wires.forEach((w, i) => {
@@ -489,7 +493,7 @@ test('the footer’s links are still a heading and its links in each node, and t
   const page = await ctx.newPage();
   await page.goto(server.url + '/terms/');
   const foot = page.locator('footer');
-  assert.deepEqual(await foot.getByRole('heading', { level: 2 }).allTextContents(), ['Product', 'Legal', 'Contact']);
+  assert.deepEqual(await foot.getByRole('heading', { level: 2 }).allTextContents(), ['Product', 'Legal', 'Contact', 'QOL suggestions']);
   assert.deepEqual(await foot.getByRole('navigation').evaluateAll(ns => ns.map(n => n.getAttribute('aria-labelledby'))),
     ['ov-foot-product', 'ov-foot-legal']);
   assert.equal(await foot.getByRole('link', { name: 'Terms of Service' }).getAttribute('aria-current'), 'page');
@@ -514,6 +518,8 @@ test('on a phone the footer’s nodes stack, a wire down from each one to the ne
       assert.ok(b.joint, `${at}: a wire down into ${b.name}`);
     }
     assert.equal(f.nodes[0].joint, false, `${at}: nothing into the first`);
+    assert.equal(f.nodes[f.nodes.length - 1].name, 'QOL suggestions', `${at}: QOL suggestions last`);
+    assert.equal(await page.locator('.ov-node.is-qol .ov-port.is-out').isVisible(), false, `${at}: and nothing out of the last`);
     assert.ok(f.wires.every(w => !w.shown) && f.edges.flat().every(w => !w.shown) && f.lanes.flat().every(l => !l.shown),
       `${at}: the row's wires are put away`);
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth) <= 0, `${at}: sideways`);
