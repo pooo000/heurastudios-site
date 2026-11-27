@@ -17,7 +17,9 @@ async function open(options = {}) {
   const errors = [], requests = [];
   page.on('pageerror', e => errors.push(e.message));
   await page.goto(server.url + '/openai-fine-tuning/');
-  page.on('request', r => { if (!r.url().startsWith('blob:') && !r.url().startsWith('data:')) requests.push(r.url()); });
+  // (the browser may fetch the page's own icon after load, which isn't the file leaving: Chromium 1243 does, now and then)
+  const icon = u => /^\/(favicon[^/]*|apple-touch-icon\.png)$/.test(new URL(u).pathname);
+  page.on('request', r => { const u = r.url(); if (!u.startsWith('blob:') && !u.startsWith('data:') && !icon(u)) requests.push(u); });
   return { page, errors, requests, close: () => ctx.close() };
 }
 
