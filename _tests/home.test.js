@@ -51,7 +51,7 @@ async function fill(page, values) {
 // and the gate, in the words an ML lead would use. The ways in (Ryan, Nov 26: "have book a demo and like start training
 // for the sign up thing but have them in the top text thing"): the hero's Book a demo (the booking page) and Start
 // training (the app's sign-up); the header has Log in and Book a demo.
-const DEMO = 'https://calendar.app.google/PqGzaF3hks8YYsnN7';
+const DEMO = 'https://cal.com/ryan-tian-12q9bf/heura-studios-demo';
 test('the hero: the headline, the lead, Book a demo and Start training; the header has Log in and Book a demo', async () => {
   const { page, errors, close } = await open('/');
   assert.equal(await page.title(), 'Post-training for AI-native companies – Heura Studios');

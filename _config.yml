@@ -20,9 +20,10 @@ exclude: [docs, README.md, package.json, package-lock.json, Gemfile, Gemfile.loc
 # The app: the header's Log in, and every Start training (the app's sign-up; open to anyone since Nov 18, 2026).
 app_url: https://app.heurastudios.com
 
-# Book a demo (Ryan, Nov 26, 2026): the "Heura Studios demo" booking page in ryan@heurastudios.com's Google Calendar
-# (30 minutes on Google Meet, weekdays 4:30-9pm Pacific). Editing the page in Calendar keeps this link.
-demo_url: https://calendar.app.google/PqGzaF3hks8YYsnN7
+# Book a demo: the "Heura Studios demo" event on Ryan's Cal.com (Nov 27, 2026, Ryan: "replace the google meet thing
+# with cal.com"; until then a Google Calendar booking page). 30 minutes on Google Meet, weekdays 4:30-9pm Pacific (the
+# "Demo hours" schedule), 15 minutes' buffer after; it checks ryan@heurastudios.com's Google Calendar for conflicts.
+demo_url: https://cal.com/ryan-tian-12q9bf/heura-studios-demo
 
 # Google Apps Script web app behind the forms (see _backend/), in ryan@heurastudios.com's Google since Nov 8, 2026.
 # Redeploying as a "New version" keeps this URL.

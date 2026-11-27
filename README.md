@@ -43,7 +43,7 @@ Pushing to `main` deploys (GitHub Pages, about a minute). CI runs `npm test` on 
 | `_tests/` | Playwright page tests (run against the Jekyll build) |
 | `_tools/` | Python scripts that make the screen recordings, the logo/icon files and the Datasets page's data |
 | `img/`, `reports/` | Images, recordings, report PDFs |
-| `_config.yml` | Site config, including `app_url` (the app, where Log in and Start training go), `demo_url` (the Google Calendar booking page behind every Book a demo) and `form_endpoint` (the Apps Script URL) |
+| `_config.yml` | Site config, including `app_url` (the app, where Log in and Start training go), `demo_url` (the Cal.com booking page behind every Book a demo) and `form_endpoint` (the Apps Script URL) |
 
 Folders starting with `_` are never published.
 
@@ -68,8 +68,8 @@ Folders starting with `_` are never published.
 
 Sign-up is open to anyone (since Nov 18, 2026): Log in (the header) and Start training (the hero and the footer; it was
 Sign up until Nov 26) go to the app (`app_url`). Book a demo (the header and the hero, since Nov 26) opens the "Heura
-Studios demo" booking page in ryan@heurastudios.com's Google Calendar (`demo_url`): 30 minutes on Google Meet. The home
-page's form is for inquiries, questions sent to the founders without emailing them.
+Studios demo" event on Ryan's Cal.com (`demo_url`; a Google Calendar booking page until Nov 27): 30 minutes on Google
+Meet. The home page's form is for inquiries, questions sent to the founders without emailing them.
 
 Both forms post to one Apps Script web app (`form_endpoint`). The home page's inquiry form sends `kind=inquiry`
 (name, email, company, role, message); the waitlist page sends an email and a company. With JS, `form.js` posts with

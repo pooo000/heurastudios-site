@@ -309,7 +309,7 @@ test('the blog has Log in, Book a demo and Start training, like every other page
   for (const p of ['/blog/', POST, SMB, SLEEP, TEAMS]) {
     const { page, errors, close } = await open(p);
     assert.equal(await page.locator('header').getByRole('link', { name: 'Book a demo', exact: true }).getAttribute('href'),
-      'https://calendar.app.google/PqGzaF3hks8YYsnN7', `${p}: Book a demo, in the header`);
+      'https://cal.com/ryan-tian-12q9bf/heura-studios-demo', `${p}: Book a demo, in the header`);
     assert.equal(await page.locator('footer').getByRole('link', { name: 'Start training', exact: true }).getAttribute('href'),
       `${APP}/signup`, `${p}: Start training, in the footer`);
     assert.equal(await page.locator('header, footer').getByRole('link', { name: 'Sign up', exact: true }).count(), 0, `${p}: no Sign up`);

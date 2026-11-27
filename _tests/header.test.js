@@ -35,7 +35,7 @@ test('no prices on the public pages: the plans are in Heura Studios, after loggi
 // The header: the logo, the sections, then Log in (the app's) and Book a demo (the booking page, since Nov 26), at the
 // right. Datasets since Nov 18 (Ryan: "have it as a seperate tab at the top"), between Tools and Blog.
 const APP = 'https://app.heurastudios.com';
-const DEMO = 'https://calendar.app.google/PqGzaF3hks8YYsnN7';
+const DEMO = 'https://cal.com/ryan-tian-12q9bf/heura-studios-demo';
 for (const path of ['/', '/tools/', '/datasets/', '/blog/', '/privacy/', '/terms/', '/waitlist/']) {
   test(`${path}: the header fits from 320px to 1280px, Log in and then Book a demo at the right`, async () => {
     for (const width of [320, 360, 375, 390, 414, 420, 439, 440, 479, 480, 549, 550, 600, 619, 620, 759, 760, 834, 869, 870, 880, 960, 1024, 1280]) {

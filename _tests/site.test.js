@@ -43,7 +43,7 @@ async function fill(page, email, company) {
 // Before: Request access (Oct 24, for teams under contract), Launch an agent (Oct 19) and Get started (Oct 14). The
 // waitlist page stays for anyone who follows an old link, with the same header.
 const APP = 'https://app.heurastudios.com';
-const DEMO = 'https://calendar.app.google/PqGzaF3hks8YYsnN7';
+const DEMO = 'https://cal.com/ryan-tian-12q9bf/heura-studios-demo';
 test('Book a demo in the header, Start training in the footer, Log in beside Book a demo, and nothing says Request access', async () => {
   for (const path of ['/', '/tools/', '/datasets/', '/openai-fine-tuning/', '/asteria/', '/privacy/', '/terms/', '/waitlist/', '/blog/', '/blog/what-teams-train/']) {
     const { page, errors, close } = await open(path);
