@@ -139,7 +139,7 @@ test('the Privacy Policy says what billing and the credits record collect, that 
   assert.match(retention, /Credits and usage: your credits record is kept while your account is open and deleted with it\./);
   assert.match(retention, /Billing records \(invoices, payments, and the plan or credits they were for\).* even after you delete your account\./);
   assert.match(all, /send service notices, such as an email when your month’s credits run out/);
-  assert.match(all, /Waitlist and inquiry information Name, email address, company, role, your question, the page that sent you/);
+  assert.match(all, /Waitlist, inquiry and suggestion information Name, email address, company, role, your question or suggestion, the page that sent you \(for a suggestion, the page you sent it from\)/);
   assert.match(all, /This version takes effect on November 26, 2026\. If you agreed to an earlier version, it applies to you from December 11, 2026/);
   const who = page.locator('section[aria-labelledby="who"]');
   assert.equal(await who.getByRole('link', { name: 'November 18, 2026' }).getAttribute('href'), '/privacy/2026-11-18/');
@@ -212,4 +212,25 @@ test('the November 18 versions say what they said, and the dated pages stay out 
   const map = await res.text();
   assert.match(map, /\/terms\/</);
   assert.doesNotMatch(map, /\/(terms|privacy)\/20\d\d-/);
+});
+
+// Nov 27, 2026 (the footer's QOL suggestions box, emailed to contact@heurastudios.com): Ryan, on adding it to the Privacy
+// Policy: "yes do that and ship it". The same version (November 26) with one dated line saying what changed; the app's
+// copy has the same words.
+test('the Privacy Policy covers the suggestion form, says what it collects and who runs it, and says when that was added', async () => {
+  const { page, errors, close } = await open('/privacy/');
+  const all = (await page.locator('main').innerText()).replace(/\s+/g, ' ');
+  for (const said of [
+    'This version takes effect on November 26, 2026.',
+    'It was updated on November 27, 2026 to cover the suggestion form at the bottom of heurastudios.com’s pages; nothing else in it changed.',
+    'the Heura Studios app at app.heurastudios.com, the waitlist, inquiry and suggestion forms, our models (including Heura Arche)',
+    'Communicate: reply to your questions and suggestions, send service notices,',
+    'Google LLC (United States) runs our waitlist, inquiry and suggestion forms (Google Sheets and Apps Script) and our email.']) {
+    assert.ok(all.includes(said), said);
+  }
+  assert.doesNotMatch(all, /waitlist and inquiry forms|Waitlist and inquiry information/, 'nowhere the old two forms alone');
+  const row = page.locator('.legal-table tr', { hasText: 'Waitlist, inquiry and suggestion information' });
+  assert.equal(await row.count(), 1);
+  assert.deepEqual(errors, []);
+  await close();
 });
